@@ -1,0 +1,134 @@
+<div class="min-h-screen bg-gray-50 flex flex-col">
+
+  <div class="flex-1 container mx-auto px-4 py-12 max-w-2xl">
+    <div class="mb-8 text-center">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ pageTitle }}</h1>
+      <p class="text-gray-600">Cập nhật thông tin theo hồ sơ trên máy chủ (định dạng UserProfileDTO).</p>
+    </div>
+
+    <div *ngIf="verificationStatus === 'not_started'" class="p-4 mb-6 bg-orange-50 border border-orange-200 rounded-lg">
+      <div class="flex items-start">
+        <svg class="w-6 h-6 text-orange-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+        <div class="flex-1">
+          <h3 class="text-sm font-semibold text-orange-800">Chưa xác thực danh tính</h3>
+          <p class="text-sm text-orange-700 mt-1 mb-3">
+            Bạn cần xác thực danh tính (CCCD + VNeID) để sử dụng đầy đủ tính năng.
+          </p>
+          <button type="button" (click)="navigateToIdentityVerification()"
+            class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-md transition-colors">
+            Xác thực ngay
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="verificationStatus === 'pending'" class="p-4 mb-6 bg-blue-50 border border-blue-200 rounded-lg">
+      <div class="flex items-start">
+        <svg class="w-6 h-6 text-blue-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+        <div class="flex-1">
+          <h3 class="text-sm font-semibold text-blue-800">Đang chờ duyệt</h3>
+          <p class="text-sm text-blue-700 mt-1">Hồ sơ xác thực đang được kiểm tra.</p>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="verificationStatus === 'approved'" class="p-4 mb-6 bg-green-50 border border-green-200 rounded-lg">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 text-green-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
+        <div>
+          <h3 class="text-sm font-semibold text-green-800">Đã xác thực danh tính</h3>
+          <p class="text-sm text-green-700">Bạn có thể sử dụng tất cả các tính năng của hệ thống.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-8 bg-white rounded-lg shadow-sm border border-gray-200">
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1.5">Tên (firstName)</label>
+            <input id="firstName" type="text" formControlName="firstName" placeholder="Văn A"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
+              [class.border-red-300]="firstName?.invalid && firstName?.dirty" />
+            <div *ngIf="firstName?.invalid && firstName?.dirty" class="mt-1 text-sm text-red-600">Bắt buộc</div>
+          </div>
+          <div>
+            <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1.5">Họ (lastName)</label>
+            <input id="lastName" type="text" formControlName="lastName" placeholder="Nguyễn"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
+              [class.border-red-300]="lastName?.invalid && lastName?.dirty" />
+            <div *ngIf="lastName?.invalid && lastName?.dirty" class="mt-1 text-sm text-red-600">Bắt buộc</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="dateOfBirth" class="block text-sm font-medium text-gray-700 mb-1.5">Ngày sinh (dateOfBirth)</label>
+            <input id="dateOfBirth" type="date" formControlName="dateOfBirth"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
+              [class.border-red-300]="dateOfBirth?.invalid && dateOfBirth?.dirty" />
+            <div *ngIf="dateOfBirth?.invalid && dateOfBirth?.dirty" class="mt-1 text-sm text-red-600">Chọn ngày sinh</div>
+          </div>
+          <div>
+            <label for="gender" class="block text-sm font-medium text-gray-700 mb-1.5">Giới tính (gender)</label>
+            <select id="gender" formControlName="gender"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border">
+              <option *ngFor="let option of genderOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">Gửi API: Nam = true, Nữ = false, Khác = null</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="job" class="block text-sm font-medium text-gray-700 mb-1.5">Công việc (job)</label>
+            <select id="job" formControlName="job"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border">
+              <option *ngFor="let option of jobOptions" [value]="option.value">{{ option.label }}</option>
+            </select>
+          </div>
+          <div>
+            <label for="phoneNumber" class="block text-sm font-medium text-gray-700 mb-1.5">Số điện thoại (phoneNumber)</label>
+            <input id="phoneNumber" type="tel" formControlName="phoneNumber" placeholder="0912345678"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
+              [class.border-red-300]="phoneNumber?.invalid && phoneNumber?.dirty" />
+            <div *ngIf="phoneNumber?.invalid && phoneNumber?.dirty" class="mt-1 text-sm text-red-600">10–11 chữ số hoặc để trống</div>
+          </div>
+        </div>
+
+        <div>
+          <label for="livingArea" class="block text-sm font-medium text-gray-700 mb-1.5">Khu vực sống (livingArea)</label>
+          <input id="livingArea" type="text" formControlName="livingArea" placeholder="VD: Cầu Giấy, Hà Nội"
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border" />
+        </div>
+
+        <div>
+          <label for="bio" class="block text-sm font-medium text-gray-700 mb-1.5">Giới thiệu (bio)</label>
+          <textarea id="bio" formControlName="bio"
+            placeholder="Giới thiệu ngắn..."
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 min-h-[100px] resize-none border"
+            [maxlength]="maxBioLength"></textarea>
+          <p class="mt-1 text-xs text-gray-400 text-right">{{ bioLength }}/{{ maxBioLength }}</p>
+        </div>
+
+        <div class="flex flex-wrap gap-3 pt-2">
+          <button type="button" (click)="navigateBack()"
+            class="px-4 py-2.5 rounded-md border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50">
+            Quay lại
+          </button>
+          <button type="submit" [disabled]="profileForm.invalid || submitLoading"
+            class="flex-1 min-w-[200px] py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors">
+            <span *ngIf="!submitLoading">Lưu lên server</span>
+            <span *ngIf="submitLoading">Đang gửi…</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

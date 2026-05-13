@@ -1,0 +1,39 @@
+<div class="verify-otp-container">
+  <div class="verify-otp-card">
+    <div class="card-header">
+      <h2>Xác thực OTP</h2>
+      <p>Nhập mã OTP đã được gửi đến email: <strong>{{ email }}</strong></p>
+    </div>
+
+    <form [formGroup]="otpForm" (ngSubmit)="submit()">
+      <div class="form-group">
+        <label for="otp">Mã OTP</label>
+        <input
+          id="otp"
+          type="text"
+          formControlName="otp"
+          placeholder="Nhập mã 6 số"
+          maxlength="6"
+          [class.error]="otpForm.get('otp')?.invalid && otpForm.get('otp')?.dirty"
+        />
+        <div class="error-message" *ngIf="otpForm.get('otp')?.invalid && otpForm.get('otp')?.dirty">
+          <span *ngIf="otpForm.get('otp')?.errors?.['required']">OTP là bắt buộc</span>
+          <span *ngIf="otpForm.get('otp')?.errors?.['minlength'] || otpForm.get('otp')?.errors?.['maxlength']">OTP phải có 6 số</span>
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="loading" class="submit-btn">
+        <span *ngIf="!loading">Xác thực</span>
+        <span *ngIf="loading">Đang xác thực...</span>
+      </button>
+    </form>
+
+    <div class="resend-link">
+      <a (click)="resendOtp()" [class.disabled]="loading">Gửi lại OTP</a>
+    </div>
+
+    <div class="back-link">
+      <a (click)="backToForgot()">Quay lại</a>
+    </div>
+  </div>
+</div>

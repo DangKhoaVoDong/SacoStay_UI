@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../services/auth.service';
+import { normalizeAuthUser, applyTempRegisterProfileToUser, clearTempRegisterProfile } from '../../utils/user-display';
 
 @Component({
   selector: 'app-otp-verification',
@@ -11,13 +13,13 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./otp-verification.component.css']
 })
 export class OtpVerificationComponent implements OnInit, OnDestroy {
-  otp: string[] = ['', '', '', '', '', ''];
+  otpValue: string = '';
   isLoading = false;
   countdown = 60;
   email = '';
   private countdownTimer: any;
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private authService: AuthService) {
     this.email = localStorage.getItem('temp_email') || 'your-email@example.com';
   }
 
@@ -40,66 +42,70 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
     }
   }
 
-  handleChange(index: number, value: string): void {
-    if (value.length > 1) {
-      value = value.slice(0, 1);
-    }
-    
-    if (!/^\d*$/.test(value)) {
-      return;
-    }
-
-    const newOtp = [...this.otp];
-    newOtp[index] = value;
-    this.otp = newOtp;
-
-    // Move to next input
-    if (value !== '' && index < 5) {
-      const nextInput = document.getElementById(`otp-${index + 1}`) as HTMLInputElement;
-      nextInput?.focus();
-    }
-  }
-
-  handleKeyDown(index: number, event: KeyboardEvent): void {
-    if (event.key === 'Backspace' && this.otp[index] === '' && index > 0) {
-      const prevInput = document.getElementById(`otp-${index - 1}`) as HTMLInputElement;
-      prevInput?.focus();
-    }
+  sanitizeOtp(value: string): string {
+    return value.replace(/[^\d]/g, '').slice(0, 6);
   }
 
   handleVerify(): void {
-    const otpValue = this.otp.join('');
-    if (otpValue.length !== 6) {
+    if (this.otpValue.length !== 6) {
+      alert('Vui lòng nhập đủ 6 chữ số.');
       return;
     }
 
     this.isLoading = true;
+    const tempPassword = localStorage.getItem('temp_password');
+    const userRole = localStorage.getItem('user_role');
 
-    setTimeout(() => {
-      this.isLoading = false;
-      
-      // Mock success - create user account and go to home
-      const tempName = localStorage.getItem('temp_name') || 'Người dùng mới';
-      const tempEmail = localStorage.getItem('temp_email') || '';
-      
-      localStorage.setItem('user', JSON.stringify({
-        id: 'me',
-        name: tempName,
-        email: tempEmail,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(tempName)}&background=FF6B6B&color=fff`,
-        vipTier: 'free'
-      }));
+    console.log('Verifying OTP:', this.otpValue);
+    console.log('Email:', this.email);
+    console.log('TempPassword:', tempPassword ? '[SET]' : '[EMPTY]');
 
-      localStorage.removeItem('temp_email');
-      localStorage.removeItem('temp_name');
+    this.authService.verifyEmailOtp(this.email, this.otpValue).subscribe({
+      next: () => {
+        if (tempPassword) {
+          this.authService.login({ emailPhoneorUsername: this.email, password: tempPassword }).subscribe({
+            next: (response) => {
+              this.isLoading = false;
+              const raw =
+                response.user ??
+                (response.token ? { email: this.email } : null);
+              const merged = applyTempRegisterProfileToUser(
+                raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null
+              );
+              if (Object.keys(merged).length > 0) {
+                localStorage.setItem('user', JSON.stringify(normalizeAuthUser(merged)));
+              }
+              clearTempRegisterProfile();
 
-      const userRole = localStorage.getItem('user_role');
-      if (userRole === 'landlord') {
-        this.router.navigate(['/identity-verification']);
-      } else {
-        this.router.navigate(['/']);
+              if (userRole === 'landlord') {
+                this.router.navigate(['/identity-verification']);
+              } else {
+                this.router.navigate(['/']);
+              }
+            },
+            error: (err) => {
+              this.isLoading = false;
+              console.error('Auto-login after OTP failed', err);
+              alert('Xác thực thành công nhưng tự động đăng nhập thất bại. Vui lòng đăng nhập lại.');
+              this.router.navigate(['/login']);
+            }
+          });
+        } else {
+          this.isLoading = false;
+          clearTempRegisterProfile();
+          alert('Xác thực thành công. Vui lòng đăng nhập lại.');
+          this.router.navigate(['/login']);
+        }
+      },
+      error: (err) => {
+        this.isLoading = false;
+        console.error('OTP verification failed', err);
+        console.error('Error status:', err?.status);
+        console.error('Error body:', err?.error);
+        console.error('Error message:', err?.error?.message || err?.message);
+        alert('Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.');
       }
-    }, 1000);
+    });
   }
 
   handleResend(): void {
@@ -109,7 +115,7 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
   }
 
   get isOtpComplete(): boolean {
-    return this.otp.join('').length === 6;
+    return this.otpValue.length === 6;
   }
 
   get canResend(): boolean {
