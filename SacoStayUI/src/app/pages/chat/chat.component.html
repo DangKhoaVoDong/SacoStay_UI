@@ -1,0 +1,154 @@
+<div class="min-h-screen flex flex-col bg-gray-50">
+  <app-navbar></app-navbar>
+
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+    <div class="h-[calc(100vh-10rem)] min-h-[32rem] bg-white rounded-3xl shadow-xl border border-orange-50 overflow-hidden flex">
+      <aside class="w-80 border-r border-gray-100 flex flex-col bg-white shrink-0">
+        <div class="p-4 border-b border-gray-100">
+          <h2 class="font-bold text-gray-900">Tin nhắn</h2>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+          <div *ngIf="listLoading" class="p-6 text-center text-sm text-gray-500">Đang tải…</div>
+          <div *ngIf="!listLoading && listError" class="p-4 text-sm text-red-600">{{ listError }}</div>
+          <div *ngIf="!listLoading && !listError && conversations.length === 0" class="p-6 text-center text-sm text-gray-500">
+            Chưa có cuộc trò chuyện.<br />
+            <span class="text-xs text-gray-400">Mở chat từ trang Tìm bạn hoặc hồ sơ người khác.</span>
+          </div>
+
+          <button
+            type="button"
+            *ngFor="let chat of conversations"
+            (click)="selectConversation(chat.otherUser.id)"
+            class="w-full text-left p-4 flex items-center hover:bg-gray-50 transition-colors"
+            [class.bg-orange-50]="activeOtherUserId === chat.otherUser.id"
+            [class.border-r-2]="activeOtherUserId === chat.otherUser.id"
+            [class.border-saco-orange]="activeOtherUserId === chat.otherUser.id"
+          >
+            <div class="relative mr-3 shrink-0">
+              <img
+                [src]="avatarUrl(chat.otherUser)"
+                [alt]="chat.otherUser.displayName"
+                class="w-12 h-12 rounded-full object-cover"
+              />
+              <span
+                *ngIf="chat.unreadCount > 0"
+                class="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 bg-saco-orange rounded-full flex items-center justify-center text-white text-xs font-bold"
+              >
+                {{ chat.unreadCount }}
+              </span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-center mb-1 gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <h3 class="font-medium text-gray-900 truncate">{{ chat.otherUser.displayName }}</h3>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0" [ngClass]="roleBadgeClass(chat.otherUser)">
+                    {{ roleLabel(chat.otherUser) }}
+                  </span>
+                </div>
+                <span *ngIf="chat.lastMessageAt" class="text-xs text-gray-400 shrink-0">
+                  {{ formatListTime(chat.lastMessageAt) }}
+                </span>
+              </div>
+              <p class="text-sm text-gray-500 truncate">{{ chat.lastMessageText }}</p>
+            </div>
+          </button>
+        </div>
+      </aside>
+
+      <section class="flex-1 flex flex-col bg-white min-w-0">
+        <ng-container *ngIf="activeOtherUser; else noChatSelected">
+          <header class="p-4 border-b border-gray-100 flex justify-between items-center">
+            <div class="flex items-center min-w-0">
+              <img
+                [src]="avatarUrl(activeOtherUser)"
+                [alt]="activeOtherUser.displayName"
+                class="w-10 h-10 rounded-full object-cover mr-3 shrink-0"
+              />
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="font-bold text-gray-900 truncate">{{ activeOtherUser.displayName }}</h3>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full" [ngClass]="roleBadgeClass(activeOtherUser)">
+                    {{ roleLabel(activeOtherUser) }}
+                  </span>
+                </div>
+                <span class="text-xs text-green-500 flex items-center">
+                  <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                  Online
+                </span>
+              </div>
+            </div>
+          </header>
+
+          <div id="chat-messages-scroll" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+            <div *ngIf="messagesLoading" class="text-center text-sm text-gray-500 py-8">Đang tải tin nhắn…</div>
+            <div *ngIf="messagesError" class="text-center text-sm text-red-600 py-4">{{ messagesError }}</div>
+            <div *ngIf="!messagesLoading && !messagesError && messages.length === 0" class="text-center text-sm text-gray-500 py-8">
+              Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện!
+            </div>
+
+            <div
+              *ngFor="let msg of messages; trackBy: trackByIndex"
+              class="flex"
+              [class.justify-end]="msg.isMine"
+              [class.justify-start]="!msg.isMine"
+            >
+              <div
+                class="rounded-2xl py-2 px-4 max-w-[70%] shadow-sm"
+                [class.bg-saco-orange]="msg.isMine"
+                [class.text-white]="msg.isMine"
+                [class.rounded-tr-none]="msg.isMine"
+                [class.bg-white]="!msg.isMine"
+                [class.border]="!msg.isMine"
+                [class.border-gray-200]="!msg.isMine"
+                [class.rounded-tl-none]="!msg.isMine"
+              >
+                <p class="text-sm" [class.text-white]="msg.isMine" [class.text-gray-800]="!msg.isMine">{{ msg.text }}</p>
+                <span
+                  class="text-xs mt-1 block"
+                  [class.text-white/70]="msg.isMine"
+                  [class.text-right]="msg.isMine"
+                  [class.text-gray-400]="!msg.isMine"
+                >
+                  {{ msg.sentAt || '' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <footer class="p-4 border-t border-gray-100 bg-white">
+            <p *ngIf="sendError" class="text-sm text-red-600 mb-2">{{ sendError }}</p>
+            <form (ngSubmit)="handleSend($event)" class="flex gap-2">
+              <input
+                type="text"
+                class="input-saco flex-1"
+                placeholder="Nhập tin nhắn..."
+                [(ngModel)]="messageText"
+                name="messageText"
+                [disabled]="sendLoading"
+              />
+              <button
+                type="submit"
+                class="btn-primary-saco px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                [disabled]="!messageText.trim() || sendLoading"
+              >
+                <svg *ngIf="!sendLoading" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                <span *ngIf="sendLoading" class="text-sm">…</span>
+              </button>
+            </form>
+          </footer>
+        </ng-container>
+
+        <ng-template #noChatSelected>
+          <div class="flex-1 flex items-center justify-center text-gray-500 text-sm p-8 text-center">
+            Chọn một cuộc trò chuyện để xem tin nhắn
+          </div>
+        </ng-template>
+      </section>
+    </div>
+  </main>
+
+  <app-footer></app-footer>
+</div>

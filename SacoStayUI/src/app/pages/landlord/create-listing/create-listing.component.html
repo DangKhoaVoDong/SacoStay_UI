@@ -1,0 +1,218 @@
+<app-landlord-layout>
+  <div class="max-w-3xl mx-auto">
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">Đăng tin phòng trọ</h1>
+      <p class="text-gray-600">Tiếp cận hàng nghìn người tìm trọ mỗi ngày</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+      @if (errorMessage) {
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{{ errorMessage }}</div>
+      }
+
+      <form (ngSubmit)="submit($event)" class="space-y-6">
+        <div class="space-y-4">
+          <h3 class="text-lg font-bold text-gray-900 border-b pb-2">Thông tin cơ bản</h3>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Tiêu đề tin đăng</label>
+            <input
+              type="text"
+              [(ngModel)]="title"
+              name="title"
+              required
+              placeholder="VD: Phòng trọ cao cấp gần ĐH Bách Khoa..."
+              class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] sm:text-sm py-2.5 px-3"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Địa chỉ chi tiết</label>
+            <input
+              type="text"
+              [(ngModel)]="address"
+              name="address"
+              required
+              placeholder="Số nhà, tên đường..."
+              class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] sm:text-sm py-2.5 px-3"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Thành phố</label>
+              <select
+                [(ngModel)]="city"
+                name="city"
+                (ngModelChange)="onCityChange()"
+                class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] sm:text-sm py-2.5 px-3"
+              >
+                @for (opt of cityOptions; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Quận/Huyện</label>
+              <select
+                [(ngModel)]="district"
+                name="district"
+                class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] sm:text-sm py-2.5 px-3"
+              >
+                @for (opt of districtOptions; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Diện tích (m²)</label>
+              <input
+                type="number"
+                [(ngModel)]="area"
+                name="area"
+                required
+                min="1"
+                placeholder="25"
+                class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] sm:text-sm py-2.5 px-3"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Số người tối đa</label>
+              <input
+                type="number"
+                [(ngModel)]="maxOccupants"
+                name="maxOccupants"
+                required
+                min="1"
+                placeholder="2"
+                class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] sm:text-sm py-2.5 px-3"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Giá thuê (VND/tháng)</label>
+              <input
+                type="number"
+                [(ngModel)]="price"
+                name="price"
+                required
+                min="0"
+                placeholder="3000000"
+                class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] sm:text-sm py-2.5 px-3"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4 pt-4">
+          <h3 class="text-lg font-bold text-gray-900 border-b pb-2 flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#FF6B6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            </svg>
+            Vị trí trên bản đồ
+          </h3>
+          <p class="text-sm text-gray-500">Nhấp vào bản đồ để ghim vị trí chính xác của phòng trọ.</p>
+          <div class="rounded-xl overflow-hidden border border-gray-200 shadow-sm h-[320px]">
+            <app-listing-map [city]="city" [lat]="lat" [lng]="lng" (locationPick)="onMapPick($event)" />
+          </div>
+          @if (lat !== null && lng !== null) {
+            <div class="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+              <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              <span>Đã ghim vị trí: {{ lat | number: '1.5-5' }}, {{ lng | number: '1.5-5' }}</span>
+              <button type="button" (click)="clearLocation()" class="ml-auto text-gray-400 hover:text-red-500 text-xs">Xóa</button>
+            </div>
+          } @else {
+            <p class="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              Chưa ghim vị trí. Nhấp vào bản đồ để xác định vị trí phòng.
+            </p>
+          }
+        </div>
+
+        <div class="space-y-4 pt-4">
+          <h3 class="text-lg font-bold text-gray-900 border-b pb-2">Mô tả & Tiện nghi</h3>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Mô tả chi tiết</label>
+            <textarea
+              [(ngModel)]="description"
+              name="description"
+              required
+              rows="5"
+              placeholder="Mô tả về phòng, giờ giấc, chi phí điện nước..."
+              class="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] sm:text-sm py-2.5 px-3 min-h-[120px]"
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-3">Tiện nghi có sẵn</label>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              @for (amenity of amenitiesList; track amenity) {
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [checked]="amenities.includes(amenity)"
+                    (change)="toggleAmenity(amenity)"
+                    class="rounded text-[#FF6B6B] focus:ring-[#FF6B6B]"
+                  />
+                  <span class="text-sm text-gray-700">{{ amenity }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4 pt-4">
+          <h3 class="text-lg font-bold text-gray-900 border-b pb-2">Hình ảnh</h3>
+          <label
+            class="block border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#FF6B6B] transition-colors cursor-pointer bg-gray-50"
+            (drop)="onDrop($event)"
+            (dragover)="onDragOver($event)"
+          >
+            <input type="file" accept="image/*" multiple class="hidden" (change)="onFilesSelected($event)" />
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            <div class="mt-4 text-sm text-gray-600">
+              <span class="font-medium text-[#FF6B6B]">Tải ảnh lên</span> hoặc kéo thả vào đây
+            </div>
+          </label>
+          @if (imagePreviews.length) {
+            <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
+              @for (preview of imagePreviews; track preview; let i = $index) {
+                <div class="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                  <img [src]="preview" alt="Ảnh phòng" class="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    (click)="removeImage(i)"
+                    class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white text-xs hover:bg-red-600"
+                    aria-label="Xóa ảnh"
+                  >
+                    ×
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="pt-6">
+          <button
+            type="submit"
+            [disabled]="submitting"
+            class="w-full py-3 rounded-lg bg-[#FF9F43] text-white font-medium hover:bg-[#FF8C2A] disabled:opacity-60 inline-flex items-center justify-center gap-2"
+          >
+            {{ submitting ? 'Đang đăng tin...' : 'Đăng tin' }}
+            @if (!submitting) {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</app-landlord-layout>

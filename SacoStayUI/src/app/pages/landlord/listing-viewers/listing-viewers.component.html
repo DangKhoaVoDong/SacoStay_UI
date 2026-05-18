@@ -1,0 +1,213 @@
+<app-landlord-layout>
+  @if (selectedViewer) {
+    <div class="max-w-5xl mx-auto w-full py-4">
+      <button
+        type="button"
+        (click)="closeViewer()"
+        class="inline-flex items-center text-gray-500 hover:text-gray-900 mb-6 transition-colors"
+      >
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Quay lại danh sách
+      </button>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-1 space-y-6">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+            <img
+              [src]="selectedViewer.avatarUrl"
+              [alt]="selectedViewer.displayName"
+              class="w-32 h-32 rounded-full object-cover mx-auto border-4 border-white shadow-md"
+            />
+            <h1 class="mt-4 text-2xl font-bold text-[#1A1A2E]">{{ selectedViewer.displayName }}</h1>
+            <p class="text-gray-500 text-sm mt-1">Mã người xem: {{ selectedViewer.tenantId }}</p>
+            <p class="text-gray-500 text-sm mt-2 flex items-center justify-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {{ selectedViewer.viewTimeLabel }}
+            </p>
+            <div class="mt-6">
+              <a
+                routerLink="/landlord-chat"
+                class="inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A] shadow-lg shadow-orange-200"
+              >
+                Nhắn tin
+              </a>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-sm border border-orange-100 p-6 bg-orange-50/50">
+            <h3 class="font-bold text-gray-900 mb-2">Tin đã xem</h3>
+            <p class="text-sm text-gray-700">{{ selectedViewer.roomTitle || '—' }}</p>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white rounded-2xl shadow-sm border border-[#FF6B6B]/20 p-6 bg-gradient-to-r from-[#FFF5F5] to-white">
+            <h2 class="text-xl font-bold text-[#1A1A2E]">Độ hòa hợp lối sống</h2>
+            <p class="text-gray-600 text-sm mt-1">Từ API Lifestyle/match (cần cả hai đã làm trắc nghiệm)</p>
+            @if (matchLoading) {
+              <p class="mt-4 text-gray-500">Đang tính...</p>
+            } @else {
+              <p class="mt-4 text-4xl font-black text-[#FF9F43]">{{ matchScore ?? 0 }}%</p>
+            }
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+            API analytics hiện chỉ trả <strong>TenantId</strong> và thời gian xem. Tên, ảnh, lối sống chi tiết sẽ hiển thị khi backend bổ sung endpoint hồ sơ người xem.
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="max-w-5xl mx-auto space-y-4">
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-[#1A1A2E]">Phân tích người xem tin</h1>
+          <p class="text-gray-500 mt-1">Danh sách khách tiềm năng đã xem phòng của bạn (24h gần nhất)</p>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-sm text-gray-500">
+            <strong class="text-gray-900">{{ viewers.length }}</strong> người ·
+            <strong class="text-gray-900">{{ totalViewsIn24H }}</strong> lượt xem (24h)
+          </span>
+          <span class="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+            {{ getVipBadgeLabel() }}
+          </span>
+        </div>
+      </div>
+
+      @if (posts.length > 1) {
+        <div class="bg-white rounded-xl border border-gray-100 p-4 flex flex-wrap items-center gap-3">
+          <label class="text-sm font-medium text-gray-700" for="postFilter">Tin đăng:</label>
+          <select
+            id="postFilter"
+            class="border border-gray-200 rounded-lg px-3 py-2 text-sm min-w-[200px]"
+            [value]="selectedPostId"
+            (change)="onPostChange($any($event.target).value)"
+          >
+            <option value="all">Tất cả tin đăng</option>
+            @for (p of posts; track p.id) {
+              <option [value]="p.id">{{ p.title }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      @if (loading) {
+        <p class="text-gray-500 py-12 text-center">Đang tải...</p>
+      } @else if (!posts.length) {
+        <div class="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+          <p class="text-gray-600 mb-4">Bạn chưa có tin đăng nào.</p>
+          <a routerLink="/create-listing" class="text-[#FF9F43] font-medium hover:underline">Đăng tin đầu tiên</a>
+        </div>
+      } @else {
+        @if (vipTier === 'free') {
+          <div class="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-900">{{ getViewerLimitLabel() }}</p>
+                <p class="text-xs text-gray-500 mt-0.5">Nâng cấp gói ELITE trên tin để xem đủ danh sách (theo backend)</p>
+              </div>
+            </div>
+            <a routerLink="/landlord-pricing" class="px-4 py-2 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A] shrink-0 text-center">
+              Nâng cấp VIP
+            </a>
+          </div>
+        } @else if (isLimitedView) {
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-800">
+            {{ getViewerLimitLabel() }} · Gói tin: <strong>{{ apiPackage }}</strong>
+          </div>
+        }
+
+        @if (errorMessage) {
+          <p class="text-red-600 text-sm bg-red-50 border border-red-100 rounded-lg p-3">{{ errorMessage }}</p>
+        }
+
+        @if (loadingViewers) {
+          <p class="text-gray-500 py-8 text-center">Đang tải người xem...</p>
+        } @else {
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-100">
+                    <th class="p-4 font-semibold text-gray-600 text-sm">Khách hàng</th>
+                    <th class="p-4 font-semibold text-gray-600 text-sm">Tin đã xem</th>
+                    <th class="p-4 font-semibold text-gray-600 text-sm">Thời gian</th>
+                    <th class="p-4 font-semibold text-gray-600 text-sm text-right">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  @if (viewers.length) {
+                    @for (viewer of viewers; track viewer.tenantId + viewer.viewedAt) {
+                      <tr class="hover:bg-gray-50 transition-colors cursor-pointer" (click)="openViewer(viewer)">
+                        <td class="p-4">
+                          <div class="flex items-center">
+                            <img [src]="viewer.avatarUrl" [alt]="viewer.displayName" class="w-10 h-10 rounded-full mr-3 object-cover" />
+                            <div>
+                              <div class="font-bold text-gray-900">{{ viewer.displayName }}</div>
+                              <div class="text-xs text-gray-500">Người thuê đã đăng nhập</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="p-4 text-sm text-gray-700 font-medium max-w-xs truncate">
+                          {{ viewer.roomTitle || '—' }}
+                        </td>
+                        <td class="p-4">
+                          <div class="flex items-center text-sm text-gray-500">
+                            <svg class="w-4 h-4 mr-1.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {{ viewer.viewTimeLabel }}
+                          </div>
+                        </td>
+                        <td class="p-4 text-right">
+                          <div class="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50"
+                              (click)="openViewer(viewer); $event.stopPropagation()"
+                            >
+                              Hồ sơ
+                            </button>
+                            <a
+                              routerLink="/landlord-chat"
+                              class="px-3 py-1.5 text-sm rounded-lg bg-[#FF9F43] text-white hover:bg-[#FF8C2A]"
+                              (click)="$event.stopPropagation()"
+                            >
+                              Liên hệ
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  } @else {
+                    <tr>
+                      <td colspan="4" class="p-12 text-center text-gray-500 text-sm">
+                        Chưa có ai xem tin trong 24h qua.
+                        <br />
+                        <span class="text-xs mt-2 inline-block">
+                          Gợi ý: đăng nhập tài khoản người thuê, mở chi tiết tin trên
+                          <a routerLink="/rooms" class="text-[#FF9F43] hover:underline">/rooms</a> để ghi nhận lượt xem.
+                        </span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+</app-landlord-layout>

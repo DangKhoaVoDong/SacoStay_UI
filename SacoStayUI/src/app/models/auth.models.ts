@@ -38,6 +38,12 @@ export interface UserProfile {
   job?: string | null;
   livingArea?: string | null;
   bio?: string | null;
+  /** Ảnh đại diện (nếu API trả về). */
+  avatar?: string | null;
+  /** Dùng trong navbar để chọn link hồ sơ (nếu API trả về). */
+  lifestyleProfile?: unknown;
+  vipTier?: string | null;
+  verificationStatus?: string | null;
 }
 
 export interface ForgotPasswordRequest {
@@ -55,7 +61,7 @@ export interface ResetPasswordRequest {
   confirmPassword: string;
 }
 
-/** Body PUT `/api/Auth/update-profile` (OpenAPI UserProfileDTO). */
+/** Dữ liệu cập nhật hồ sơ — gửi lên API dạng multipart/form-data (PascalCase). */
 export interface UserProfileUpdateDTO {
   firstName?: string | null;
   lastName?: string | null;

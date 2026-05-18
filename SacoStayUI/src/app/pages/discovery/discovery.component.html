@@ -1,0 +1,188 @@
+<div class="h-screen bg-[#FFF8F0] flex flex-col overflow-hidden">
+  <app-navbar />
+
+  @if (needsQuiz) {
+    <div class="flex-1 flex items-center justify-center p-4">
+      <div class="text-center max-w-md">
+        <div class="w-20 h-20 bg-white rounded-full shadow-md flex items-center justify-center mx-auto mb-6">
+          <svg class="w-10 h-10 text-[#FF9F43]" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-[#1A1A2E] mb-3">Trắc nghiệm lối sống</h2>
+        <p class="text-[#6B7280] mb-8">
+          Để tìm bạn ở ghép phù hợp, bạn cần hoàn thành trắc nghiệm lối sống trước nhé!
+        </p>
+        <button
+          type="button"
+          class="px-12 py-3 rounded-lg bg-[#FF9F43] text-white font-medium shadow-lg shadow-orange-200 hover:bg-[#FF8C2A]"
+          (click)="startQuiz()"
+        >
+          Bắt đầu trắc nghiệm
+        </button>
+      </div>
+    </div>
+  } @else if (loading) {
+    <p class="flex-1 flex items-center justify-center text-gray-500">Đang tải gợi ý...</p>
+  } @else {
+    <main class="flex-1 flex w-full max-w-[1600px] mx-auto h-[calc(100vh-64px)] overflow-hidden">
+      <!-- Left: liked -->
+      <aside class="hidden lg:flex w-72 flex-col bg-white border-r border-orange-100 shrink-0">
+        <div class="p-4 border-b border-orange-100">
+          <h3 class="font-bold text-gray-900">Tương hợp</h3>
+          <p class="text-xs text-gray-500 mt-0.5">{{ likedUsers.length }} người</p>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3 content-start">
+          @if (likedUsers.length) {
+            @for (u of likedUsers; track u.userId) {
+              <div class="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100">
+                <img [src]="u.avatarUrl" [alt]="u.displayName" class="w-full h-full object-cover object-center" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2">
+                  <span class="text-white font-bold text-xs truncate">{{ u.displayName }}</span>
+                </div>
+                <span
+                  class="absolute top-2 right-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full"
+                  [style.background]="scoreColor(u.matchingScore)"
+                >
+                  {{ u.matchingScore }}%
+                </span>
+              </div>
+            }
+          } @else {
+            <p class="col-span-2 text-center text-sm text-gray-500 py-8">Hãy thả tim để kết nối!</p>
+          }
+        </div>
+      </aside>
+
+      <!-- Center: swipe -->
+      <section class="flex-1 relative flex flex-col items-center justify-center p-4 overflow-hidden min-w-0">
+        @if (!isPremium) {
+          <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-2 bg-white border-2 border-orange-200 rounded-xl shadow-lg text-sm">
+            <span class="font-bold text-gray-900">Còn {{ remainingSwipesLabel }} lượt</span>
+            <span class="text-gray-500 text-xs ml-2">• Reset sau {{ daysUntilReset }} ngày</span>
+          </div>
+        }
+
+        <div class="relative w-full max-w-md h-[min(650px,70vh)] mt-8">
+          @if (hasMoreCards && currentCard) {
+            <article
+              class="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl bg-gray-900 transition-transform duration-300"
+              [class.-translate-x-[120%]]="swipeAnim === 'left'"
+              [class.translate-x-[120%]]="swipeAnim === 'right'"
+              [class.opacity-0]="swipeAnim !== null"
+            >
+              <div class="absolute inset-0 bg-gray-100">
+                <img
+                  [src]="currentCard.avatarUrl"
+                  [alt]="currentCard.displayName"
+                  class="w-full h-full object-cover object-center"
+                />
+              </div>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none"></div>
+
+              <div class="absolute top-10 left-6 border-4 border-[#2ECC71] rounded-xl px-3 py-1 -rotate-12 opacity-0"
+                [class.opacity-100]="swipeAnim === 'right'">
+                <span class="text-[#2ECC71] font-black text-xl">Phù hợp ✨</span>
+              </div>
+              <div class="absolute top-10 right-6 border-4 border-red-500 rounded-xl px-3 py-1 rotate-12 opacity-0"
+                [class.opacity-100]="swipeAnim === 'left'">
+                <span class="text-red-500 font-black text-xl">Lượt sau 👋</span>
+              </div>
+
+              <div class="absolute bottom-0 left-0 right-0 p-6 text-white z-10">
+                <div class="flex items-end justify-between gap-3">
+                  <div class="min-w-0">
+                    <h2 class="text-2xl font-black truncate">{{ currentCard.displayName }}</h2>
+                    <p class="text-sm text-gray-200 mt-1">Độ hợp từ trắc nghiệm lối sống</p>
+                  </div>
+                  <div
+                    class="shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-bold text-sm border-2 border-white/30 bg-black/40"
+                    [style.borderColor]="scoreColor(currentCard.matchingScore)"
+                  >
+                    {{ currentCard.matchingScore }}%
+                  </div>
+                </div>
+              </div>
+            </article>
+          } @else {
+            <div class="flex flex-col items-center justify-center h-full text-center px-4">
+              <div class="w-20 h-20 bg-white rounded-full shadow-md flex items-center justify-center mb-4">
+                <svg class="w-10 h-10 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-[#1A1A2E]">Hết rồi!</h3>
+              <p class="text-[#6B7280] mt-2 mb-6 text-sm">
+                {{ isPremium ? 'Quay lại sau để xem thêm người mới.' : 'Bạn đã xem hết gợi ý. Nâng cấp Premium để xem thêm!' }}
+              </p>
+              @if (!isPremium) {
+                <a routerLink="/tenant-pricing" class="px-6 py-2 rounded-lg bg-gradient-to-r from-[#FF9F43] to-[#FF6B6B] text-white font-medium">
+                  Nâng cấp Premium
+                </a>
+              }
+              <button type="button" class="mt-4 text-sm text-[#FF9F43] font-medium" (click)="loadDeck()">Tải lại</button>
+            </div>
+          }
+        </div>
+
+        @if (hasMoreCards && currentCard) {
+          <div class="flex items-center justify-center gap-8 mt-6">
+            <button type="button" class="flex flex-col items-center gap-1" (click)="handleSwipe('left')">
+              <span class="w-14 h-14 rounded-full bg-white shadow-lg border border-red-100 flex items-center justify-center text-red-500 hover:scale-110 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </span>
+              <span class="text-xs text-gray-500">Bỏ qua</span>
+            </button>
+            <button type="button" class="flex flex-col items-center gap-1" (click)="handleSwipe('right')">
+              <span class="w-16 h-16 rounded-full bg-white shadow-xl border border-green-100 flex items-center justify-center text-[#2ECC71] hover:scale-110 transition-transform">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              </span>
+              <span class="text-xs font-bold text-gray-500">Thích</span>
+            </button>
+          </div>
+        }
+      </section>
+
+      <!-- Right: detail -->
+      @if (currentCard && hasMoreCards) {
+        <aside class="hidden lg:flex w-80 flex-col bg-white border-l border-orange-100 shrink-0 overflow-y-auto">
+          <div class="p-6 space-y-4">
+            <h3 class="font-bold text-gray-900">Chi tiết</h3>
+            <img [src]="currentCard.avatarUrl" class="w-24 h-24 rounded-full object-cover mx-auto border-4 border-white shadow" [alt]="currentCard.displayName" />
+            <p class="text-center font-bold text-lg">{{ currentCard.displayName }}</p>
+            <p class="text-center text-3xl font-black" [style.color]="scoreColor(currentCard.matchingScore)">
+              {{ currentCard.matchingScore }}% hợp
+            </p>
+            @if (!isPremium) {
+              <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 text-sm text-gray-700">
+                Nâng cấp Premium để xem hồ sơ đầy đủ và swipe không giới hạn.
+                <a routerLink="/tenant-pricing" class="block mt-3 text-center text-[#FF9F43] font-semibold">Xem gói Premium</a>
+              </div>
+            } @else {
+              <a routerLink="/chat" class="block w-full py-2 text-center rounded-lg bg-[#FF9F43] text-white text-sm font-medium">Nhắn tin</a>
+            }
+          </div>
+        </aside>
+      }
+    </main>
+  }
+
+  @if (showUpgradePrompt) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center relative shadow-xl">
+        <button type="button" class="absolute top-4 right-4 text-gray-400" (click)="showUpgradePrompt = false">✕</button>
+        <h2 class="text-xl font-bold mb-3">Nâng cấp Premium</h2>
+        <p class="text-gray-600 text-sm mb-6">
+          Bạn đã dùng hết 5 lượt swipe miễn phí trong tuần. Nâng cấp để tiếp tục tìm bạn ở ghép!
+        </p>
+        <a routerLink="/tenant-pricing" class="block w-full py-3 rounded-lg bg-gradient-to-r from-[#FF9F43] to-[#FF6B6B] text-white font-medium">
+          Nâng cấp Premium
+        </a>
+      </div>
+    </div>
+  }
+</div>

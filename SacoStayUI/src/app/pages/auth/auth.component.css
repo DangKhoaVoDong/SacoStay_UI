@@ -43,36 +43,24 @@
   filter: blur(3rem);
 }
 
-.tab-switcher {
-  display: flex;
-  background: white;
-  border-radius: 16px 16px 0 0;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.tab-button {
-  flex: 1;
-  padding: 16px;
-  border: none;
-  background: transparent;
-  font-size: 16px;
-  font-weight: 600;
+.auth-switch-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
   color: #6b7280;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-bottom: 3px solid transparent;
 }
 
-.tab-button:hover {
-  background: #f9fafb;
-  color: #374151;
-}
-
-.tab-button.active {
+.auth-switch-link {
+  margin-left: 0.25rem;
+  font-weight: 600;
   color: #ff9f43;
-  background: #fff7ed;
-  border-bottom-color: #ff9f43;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.auth-switch-link:hover {
+  color: #ff8c2a;
+  text-decoration: underline;
 }
 
 /* Enhanced button styles */
@@ -125,22 +113,9 @@
   background: #fff7ed;
   box-shadow: 0 4px 12px rgba(255, 159, 67, 0.08);
 }
-
-
-.tab-button.active {
-  color: #ff9f43;
-  background: #fff7ed;
-  border-bottom-color: #ff9f43;
-}
-
 /* Responsive */
 @media (max-width: 640px) {
   .auth-page {
     padding: 16px;
-  }
-  
-  .tab-button {
-    padding: 14px;
-    font-size: 14px;
   }
 }

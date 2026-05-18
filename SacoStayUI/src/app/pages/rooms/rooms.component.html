@@ -1,0 +1,195 @@
+<div class="min-h-screen bg-gray-50 flex flex-col">
+  <app-navbar />
+
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Phòng trọ nổi bật</h1>
+        <p class="text-gray-500">Danh sách phòng trọ đã được xác thực</p>
+      </div>
+      <a
+        routerLink="/map"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:border-[#FF9F43] hover:text-[#FF9F43] transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m0 13V7m0 0L9 4" />
+        </svg>
+        Xem bản đồ
+      </a>
+    </div>
+
+    <div class="flex items-center gap-3 mb-4 flex-wrap">
+      <button
+        type="button"
+        (click)="toggleFilterPanel()"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-semibold transition-all"
+        [ngClass]="
+          showFilterPanel
+            ? 'bg-[#FF9F43] text-white border-[#FF9F43]'
+            : 'bg-white text-gray-700 border-gray-300 hover:border-[#FF9F43] hover:text-[#FF9F43]'
+        "
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        </svg>
+        Bộ lọc
+        @if (activeFilterCount > 0) {
+          <span
+            class="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold"
+            [ngClass]="showFilterPanel ? 'bg-white text-[#FF9F43]' : 'bg-[#FF9F43] text-white'"
+          >
+            {{ activeFilterCount }}
+          </span>
+        }
+      </button>
+
+      @if (filters.city !== 'all') {
+        <span class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-[#FF9F43] border border-orange-200 rounded-lg text-xs font-medium">
+          {{ filters.city }}
+          <button type="button" (click)="setCity('all')" class="ml-0.5 hover:text-orange-700" aria-label="Xóa lọc thành phố">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </span>
+      }
+      @if (filters.district !== 'all') {
+        <span class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-[#FF9F43] border border-orange-200 rounded-lg text-xs font-medium">
+          {{ filters.district }}
+          <button type="button" (click)="setDistrict('all')" class="ml-0.5 hover:text-orange-700" aria-label="Xóa lọc quận">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </span>
+      }
+      @if (filters.priceMin > priceSliderMin || filters.priceMax < priceSliderMax) {
+        <span class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-[#FF9F43] border border-orange-200 rounded-lg text-xs font-medium">
+          {{ (filters.priceMin / 1000000).toFixed(1) }}tr - {{ (filters.priceMax / 1000000).toFixed(1) }}tr
+          <button
+            type="button"
+            (click)="resetPriceFilter()"
+            class="ml-0.5 hover:text-orange-700"
+            aria-label="Xóa lọc giá"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </span>
+      }
+      @for (a of selectedAmenities; track a) {
+        <span class="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-[#FF9F43] border border-orange-200 rounded-lg text-xs font-medium">
+          {{ a }}
+          <button type="button" (click)="toggleAmenity(a)" class="ml-0.5 hover:text-orange-700" [attr.aria-label]="'Xóa ' + a">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </span>
+      }
+    </div>
+
+    @if (showFilterPanel) {
+      <div class="bg-white mb-8 border border-gray-200 shadow-lg rounded-xl overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span class="text-sm font-bold text-gray-800">Bộ lọc tìm kiếm</span>
+          </div>
+          <button type="button" (click)="showFilterPanel = false" class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            Đóng
+          </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-gray-800 mb-2.5">Thành phố</label>
+              <div class="flex flex-wrap gap-2">
+                @for (opt of cityOptions; track opt.value) {
+                  <button type="button" (click)="setCity(opt.value)" [class]="chipBtn(filters.city === opt.value)">{{ opt.label }}</button>
+                }
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-800 mb-2.5">Giá</label>
+              <div class="flex items-center gap-2 mb-3">
+                <input type="text" [value]="formatPrice(filters.priceMin)" readonly class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 text-center font-medium" />
+                <span class="text-gray-400 font-medium">—</span>
+                <input type="text" [value]="formatPrice(filters.priceMax)" readonly class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 text-center font-medium" />
+              </div>
+              <div class="relative h-2 mt-1">
+                <div class="absolute inset-0 bg-gray-200 rounded-full"></div>
+                <div class="absolute h-full bg-[#4CAF50] rounded-full" [style.left.%]="minPercent" [style.right.%]="100 - maxPercent"></div>
+                <input type="range" [min]="priceSliderMin" [max]="priceSliderMax" step="500000" [ngModel]="filters.priceMin" (ngModelChange)="handlePriceMinChange($event)" class="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#4CAF50] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer" />
+                <input type="range" [min]="priceSliderMin" [max]="priceSliderMax" step="500000" [ngModel]="filters.priceMax" (ngModelChange)="handlePriceMaxChange($event)" class="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#4CAF50] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-800 mb-2.5">Quận/Huyện</label>
+              <div class="flex flex-wrap gap-2">
+                @for (opt of districtOptions; track opt.value) {
+                  <button type="button" (click)="setDistrict(opt.value)" [class]="chipBtn(filters.district === opt.value)">{{ opt.label }}</button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-800 mb-2.5">Số người tối đa</label>
+            <div class="flex flex-wrap gap-2">
+              @for (opt of maxOccupantOptions; track opt.value) {
+                <button type="button" (click)="setMaxOccupants(opt.value)" [class]="chipBtn(filters.maxOccupants === opt.value)">{{ opt.label }}</button>
+              }
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-800 mb-2.5">Tiện nghi</label>
+            <div class="flex flex-wrap gap-2">
+              @for (amenity of amenityOptions; track amenity.value) {
+                <button
+                  type="button"
+                  (click)="toggleAmenity(amenity.value)"
+                  [class]="chipBtn(selectedAmenities.includes(amenity.value)) + ' inline-flex items-center gap-1.5'"
+                >
+                  <span>{{ amenity.icon }}</span>
+                  {{ amenity.value }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-4 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+          <button type="button" (click)="clearAllFilters()" class="px-8 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-white">Bỏ chọn</button>
+          <button type="button" (click)="showFilterPanel = false" class="px-8 py-2.5 rounded-lg text-sm font-medium text-white bg-[#FF9F43] hover:bg-[#FF8C2A]">Xem kết quả ({{ filteredRooms.length }})</button>
+        </div>
+      </div>
+    }
+
+    @if (loading) {
+      <p class="text-center text-gray-500 py-12">Đang tải danh sách phòng...</p>
+    } @else if (error) {
+      <p class="text-center text-red-500 py-12">{{ error }}</p>
+    } @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @if (filteredRooms.length > 0) {
+          @for (room of filteredRooms; track room.id) {
+            <app-room-card [room]="room" />
+          }
+        } @else if (!allRooms.length) {
+          <div class="col-span-full text-center py-12 text-gray-500">
+            <p>Chưa có tin phòng trọ nào trong hệ thống.</p>
+            <p class="text-sm mt-2">Chủ trọ có thể đăng tin mới từ Kênh Chủ trọ.</p>
+          </div>
+        } @else {
+          <div class="col-span-full text-center py-12 text-gray-500">
+            <p>Không tìm thấy phòng trọ nào phù hợp với bộ lọc.</p>
+            <button type="button" (click)="clearAllFilters()" class="mt-3 text-[#FF9F43] font-medium hover:underline">
+              Xóa bộ lọc
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>

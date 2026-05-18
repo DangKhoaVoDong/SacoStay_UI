@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../services/auth.service';
-import { normalizeAuthUser, clearTempRegisterProfile } from '../../utils/user-display';
+import { filter } from 'rxjs/operators';
+import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
+import { clearTempRegisterProfile } from '../../utils/user-display';
 
 @Component({
   selector: 'app-auth',
@@ -13,6 +15,9 @@ import { normalizeAuthUser, clearTempRegisterProfile } from '../../utils/user-di
   styleUrls: ['./auth.component.css']
 })
 export class AuthComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   currentMode: 'login' | 'register' = 'login';
 
   loginForm!: FormGroup;
@@ -33,9 +38,19 @@ export class AuthComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForms();
-    // Lấy mode từ URL query params
-    const urlParams = new URLSearchParams(window.location.search);
-    this.currentMode = (urlParams.get('mode') as 'login' | 'register') || 'login';
+    this.syncModeFromRoute();
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => this.syncModeFromRoute());
+  }
+
+  private syncModeFromRoute(): void {
+    const path = this.router.url.split('?')[0];
+    this.currentMode = path.includes('/register') ? 'register' : 'login';
+    this.cdr.detectChanges();
   }
 
   private initForms(): void {
@@ -61,18 +76,6 @@ export class AuthComponent implements OnInit {
     return password === confirmPassword ? null : { passwordMismatch: true };
   }
 
-  switchMode(mode: 'login' | 'register'): void {
-    this.currentMode = mode;
-    // Cập nhật URL mà không reload
-    const url = new URL(window.location.href);
-    if (mode === 'login') {
-      url.searchParams.delete('mode');
-    } else {
-      url.searchParams.set('mode', 'register');
-    }
-    window.history.replaceState({}, '', url.toString());
-  }
-
   selectRole(role: 'tenant' | 'landlord'): void {
     this.selectedRole = role;
   }
@@ -95,19 +98,19 @@ export class AuthComponent implements OnInit {
     };
 
     this.authService.login(loginData).subscribe({
-      next: (response: any) => {
+      next: () => {
         this.loginLoading = false;
-        const rawUser =
-          response.user ??
-          (response.token
-            ? { email: this.loginForm.value.email?.trim() }
-            : null);
-        if (rawUser) {
-          localStorage.setItem('user', JSON.stringify(normalizeAuthUser(rawUser)));
-        }
         clearTempRegisterProfile();
-        alert('Đăng nhập thành công');
-        this.router.navigate(['/']);
+        this.authService.refreshProfile().subscribe({
+          next: () => {
+            alert('Đăng nhập thành công');
+            this.router.navigate(['/']);
+          },
+          error: () => {
+            alert('Đăng nhập thành công nhưng không tải được hồ sơ từ máy chủ.');
+            this.router.navigate(['/']);
+          }
+        });
       },
       error: (err: any) => {
         this.loginLoading = false;
@@ -185,7 +188,7 @@ export class AuthComponent implements OnInit {
         localStorage.setItem('temp_lastName', registerData.lastName);
         localStorage.setItem('temp_phone', registerData.phoneNumber || '');
         localStorage.setItem('temp_name', `${registerData.firstName} ${registerData.lastName}`.trim());
-        localStorage.setItem('user_role', registerData.role);
+        sessionStorage.setItem(SESSION_PENDING_ROLE_KEY, registerData.role);
 
         // Navigate to OTP verification
         this.router.navigate(['/otp-verification']);

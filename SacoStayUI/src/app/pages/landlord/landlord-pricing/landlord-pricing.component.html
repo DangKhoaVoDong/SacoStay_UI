@@ -1,0 +1,108 @@
+<app-landlord-layout>
+  <div class="max-w-6xl mx-auto">
+    <div class="mb-8 text-center">
+      <h1 class="text-3xl font-bold text-[#1A1A2E] mb-2">Bảng giá đăng tin</h1>
+      <p class="text-[#6B7280]">Thanh toán VNPay mở tab mới — sau khi xong bấm «Quay lại» trên trang kết quả</p>
+      @if (loadingPosts) {
+        <p class="text-sm text-orange-600 mt-2">Đang tìm tin đăng…</p>
+      } @else if (!roomPostId) {
+        <p class="text-sm text-red-600 mt-2">Chưa có tin. <a routerLink="/create-listing" class="underline font-medium">Đăng tin</a> trước.</p>
+      }
+    </div>
+
+    @if (errorMessage) {
+      <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{{ errorMessage }}</div>
+    }
+
+    <div class="overflow-x-auto shadow-xl border-0 rounded-2xl bg-white">
+      <table class="w-full min-w-[900px] border-collapse">
+        <thead>
+          <tr>
+            <th class="p-4 border border-gray-200 bg-white w-44"></th>
+            <th class="p-4 border border-gray-200 bg-[#EF4444] text-white text-center font-black text-2xl uppercase w-1/4">ELITE</th>
+            <th class="p-4 border border-gray-200 bg-[#FB923C] text-white text-center font-black text-xl uppercase w-1/4">PRO</th>
+            <th class="p-4 border border-gray-200 bg-[#FCD34D] text-white text-center font-black text-lg uppercase w-1/4">LITE</th>
+            <th class="p-4 border border-gray-200 bg-[#FEF3C7] text-gray-800 text-center font-bold text-base w-1/4">BASIC</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm">
+          <tr>
+            <td class="p-4 border border-gray-200 font-bold text-gray-900 bg-gray-50">Giá 30 ngày</td>
+            <td class="p-4 border border-gray-200 text-center font-bold text-xl">1.475.000</td>
+            <td class="p-4 border border-gray-200 text-center font-bold text-xl">737.500</td>
+            <td class="p-4 border border-gray-200 text-center font-bold text-xl">295.000</td>
+            <td class="p-4 border border-gray-200 text-center font-bold text-xl">53.000</td>
+          </tr>
+          <tr>
+            <td class="p-4 border border-gray-200 font-bold text-gray-900 bg-gray-50">Nhãn dán nổi bật</td>
+            <td class="p-4 border border-gray-200 text-center font-bold text-red-600">MÀU ĐỎ, IN HOA</td>
+            <td class="p-4 border border-gray-200 text-center font-bold text-orange-500">MÀU CAM, IN HOA</td>
+            <td class="p-4 border border-gray-200 text-center font-bold text-blue-600">MÀU XANH, IN HOA</td>
+            <td class="p-4 border border-gray-200 text-center font-medium text-gray-500">Màu mặc định, viết thường</td>
+          </tr>
+          <tr>
+            <td class="p-4 border border-gray-200 font-bold text-gray-900 bg-gray-50">Kích thước tin</td>
+            <td class="p-4 border border-gray-200 text-center font-bold">Rất lớn</td>
+            <td class="p-4 border border-gray-200 text-center font-bold">Lớn</td>
+            <td class="p-4 border border-gray-200 text-center font-bold">Trung bình</td>
+            <td class="p-4 border border-gray-200 text-center font-bold">Nhỏ</td>
+          </tr>
+          <tr>
+            <td class="p-4 border border-gray-200 font-bold text-gray-900 bg-gray-50">Ưu tiên duyệt (30-60 phút)</td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-300 font-bold">✓</span></td>
+          </tr>
+          <tr>
+            <td class="p-4 border border-gray-200 font-bold text-gray-900 bg-gray-50">Duy trì thêm 10 ngày tin thường</td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-300 font-bold">✓</span></td>
+          </tr>
+          <tr>
+            <td class="p-4 border border-gray-200 font-bold text-gray-900 bg-gray-50">Bộ lọc</td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-300 font-bold">✓</span></td>
+          </tr>
+          <tr>
+            <td class="p-4 border border-gray-200 font-bold text-gray-900 bg-gray-50">Đẩy tin</td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-300 font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-300 font-bold">✓</span></td>
+          </tr>
+          <tr>
+            <td class="p-4 border border-gray-200 font-bold text-gray-900 bg-gray-50">Phân tích người xem</td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-green-500 items-center justify-center text-white font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-300 font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-300 font-bold">✓</span></td>
+            <td class="p-4 border border-gray-200 text-center"><span class="inline-flex w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-300 font-bold">✓</span></td>
+          </tr>
+          <tr>
+            <td class="p-4 border border-gray-200 bg-gray-50"></td>
+            <td class="p-4 border border-gray-200 text-center">
+              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FDA4AF] hover:bg-[#F43F5E] text-white font-medium transition-colors" (click)="handleSelectPackage('elite')" [disabled]="isPaying('elite') || !roomPostId">{{ isPaying('elite') ? 'Đang xử lý…' : 'Thanh toán VNPay' }}</button>
+            </td>
+            <td class="p-4 border border-gray-200 text-center">
+              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FB923C] hover:bg-[#F97316] text-white font-medium transition-colors" (click)="handleSelectPackage('pro')" [disabled]="isPaying('pro') || !roomPostId">{{ isPaying('pro') ? 'Đang xử lý…' : 'Thanh toán VNPay' }}</button>
+            </td>
+            <td class="p-4 border border-gray-200 text-center">
+              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FCD34D] hover:bg-[#F59E0B] text-gray-900 font-medium transition-colors" (click)="handleSelectPackage('lite')" [disabled]="isPaying('lite') || !roomPostId">{{ isPaying('lite') ? 'Đang xử lý…' : 'Thanh toán VNPay' }}</button>
+            </td>
+            <td class="p-4 border border-gray-200 text-center">
+              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FEF3C7] hover:bg-[#FDE68A] text-gray-900 font-medium transition-colors" (click)="handleSelectPackage('basic')" [disabled]="isPaying('basic') || !roomPostId">{{ isPaying('basic') ? 'Đang xử lý…' : 'Thanh toán VNPay' }}</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="mt-6 text-sm text-[#6B7280] italic font-medium">
+      (*) Các tin VIP sẽ được hiển thị ngay sau khi khách hàng đăng tin mà không cần chờ kiểm duyệt. Tin đăng sẽ được kiểm duyệt nội dung sau.
+    </p>
+  </div>
+</app-landlord-layout>

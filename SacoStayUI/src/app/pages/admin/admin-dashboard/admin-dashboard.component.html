@@ -1,0 +1,237 @@
+<div class="min-h-screen bg-gray-50 flex flex-col">
+  <app-navbar />
+
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">Dashboard Quản trị</h1>
+      <button
+        type="button"
+        (click)="loadData()"
+        [disabled]="loading"
+        class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+      >
+        {{ loading ? 'Đang tải…' : 'Làm mới' }}
+      </button>
+    </div>
+
+    @if (errorMessage) {
+      <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{{ errorMessage }}</div>
+    }
+
+    @if (loading) {
+      <p class="text-center text-gray-500 py-16">Đang tải dữ liệu từ API…</p>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mr-4 text-blue-600 text-xl">👥</div>
+          <div>
+            <p class="text-sm text-gray-500 font-medium">Tổng người dùng</p>
+            <h3 class="text-2xl font-bold text-gray-900">{{ stats.totalUsers }}</h3>
+          </div>
+        </div>
+        <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center">
+          <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mr-4 text-green-600 text-xl">🏠</div>
+          <div>
+            <p class="text-sm text-gray-500 font-medium">Tổng tin phòng</p>
+            <h3 class="text-2xl font-bold text-gray-900">{{ stats.totalRoomPosts }}</h3>
+          </div>
+        </div>
+        <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center">
+          <div class="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mr-4 text-orange-600 text-xl">⏳</div>
+          <div>
+            <p class="text-sm text-gray-500 font-medium">Chờ duyệt</p>
+            <h3 class="text-2xl font-bold text-gray-900">{{ stats.pendingRoomPosts }}</h3>
+          </div>
+        </div>
+        <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm flex items-center">
+          <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mr-4 text-emerald-600 text-xl">✓</div>
+          <div>
+            <p class="text-sm text-gray-500 font-medium">Đang hiển thị</p>
+            <h3 class="text-2xl font-bold text-gray-900">{{ stats.activeRoomPosts }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-full sm:w-auto">
+        <button
+          type="button"
+          (click)="setTab('overview')"
+          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+          [class.bg-white]="activeTab === 'overview'"
+          [class.text-gray-900]="activeTab === 'overview'"
+          [class.shadow-sm]="activeTab === 'overview'"
+          [class.text-gray-500]="activeTab !== 'overview'"
+        >
+          Tổng quan
+        </button>
+        <button
+          type="button"
+          (click)="setTab('pending')"
+          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+          [class.bg-white]="activeTab === 'pending'"
+          [class.text-gray-900]="activeTab === 'pending'"
+          [class.shadow-sm]="activeTab === 'pending'"
+          [class.text-gray-500]="activeTab !== 'pending'"
+        >
+          Tin chờ duyệt ({{ pendingPosts.length }})
+        </button>
+        <button
+          type="button"
+          (click)="setTab('users')"
+          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+          [class.bg-white]="activeTab === 'users'"
+          [class.text-gray-900]="activeTab === 'users'"
+          [class.shadow-sm]="activeTab === 'users'"
+          [class.text-gray-500]="activeTab !== 'users'"
+        >
+          Người dùng
+        </button>
+        <button
+          type="button"
+          (click)="setTab('user-reports')"
+          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+          [class.bg-white]="activeTab === 'user-reports'"
+          [class.text-gray-900]="activeTab === 'user-reports'"
+          [class.shadow-sm]="activeTab === 'user-reports'"
+          [class.text-gray-500]="activeTab !== 'user-reports'"
+        >
+          Báo cáo người dùng
+        </button>
+        <button
+          type="button"
+          (click)="setTab('room-reports')"
+          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+          [class.bg-white]="activeTab === 'room-reports'"
+          [class.text-gray-900]="activeTab === 'room-reports'"
+          [class.shadow-sm]="activeTab === 'room-reports'"
+          [class.text-gray-500]="activeTab !== 'room-reports'"
+        >
+          Báo cáo phòng trọ
+        </button>
+      </div>
+
+      @if (activeTab === 'overview' || activeTab === 'pending') {
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+          <div class="p-6 border-b border-gray-100">
+            <h2 class="font-bold text-gray-900">{{ activeTab === 'pending' ? 'Tin chờ duyệt' : 'Phòng trọ — duyệt tin' }}</h2>
+            <p class="text-sm text-gray-500 mt-1">Duyệt tin để chuyển sang trạng thái Active (hiển thị công khai).</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-gray-50 text-gray-500 font-medium">
+                <tr>
+                  <th class="px-6 py-3">Phòng trọ</th>
+                  <th class="px-6 py-3">Chủ trọ</th>
+                  <th class="px-6 py-3">Giá</th>
+                  <th class="px-6 py-3">Khu vực</th>
+                  <th class="px-6 py-3">Trạng thái</th>
+                  <th class="px-6 py-3">Ngày đăng</th>
+                  <th class="px-6 py-3 text-right">Hành động</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (post of (activeTab === 'pending' ? pendingPosts : roomPosts); track post.id) {
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                      <div class="flex items-center gap-3">
+                        <img [src]="roomThumb(post)" alt="" class="w-14 h-10 rounded object-cover border border-gray-200" />
+                        <span class="font-medium text-gray-900 max-w-[200px] truncate">{{ post.title }}</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 text-gray-600">
+                      <div>{{ post.landlordName || '—' }}</div>
+                      <div class="text-xs text-gray-400">{{ post.landlordEmail }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-[#FF6B6B] font-medium whitespace-nowrap">{{ formatPrice(post.price) }}</td>
+                    <td class="px-6 py-4 text-gray-500">{{ post.district }}, {{ post.city }}</td>
+                    <td class="px-6 py-4">
+                      <span class="px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="statusClass(post.status)">{{ statusLabel(post.status) }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-500 whitespace-nowrap">{{ formatDate(post.createdAt) }}</td>
+                    <td class="px-6 py-4 text-right">
+                      @if (isPendingStatus(post.status)) {
+                        <div class="flex justify-end gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            (click)="approvePost(post)"
+                            [disabled]="isActionLoading(post.id)"
+                            class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 disabled:opacity-50"
+                          >
+                            {{ isActionLoading(post.id) ? '…' : '✓ Duyệt' }}
+                          </button>
+                          <button
+                            type="button"
+                            (click)="rejectPost(post)"
+                            [disabled]="isActionLoading(post.id)"
+                            class="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-50"
+                          >
+                            ✕ Từ chối
+                          </button>
+                        </div>
+                      } @else {
+                        <span class="text-xs text-gray-400">—</span>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">Không có tin nào.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      @if (activeTab === 'overview' || activeTab === 'users') {
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="p-6 border-b border-gray-100">
+            <h2 class="font-bold text-gray-900">Quản lý người dùng</h2>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-gray-50 text-gray-500 font-medium">
+                <tr>
+                  <th class="px-6 py-3">Người dùng</th>
+                  <th class="px-6 py-3">Vai trò</th>
+                  <th class="px-6 py-3">SĐT</th>
+                  <th class="px-6 py-3">Ngày tham gia</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (user of users; track user.id) {
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                      <div class="flex items-center">
+                        <img [src]="userAvatar(user)" alt="" class="w-8 h-8 rounded-full mr-3 object-cover" />
+                        <div>
+                          <div class="font-medium text-gray-900">{{ user.displayName || user.userName }}</div>
+                          <div class="text-gray-500 text-xs">{{ user.email }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 capitalize text-gray-700">{{ roleLabel(user.roles) }}</td>
+                    <td class="px-6 py-4 text-gray-500">{{ user.phoneNumber || '—' }}</td>
+                    <td class="px-6 py-4 text-gray-500">{{ formatDate(user.createdAt) }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="px-6 py-12 text-center text-gray-500">Chưa có người dùng.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      @if (activeTab === 'user-reports' || activeTab === 'room-reports') {
+        <div class="bg-white rounded-xl border border-dashed border-gray-200 p-12 text-center">
+          <p class="text-gray-600 font-medium mb-2">Chưa có API báo cáo trên backend</p>
+          <p class="text-sm text-gray-500">Tab này sẽ hiển thị báo cáo thật khi team BE triển khai endpoint Report.</p>
+        </div>
+      }
+    }
+  </main>
+</div>

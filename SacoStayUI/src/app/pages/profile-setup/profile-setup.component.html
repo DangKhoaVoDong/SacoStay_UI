@@ -3,7 +3,7 @@
   <div class="flex-1 container mx-auto px-4 py-12 max-w-2xl">
     <div class="mb-8 text-center">
       <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ pageTitle }}</h1>
-      <p class="text-gray-600">Cập nhật thông tin theo hồ sơ trên máy chủ (định dạng UserProfileDTO).</p>
+      <p class="text-gray-600">Cập nhật thông tin cá nhân của bạn.</p>
     </div>
 
     <div *ngIf="verificationStatus === 'not_started'" class="p-4 mb-6 bg-orange-50 border border-orange-200 rounded-lg">
@@ -48,19 +48,68 @@
       </div>
     </div>
 
-    <div class="p-8 bg-white rounded-lg shadow-sm border border-gray-200">
+    <div *ngIf="profileLoading" class="p-8 bg-white rounded-lg shadow-sm border border-gray-200 text-center text-gray-600">
+      Đang tải hồ sơ từ máy chủ…
+    </div>
+
+    <div *ngIf="!profileLoading && profileForm" class="p-8 bg-white rounded-lg shadow-sm border border-gray-200">
       <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="space-y-6">
+        <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100">
+          <div class="relative shrink-0">
+            <img
+              [src]="avatarDisplayUrl || avatarFallbackUrl"
+              alt="Ảnh đại diện"
+              class="w-24 h-24 rounded-full object-cover border-4 border-orange-100 shadow-sm"
+            />
+            <span
+              *ngIf="avatarUploading || avatarDeleting"
+              class="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-white text-xs font-medium"
+            >
+              {{ avatarUploading ? 'Đang tải…' : 'Đang xóa…' }}
+            </span>
+          </div>
+          <div class="flex flex-col items-center sm:items-start gap-2">
+            <p class="text-sm font-medium text-gray-900">Ảnh đại diện</p>
+            <p class="text-xs text-gray-500 text-center sm:text-left">JPG, PNG hoặc WebP — tối đa 5MB</p>
+            <div class="flex flex-wrap gap-2 justify-center sm:justify-start">
+              <label
+                class="cursor-pointer px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-md transition-colors"
+                [class.opacity-50]="avatarUploading || avatarDeleting"
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  [disabled]="avatarUploading || avatarDeleting"
+                  (change)="onAvatarSelected($event)"
+                  (click)="$event.stopPropagation()"
+                />
+                {{ hasServerAvatar || avatarDisplayUrl ? 'Đổi ảnh' : 'Tải ảnh lên' }}
+              </label>
+              <button
+                type="button"
+                *ngIf="hasServerAvatar"
+                (click)="onAvatarDelete()"
+                [disabled]="avatarUploading || avatarDeleting"
+                class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                Xóa ảnh
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1.5">Tên (firstName)</label>
-            <input id="firstName" type="text" formControlName="firstName" placeholder="Văn A"
+            <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1.5">Họ</label>
+            <input id="firstName" type="text" formControlName="firstName" placeholder="Nguyễn"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
               [class.border-red-300]="firstName?.invalid && firstName?.dirty" />
             <div *ngIf="firstName?.invalid && firstName?.dirty" class="mt-1 text-sm text-red-600">Bắt buộc</div>
           </div>
           <div>
-            <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1.5">Họ (lastName)</label>
-            <input id="lastName" type="text" formControlName="lastName" placeholder="Nguyễn"
+            <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1.5">Tên</label>
+            <input id="lastName" type="text" formControlName="lastName" placeholder="Văn A"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
               [class.border-red-300]="lastName?.invalid && lastName?.dirty" />
             <div *ngIf="lastName?.invalid && lastName?.dirty" class="mt-1 text-sm text-red-600">Bắt buộc</div>
@@ -69,32 +118,31 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="dateOfBirth" class="block text-sm font-medium text-gray-700 mb-1.5">Ngày sinh (dateOfBirth)</label>
+            <label for="dateOfBirth" class="block text-sm font-medium text-gray-700 mb-1.5">Ngày sinh</label>
             <input id="dateOfBirth" type="date" formControlName="dateOfBirth"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
               [class.border-red-300]="dateOfBirth?.invalid && dateOfBirth?.dirty" />
             <div *ngIf="dateOfBirth?.invalid && dateOfBirth?.dirty" class="mt-1 text-sm text-red-600">Chọn ngày sinh</div>
           </div>
           <div>
-            <label for="gender" class="block text-sm font-medium text-gray-700 mb-1.5">Giới tính (gender)</label>
+            <label for="gender" class="block text-sm font-medium text-gray-700 mb-1.5">Giới tính</label>
             <select id="gender" formControlName="gender"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border">
               <option *ngFor="let option of genderOptions" [value]="option.value">{{ option.label }}</option>
             </select>
-            <p class="mt-1 text-xs text-gray-500">Gửi API: Nam = true, Nữ = false, Khác = null</p>
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="job" class="block text-sm font-medium text-gray-700 mb-1.5">Công việc (job)</label>
+            <label for="job" class="block text-sm font-medium text-gray-700 mb-1.5">Công việc</label>
             <select id="job" formControlName="job"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border">
               <option *ngFor="let option of jobOptions" [value]="option.value">{{ option.label }}</option>
             </select>
           </div>
           <div>
-            <label for="phoneNumber" class="block text-sm font-medium text-gray-700 mb-1.5">Số điện thoại (phoneNumber)</label>
+            <label for="phoneNumber" class="block text-sm font-medium text-gray-700 mb-1.5">Số điện thoại</label>
             <input id="phoneNumber" type="tel" formControlName="phoneNumber" placeholder="0912345678"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
               [class.border-red-300]="phoneNumber?.invalid && phoneNumber?.dirty" />
@@ -103,13 +151,13 @@
         </div>
 
         <div>
-          <label for="livingArea" class="block text-sm font-medium text-gray-700 mb-1.5">Khu vực sống (livingArea)</label>
+          <label for="livingArea" class="block text-sm font-medium text-gray-700 mb-1.5">Khu vực sống</label>
           <input id="livingArea" type="text" formControlName="livingArea" placeholder="VD: Cầu Giấy, Hà Nội"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border" />
         </div>
 
         <div>
-          <label for="bio" class="block text-sm font-medium text-gray-700 mb-1.5">Giới thiệu (bio)</label>
+          <label for="bio" class="block text-sm font-medium text-gray-700 mb-1.5">Giới thiệu</label>
           <textarea id="bio" formControlName="bio"
             placeholder="Giới thiệu ngắn..."
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 min-h-[100px] resize-none border"
@@ -122,7 +170,7 @@
             class="px-4 py-2.5 rounded-md border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50">
             Quay lại
           </button>
-          <button type="submit" [disabled]="profileForm.invalid || submitLoading"
+          <button type="submit" [disabled]="!profileForm || profileForm.invalid || submitLoading"
             class="flex-1 min-w-[200px] py-3 px-4 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors">
             <span *ngIf="!submitLoading">Lưu lên server</span>
             <span *ngIf="submitLoading">Đang gửi…</span>

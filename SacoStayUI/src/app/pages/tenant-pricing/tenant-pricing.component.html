@@ -1,0 +1,129 @@
+<div class="min-h-screen flex flex-col bg-gradient-to-b from-[#FFF8F0] to-white">
+  <app-navbar />
+
+  <section class="py-16 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="inline-flex items-center gap-2 bg-orange-100 text-[#FF9F43] px-4 py-2 rounded-full text-sm font-bold mb-6">
+        <span aria-hidden="true">👑</span>
+        NÂNG CẤP PREMIUM
+      </div>
+      <h1 class="text-4xl md:text-5xl font-black text-[#1A1A2E] mb-4">Tìm bạn ở ghép nhanh hơn</h1>
+      <p class="text-xl text-gray-600 mb-8">Nâng cấp Premium để tăng cơ hội tìm được người phù hợp nhất</p>
+    </div>
+  </section>
+
+  <section class="pb-20 px-4">
+    <div class="max-w-5xl mx-auto">
+      @if (payError) {
+        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 text-center">{{ payError }}</div>
+      }
+      <div class="overflow-hidden border-2 border-orange-100 shadow-2xl rounded-2xl bg-white">
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="border-b-2 border-gray-200">
+                <th class="p-6 text-left bg-white">
+                  <span class="text-lg font-bold text-gray-900">SINH VIÊN/NGƯỜI ĐI LÀM</span>
+                </th>
+                <th class="p-6 text-center bg-gray-50 border-l border-r border-gray-200">
+                  <div class="flex flex-col items-center gap-2">
+                    <span class="text-2xl font-black text-gray-900">FREEMIUM</span>
+                    <span class="text-sm text-gray-500">Miễn phí mãi mãi</span>
+                  </div>
+                </th>
+                <th class="p-6 text-center bg-gradient-to-br from-orange-50 to-orange-100">
+                  <div class="flex flex-col items-center gap-2">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xl" aria-hidden="true">👑</span>
+                      <span class="text-2xl font-black text-[#FF9F43]">PREMIUM</span>
+                    </div>
+                    <span class="text-sm text-gray-700 font-semibold">Chỉ 80k/tháng</span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (feature of features; track feature.name; let idx = $index) {
+                <tr class="border-b border-gray-100" [class.bg-white]="idx % 2 === 0" [class.bg-gray-50/50]="idx % 2 !== 0">
+                  <td class="p-4 font-semibold text-gray-900">{{ feature.name }}</td>
+                  <td class="p-4 text-center border-l border-r border-gray-100">
+                    @if (isBool(feature.freemium)) {
+                      @if (feature.freemium) {
+                        <span class="inline-flex w-8 h-8 rounded-full bg-green-100 items-center justify-center text-green-600 font-bold">✓</span>
+                      } @else {
+                        <span class="inline-flex w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-400 font-bold">✕</span>
+                      }
+                    } @else {
+                      <span class="text-sm font-medium text-gray-700">{{ feature.freemium }}</span>
+                    }
+                  </td>
+                  <td class="p-4 text-center bg-orange-50/30">
+                    @if (isBool(feature.premium)) {
+                      @if (feature.premium) {
+                        <span class="inline-flex w-8 h-8 rounded-full bg-green-100 items-center justify-center text-green-600 font-bold">✓</span>
+                      } @else {
+                        <span class="inline-flex w-8 h-8 rounded-full bg-gray-100 items-center justify-center text-gray-400 font-bold">✕</span>
+                      }
+                    } @else {
+                      <span class="text-sm font-bold text-[#FF9F43]">{{ feature.premium }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+              <tr class="bg-white">
+                <td class="p-6 font-black text-gray-900 text-lg">Giá</td>
+                <td class="p-6 text-center border-l border-r border-gray-100">
+                  <span class="text-2xl font-black text-gray-900">Free</span>
+                </td>
+                <td class="p-6 text-center bg-orange-50/30">
+                  <span class="text-2xl font-black text-[#FF9F43]">80k/tháng</span>
+                </td>
+              </tr>
+              <tr class="bg-gray-50">
+                <td class="p-6"></td>
+                <td class="p-6 text-center border-l border-r border-gray-100">
+                  @if (!isPremium) {
+                    <a
+                      routerLink="/"
+                      class="block w-full py-2.5 px-4 border-2 border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 text-center transition-colors"
+                    >
+                      Tiếp tục Free
+                    </a>
+                  }
+                </td>
+                <td class="p-6 text-center bg-orange-50/30">
+                  @if (isPremium) {
+                    <div class="flex items-center justify-center gap-2 text-green-600 font-bold">
+                      <span>✓</span> Đang sử dụng
+                    </div>
+                  } @else {
+                    <button
+                      type="button"
+                      (click)="handleUpgrade()"
+                      [disabled]="paying"
+                      class="w-full py-3 px-4 rounded-lg text-white font-bold bg-gradient-to-r from-[#FF9F43] to-[#FF6B6B] hover:from-[#FF8C2A] hover:to-[#FF5252] shadow-lg transition-colors disabled:opacity-50"
+                    >
+                      {{ paying ? 'Đang mở VNPay…' : '⚡ Thanh toán VNPay' }}
+                    </button>
+                  }
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        @for (b of benefits; track b.title) {
+          <div class="p-6 text-center bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-shadow">
+            <div class="text-4xl mb-3">{{ b.icon }}</div>
+            <h3 class="font-bold text-gray-900 mb-2">{{ b.title }}</h3>
+            <p class="text-sm text-gray-600">{{ b.desc }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <app-footer />
+</div>

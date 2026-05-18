@@ -1,0 +1,31 @@
+<div class="min-h-screen bg-gradient-to-b from-[#FFF8F0] to-white flex flex-col">
+  <app-navbar />
+
+  <main class="flex-1 flex items-center justify-center px-4 py-16">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-orange-100 p-8 text-center">
+      <div
+        class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl"
+        [class.bg-green-100]="status === 'success'"
+        [class.bg-red-100]="status === 'failed'"
+        [class.bg-gray-100]="status === 'unknown'"
+      >
+        @if (status === 'success') { ✓ } @else if (status === 'failed') { ✕ } @else { ? }
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ title }}</h1>
+      <p class="text-gray-600 text-sm mb-2">{{ message }}</p>
+      @if (orderId) {
+        <p class="text-xs text-gray-400 mb-6">Mã đơn: {{ orderId }}</p>
+      } @else {
+        <div class="mb-6"></div>
+      }
+      <button
+        type="button"
+        (click)="goBack()"
+        class="w-full py-3 px-4 rounded-lg bg-[#FF9F43] hover:bg-[#FF8C2A] text-white font-semibold transition-colors"
+      >
+        Quay lại trang trước
+      </button>
+      <p class="text-xs text-gray-400 mt-4">Cửa sổ thanh toán VNPay có thể đóng sau khi bạn quay lại.</p>
+    </div>
+  </main>
+</div>

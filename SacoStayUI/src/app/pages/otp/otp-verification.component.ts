@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../services/auth.service';
-import { normalizeAuthUser, applyTempRegisterProfileToUser, clearTempRegisterProfile } from '../../utils/user-display';
+import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
+import { clearTempRegisterProfile } from '../../utils/user-display';
 
 @Component({
   selector: 'app-otp-verification',
@@ -54,7 +54,7 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
     const tempPassword = localStorage.getItem('temp_password');
-    const userRole = localStorage.getItem('user_role');
+    const userRole = sessionStorage.getItem(SESSION_PENDING_ROLE_KEY) || 'tenant';
 
     console.log('Verifying OTP:', this.otpValue);
     console.log('Email:', this.email);
@@ -64,24 +64,19 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
       next: () => {
         if (tempPassword) {
           this.authService.login({ emailPhoneorUsername: this.email, password: tempPassword }).subscribe({
-            next: (response) => {
-              this.isLoading = false;
-              const raw =
-                response.user ??
-                (response.token ? { email: this.email } : null);
-              const merged = applyTempRegisterProfileToUser(
-                raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null
-              );
-              if (Object.keys(merged).length > 0) {
-                localStorage.setItem('user', JSON.stringify(normalizeAuthUser(merged)));
-              }
-              clearTempRegisterProfile();
-
-              if (userRole === 'landlord') {
-                this.router.navigate(['/identity-verification']);
-              } else {
-                this.router.navigate(['/']);
-              }
+            next: () => {
+              this.authService.finalizeNewUserSession().subscribe({
+                next: () => {
+                  this.isLoading = false;
+                  this.router.navigate(['/']);
+                },
+                error: (e) => {
+                  this.isLoading = false;
+                  console.error('Finalize session after OTP failed', e);
+                  alert('Đã đăng nhập nhưng đồng bộ hồ sơ thất bại. Bạn có thể cập nhật hồ sơ sau trong phần cài đặt.');
+                  this.router.navigate(['/']);
+                }
+              });
             },
             error: (err) => {
               this.isLoading = false;
