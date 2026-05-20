@@ -72,10 +72,8 @@ export class LandlordPricingComponent implements OnInit {
 
     this.payingPackage = tierId;
     const packageName = PACKAGE_MAP[tierId];
-    const returnPath = '/landlord-profile';
-
     this.payment
-      .buyLandlordPackage(this.roomPostId, packageName, returnPath)
+      .buyLandlordPackage(this.roomPostId, packageName)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (url) => {
@@ -85,7 +83,7 @@ export class LandlordPricingComponent implements OnInit {
             this.cdr.detectChanges();
             return;
           }
-          this.payment.openPaymentInNewTab(url, returnPath, 'landlord');
+          this.payment.goToVnPay(url);
           this.cdr.detectChanges();
         },
         error: (err) => {

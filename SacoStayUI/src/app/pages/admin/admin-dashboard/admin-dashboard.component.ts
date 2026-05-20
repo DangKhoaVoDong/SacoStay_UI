@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { NavbarComponent } from '../../../components/layout/navbar.component';
-import { AdminService } from '../../../services/admin.service';
-import { getApiErrorMessage } from '../../../services/auth.service';
+import { AdminService, adminApiErrorMessage } from '../../../services/admin.service';
 import type { AdminDashboardStats, AdminRoomPostRow, AdminUserRow } from '../../../models/admin.models';
 import { resolveMediaUrl } from '../../../utils/media-url';
 
@@ -69,11 +68,7 @@ export class AdminDashboardComponent implements OnInit {
         },
         error: (err) => {
           this.loading = false;
-          const msg = getApiErrorMessage(err) || '';
-          this.errorMessage =
-            msg.includes('404')
-              ? 'API Admin chưa có trên server (404). Hãy rebuild & restart SacoStayAPI (có file AdminController.cs), rồi đăng nhập lại bằng tài khoản admin.'
-              : msg || 'Không tải được dữ liệu admin. Đăng nhập bằng tài khoản role admin.';
+          this.errorMessage = adminApiErrorMessage(err, 'Không tải được dữ liệu admin.');
           this.cdr.detectChanges();
         }
       });
@@ -88,15 +83,13 @@ export class AdminDashboardComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.actionPostId = null;
-          post.status = res.status || 'Active';
-          this.refreshStats();
-          this.cdr.detectChanges();
           alert(res.message || 'Đã duyệt tin.');
+          this.loadData();
         },
         error: (err) => {
           this.actionPostId = null;
           this.cdr.detectChanges();
-          alert(getApiErrorMessage(err) || 'Duyệt tin thất bại.');
+          alert(adminApiErrorMessage(err, 'Duyệt tin thất bại.'));
         }
       });
   }
@@ -110,15 +103,13 @@ export class AdminDashboardComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.actionPostId = null;
-          post.status = res.status || 'Hidden';
-          this.refreshStats();
-          this.cdr.detectChanges();
           alert(res.message || 'Đã từ chối tin.');
+          this.loadData();
         },
         error: (err) => {
           this.actionPostId = null;
           this.cdr.detectChanges();
-          alert(getApiErrorMessage(err) || 'Từ chối tin thất bại.');
+          alert(adminApiErrorMessage(err, 'Từ chối tin thất bại.'));
         }
       });
   }
@@ -174,12 +165,4 @@ export class AdminDashboardComponent implements OnInit {
     return this.actionPostId === id;
   }
 
-  private refreshStats(): void {
-    this.stats = {
-      ...this.stats,
-      pendingRoomPosts: this.pendingPosts.length,
-      activeRoomPosts: this.roomPosts.filter((p) => p.status?.toLowerCase() === 'active').length,
-      hiddenRoomPosts: this.roomPosts.filter((p) => p.status?.toLowerCase() === 'hidden').length
-    };
-  }
 }

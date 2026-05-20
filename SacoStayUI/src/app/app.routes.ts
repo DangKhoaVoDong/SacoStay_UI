@@ -41,6 +41,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/landlord/my-listings/my-listings.component').then(m => m.MyListingsComponent),
     canActivate: [authGuard, landlordGuard]
   },
+  /** BE gốc redirect sau VNPay: /owner/my-posts?payment=completed */
+  {
+    path: 'owner/my-posts',
+    loadComponent: () => import('./pages/landlord/my-listings/my-listings.component').then(m => m.MyListingsComponent),
+    canActivate: [authGuard, landlordGuard]
+  },
   {
     path: 'create-listing',
     loadComponent: () => import('./pages/landlord/create-listing/create-listing.component').then(m => m.CreateListingComponent),
@@ -63,9 +69,9 @@ export const routes: Routes = [
   },
   {
     path: 'landlord-chat',
-    loadComponent: () => import('./pages/landlord/landlord-placeholder/landlord-placeholder.component').then(m => m.LandlordPlaceholderComponent),
+    loadComponent: () => import('./pages/chat').then(m => m.ChatComponent),
     canActivate: [authGuard, landlordGuard],
-    data: { title: 'Tin nhắn', description: 'Kênh tin nhắn chủ trọ sẽ được cập nhật sớm.' }
+    data: { shell: 'landlord' }
   },
   {
     path: 'listing-viewers',

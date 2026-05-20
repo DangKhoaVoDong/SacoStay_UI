@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -21,7 +22,8 @@ import {
   applyTempRegisterProfileToUser,
   userIdFromUser
 } from '../utils/user-display';
-import { clearLegacyLifestyleKeys, clearLifestyleDataForUser } from '../utils/lifestyle-storage';
+import { clearLegacyLifestyleKeys, clearSwipeDataForUser } from '../utils/lifestyle-storage';
+import { ChatPeerProfileService } from './chat-peer-profile.service';
 
 const TOKEN_KEY = 'saco_stay_token';
 
@@ -68,7 +70,9 @@ function formatApiErrorBody(o: ApiErrorBody): string {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly apiUrl = environment.apiUrl;
+  private readonly chatPeerProfiles = inject(ChatPeerProfileService);
 
   private readonly currentUser = new BehaviorSubject<UserProfile | null>(null);
   readonly currentUser$ = this.currentUser.asObservable();
@@ -94,6 +98,7 @@ export class AuthService {
         if (res?.user) {
           const normalized = normalizeAuthUser(res.user) as unknown as UserProfile;
           this.currentUser.next(normalized);
+          this.chatPeerProfiles.cacheFromAuthUser(normalized);
         }
       })
     );
@@ -105,10 +110,11 @@ export class AuthService {
     });
   }
 
-  logout(): void {
+  /** Xóa token và state — không reload trang (dùng từ interceptor khi 401). */
+  clearSession(): void {
     const userId = userIdFromUser(this.getCurrentUser());
     if (userId) {
-      clearLifestyleDataForUser(userId);
+      clearSwipeDataForUser(userId);
     }
     clearLegacyLifestyleKeys();
     localStorage.removeItem(TOKEN_KEY);
@@ -117,7 +123,12 @@ export class AuthService {
     localStorage.removeItem('identity_verification_status');
     localStorage.removeItem('landlord_upgrade_status');
     this.currentUser.next(null);
-    window.location.reload();
+  }
+
+  /** Đăng xuất chủ động — không reload toàn trang (tránh vòng lặp với interceptor). */
+  logout(): void {
+    this.clearSession();
+    void this.router.navigateByUrl('/');
   }
 
   register(body: RegisterRequest): Observable<RegisterResponse> {
@@ -137,7 +148,10 @@ export class AuthService {
     }
     return this.getProfile().pipe(
       map((p) => normalizeAuthUser(p as unknown as Record<string, unknown>) as unknown as UserProfile),
-      tap((normalized) => this.currentUser.next(normalized)),
+      tap((normalized) => {
+        this.currentUser.next(normalized);
+        this.chatPeerProfiles.cacheFromAuthUser(normalized);
+      }),
       catchError(() => of(this.getCurrentUser()))
     );
   }

@@ -2,6 +2,8 @@ import type { VipTier } from '../utils/vip-tier-styles';
 
 export interface RoomPostSummary {
   id: string;
+  /** Id chủ trọ (RoomPost.UserId từ API). */
+  landlordUserId?: string;
   title: string;
   price?: number;
   address?: string;

@@ -6,6 +6,7 @@ import { NavbarComponent } from '../../../components/layout/navbar.component';
 import { LandlordLayoutComponent } from '../../../components/layout/landlord/landlord-layout.component';
 import { ReportModalComponent } from '../../../components/shared/report-modal/report-modal.component';
 import { AuthService } from '../../../services/auth.service';
+import { ChatPeerProfileService } from '../../../services/chat-peer-profile.service';
 import { RoomPostService } from '../../../services/room-post.service';
 import { isLandlordUser } from '../../../utils/user-display';
 import { getVipTierTitleClass } from '../../../utils/vip-tier-styles';
@@ -28,8 +29,12 @@ export class RoomDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly roomPosts = inject(RoomPostService);
   private readonly auth = inject(AuthService);
+  private readonly peerProfiles = inject(ChatPeerProfileService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  landlordChatName = '';
+  landlordChatAvatar = '';
 
   ngOnInit(): void {
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((u) => {
@@ -52,9 +57,26 @@ export class RoomDetailComponent implements OnInit {
         this.notFound = !room;
         this.loading = false;
         this.activeGalleryIndex = 0;
-        if (room) {
+        if (room && this.auth.isLoggedIn) {
           this.roomPosts.recordView(room.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+          this.loadLandlordChatMeta(room.landlordUserId);
         }
+        this.cdr.detectChanges();
+      });
+  }
+
+  private loadLandlordChatMeta(landlordUserId?: string): void {
+    if (!landlordUserId) {
+      this.landlordChatName = '';
+      this.landlordChatAvatar = '';
+      return;
+    }
+    this.peerProfiles
+      .fetchPeer(landlordUserId, { role: 'landlord' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p) => {
+        this.landlordChatName = p.displayName;
+        this.landlordChatAvatar = p.avatarUrl ?? '';
         this.cdr.detectChanges();
       });
   }
@@ -74,6 +96,18 @@ export class RoomDetailComponent implements OnInit {
   selectGalleryImage(index: number): void {
     if (index < 0 || index >= this.galleryImages.length) return;
     this.activeGalleryIndex = index;
+  }
+
+  get canMessageLandlord(): boolean {
+    return !!this.room?.landlordUserId && !this.isLandlord;
+  }
+
+  get chatQueryParams(): Record<string, string> {
+    const id = this.room?.landlordUserId || '';
+    const params: Record<string, string> = { with: id, role: 'landlord' };
+    if (this.landlordChatName) params['name'] = this.landlordChatName;
+    if (this.landlordChatAvatar) params['avatar'] = this.landlordChatAvatar;
+    return params;
   }
 
   get locationLine(): string {

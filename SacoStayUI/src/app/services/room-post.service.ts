@@ -213,13 +213,27 @@ export class RoomPostService {
   private summaryAsDetail(summary: RoomPostSummary): RoomPostDetail {
     return {
       ...summary,
+      landlordUserId: summary.landlordUserId,
       images: summary.imageUrl ? [summary.imageUrl] : [],
       description: undefined
     };
   }
 
   private normalizePosts(raw: unknown): RoomPostSummary[] {
-    return unwrapList(raw).map((item, index) => this.normalizeSummary(item, index)).filter((r): r is RoomPostSummary => !!r);
+    return unwrapList(raw)
+      .map((item, index) => this.normalizeSummary(this.flattenRoomItem(item), index))
+      .filter((r): r is RoomPostSummary => !!r);
+  }
+
+  /** search-nearby có thể bọc trong room/Room; gộp để lấy UserId chủ trọ. */
+  private flattenRoomItem(item: unknown): Record<string, unknown> {
+    if (!item || typeof item !== 'object') return {};
+    const o = item as Record<string, unknown>;
+    const nested = o['room'] ?? o['Room'];
+    if (nested && typeof nested === 'object') {
+      return { ...(nested as Record<string, unknown>), ...o };
+    }
+    return o;
   }
 
   private normalizeDetail(raw: unknown): RoomPostDetail | null {
@@ -262,6 +276,9 @@ export class RoomPostService {
     if (!currentPeople && Array.isArray(occupants)) {
       currentPeople = occupants.length;
     }
+    const landlordUserId = str(
+      o['landlordUserId'] ?? o['LandlordUserId'] ?? o['userId'] ?? o['UserId'] ?? o['ownerId'] ?? o['OwnerId']
+    );
     const city = str(o['city'] ?? o['City']);
     const district = str(o['district'] ?? o['District']);
     const addressStr = str(
@@ -270,6 +287,7 @@ export class RoomPostService {
     const fullAddress = [addressStr, district, city].filter(Boolean).join(', ');
     return {
       id: id || `post-${index}`,
+      landlordUserId: landlordUserId || undefined,
       title,
       price: Number.isFinite(priceNum) && priceNum > 0 ? priceNum : undefined,
       address: fullAddress || addressStr || undefined,

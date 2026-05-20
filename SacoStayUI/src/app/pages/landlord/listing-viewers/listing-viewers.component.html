@@ -30,7 +30,8 @@
             </p>
             <div class="mt-6">
               <a
-                routerLink="/landlord-chat"
+                [routerLink]="['/landlord-chat']"
+                [queryParams]="chatQueryForViewer(selectedViewer)"
                 class="inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A] shadow-lg shadow-orange-200"
               >
                 Nhắn tin
@@ -180,7 +181,8 @@
                               Hồ sơ
                             </button>
                             <a
-                              routerLink="/landlord-chat"
+                              [routerLink]="['/landlord-chat']"
+                              [queryParams]="chatQueryForViewer(viewer)"
                               class="px-3 py-1.5 text-sm rounded-lg bg-[#FF9F43] text-white hover:bg-[#FF8C2A]"
                               (click)="$event.stopPropagation()"
                             >

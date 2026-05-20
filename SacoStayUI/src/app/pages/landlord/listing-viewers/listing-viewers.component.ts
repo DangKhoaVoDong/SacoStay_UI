@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { ChatPeerProfileService } from '../../../services/chat-peer-profile.service';
+import { ChatService } from '../../../services/chat.service';
 import { LandlordLayoutComponent } from '../../../components/layout/landlord/landlord-layout.component';
 import { AuthService } from '../../../services/auth.service';
 import { LifestyleService } from '../../../services/lifestyle.service';
@@ -44,6 +46,8 @@ export class ListingViewersComponent implements OnInit {
 
   private readonly roomPosts = inject(RoomPostService);
   private readonly auth = inject(AuthService);
+  private readonly peerProfiles = inject(ChatPeerProfileService);
+  private readonly chatService = inject(ChatService);
   private readonly lifestyle = inject(LifestyleService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -98,6 +102,7 @@ export class ListingViewersComponent implements OnInit {
           this.isLimitedView = merged.isLimited;
           this.apiPackage = merged.package;
           this.loadingViewers = false;
+          this.hydrateViewerProfiles();
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -125,6 +130,32 @@ export class ListingViewersComponent implements OnInit {
           this.matchLoading = false;
           this.cdr.detectChanges();
         }
+      });
+  }
+
+  chatQueryForViewer(viewer: ViewerDisplayRow): Record<string, string> {
+    const q: Record<string, string> = {
+      with: viewer.tenantId,
+      name: viewer.displayName,
+      role: 'tenants'
+    };
+    if (viewer.avatarUrl) q['avatar'] = viewer.avatarUrl;
+    return q;
+  }
+
+  private hydrateViewerProfiles(): void {
+    const ids = [...new Set(this.viewers.map((v) => v.tenantId).filter(Boolean))];
+    if (!ids.length) return;
+    forkJoin(ids.map((id) => this.peerProfiles.fetchPeer(id, { role: 'tenants' })))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((peers) => {
+        for (const p of peers) {
+          const row = this.viewers.find((v) => v.tenantId === p.id);
+          if (!row) continue;
+          row.displayName = p.displayName;
+          row.avatarUrl = p.avatarUrl || this.chatService.avatarFallback(p.displayName);
+        }
+        this.cdr.detectChanges();
       });
   }
 
@@ -169,12 +200,11 @@ export class ListingViewersComponent implements OnInit {
   }
 
   private toDisplayRow(v: RoomPostViewerRow): ViewerDisplayRow {
-    const shortId = v.tenantId.replace(/-/g, '').slice(0, 8).toUpperCase();
-    const displayName = `Khách #${shortId}`;
+    const label = this.peerProfiles.shortLabel(v.tenantId);
     return {
       ...v,
-      displayName,
-      avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=FF9F43&color=fff&size=128`,
+      displayName: label,
+      avatarUrl: this.chatService.avatarFallback(label),
       viewTimeLabel: formatRelativeTimeVi(v.viewedAt)
     };
   }

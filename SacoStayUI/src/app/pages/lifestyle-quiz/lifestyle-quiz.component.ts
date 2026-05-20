@@ -115,10 +115,8 @@ export class LifestyleQuizComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          const userId = userIdFromUser(this.auth.getCurrentUser());
-          if (userId) {
-            setLifestyleQuizCompleted(userId);
-          }
+          const uid = userIdFromUser(this.auth.getCurrentUser());
+          if (uid) setLifestyleQuizCompleted(uid);
           this.auth.refreshProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.submitting = false;
             this.router.navigate(['/discovery']);

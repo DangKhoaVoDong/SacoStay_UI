@@ -28,6 +28,7 @@ export interface DiscoveryCard extends SwipeDeckCard {
 })
 export class DiscoveryComponent implements OnInit {
   needsQuiz = false;
+  deckEmpty = false;
   loading = true;
   deck: DiscoveryCard[] = [];
   currentIndex = 0;
@@ -109,9 +110,8 @@ export class DiscoveryComponent implements OnInit {
           this.deck = cards.map((c) => this.toDiscoveryCard(c));
           this.currentIndex = 0;
           this.loading = false;
-          if (!this.deck.length) {
-            this.needsQuiz = !hasCompletedLifestyleQuiz(this.userId);
-          }
+          this.deckEmpty = this.deck.length === 0;
+          this.needsQuiz = false;
           this.cdr.detectChanges();
         },
         error: () => {

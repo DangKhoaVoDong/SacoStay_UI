@@ -14,26 +14,27 @@ function swipeKey(userId: string): string {
   return `saco_swipe_data_${userId}`;
 }
 
-/** Xóa cờ quiz/swipe chung (phiên bản cũ — gây lẫn giữa nhiều tài khoản). */
 export function clearLegacyLifestyleKeys(): void {
   sessionStorage.removeItem(LEGACY_DONE_KEY);
   localStorage.removeItem(LEGACY_SWIPE_KEY);
 }
 
+/**
+ * Cờ hoàn thành quiz trên FE (sau POST /api/Lifestyle/submit thành công).
+ * Câu trả lời thật nằm trên DB; cờ local giúp không phải làm lại sau đăng xuất.
+ */
 export function hasCompletedLifestyleQuiz(userId: string): boolean {
   if (!userId) return false;
-  clearLegacyLifestyleKeys();
-  return sessionStorage.getItem(doneKey(userId)) === '1';
+  return localStorage.getItem(doneKey(userId)) === '1';
 }
 
 export function setLifestyleQuizCompleted(userId: string): void {
   if (!userId) return;
-  sessionStorage.setItem(doneKey(userId), '1');
+  localStorage.setItem(doneKey(userId), '1');
 }
 
-export function clearLifestyleDataForUser(userId: string): void {
+export function clearSwipeDataForUser(userId: string): void {
   if (!userId) return;
-  sessionStorage.removeItem(doneKey(userId));
   localStorage.removeItem(swipeKey(userId));
 }
 

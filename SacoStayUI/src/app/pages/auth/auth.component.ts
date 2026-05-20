@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
@@ -30,6 +30,8 @@ export class AuthComponent implements OnInit {
 
   selectedRole: 'tenant' | 'landlord' = 'tenant';
 
+  private readonly route = inject(ActivatedRoute);
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
@@ -51,6 +53,15 @@ export class AuthComponent implements OnInit {
     const path = this.router.url.split('?')[0];
     this.currentMode = path.includes('/register') ? 'register' : 'login';
     this.cdr.detectChanges();
+  }
+
+  private navigateAfterAuth(): void {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    const target =
+      returnUrl && !returnUrl.startsWith('/login') && !returnUrl.startsWith('/register')
+        ? returnUrl
+        : '/';
+    void this.router.navigateByUrl(target);
   }
 
   private initForms(): void {
@@ -104,11 +115,11 @@ export class AuthComponent implements OnInit {
         this.authService.refreshProfile().subscribe({
           next: () => {
             alert('Đăng nhập thành công');
-            this.router.navigate(['/']);
+            this.navigateAfterAuth();
           },
           error: () => {
             alert('Đăng nhập thành công nhưng không tải được hồ sơ từ máy chủ.');
-            this.router.navigate(['/']);
+            this.navigateAfterAuth();
           }
         });
       },

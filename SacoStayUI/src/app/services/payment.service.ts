@@ -4,60 +4,54 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
-export type PaymentContext = 'landlord' | 'tenant';
+function paymentUrlFromResponse(raw: unknown): string {
+  if (!raw) return '';
+  if (typeof raw === 'string') return raw.trim();
+  if (typeof raw !== 'object') return '';
+  const o = raw as Record<string, unknown>;
+  const nested = o['data'] && typeof o['data'] === 'object' ? (o['data'] as Record<string, unknown>) : o;
+  return String(
+    nested['paymentUrl'] ?? nested['PaymentUrl'] ?? nested['url'] ?? nested['Url'] ?? ''
+  ).trim();
+}
 
-const RETURN_URL_KEY = 'saco_payment_return_url';
-const CONTEXT_KEY = 'saco_payment_context';
-const ROOM_POST_KEY = 'saco_payment_room_post_id';
+export type PaymentContext = 'landlord' | 'tenant';
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  buyLandlordPackage(roomPostId: string, packageName: string, returnPath: string): Observable<string> {
+  /** Chủ trọ: POST /api/Payment/buy-package */
+  buyLandlordPackage(roomPostId: string, packageName: string): Observable<string> {
     const params = new HttpParams()
       .set('roomPostId', roomPostId)
       .set('packageName', packageName.toUpperCase())
       .set('returnContext', 'landlord');
 
     return this.http
-      .post<{ paymentUrl?: string }>(`${this.apiUrl}/Payment/buy-package`, {}, { params })
-      .pipe(map((res) => res.paymentUrl || ''));
+      .post<unknown>(`${this.apiUrl}/Payment/buy-package`, {}, { params })
+      .pipe(map((res) => paymentUrlFromResponse(res)));
   }
 
-  buyTenantPremium(returnPath: string): Observable<string> {
+  /** Người thuê Premium: POST /api/Payment/buy-tenant-premium */
+  buyTenantPremium(): Observable<string> {
     const params = new HttpParams().set('returnContext', 'tenant');
     return this.http
-      .post<{ paymentUrl?: string }>(`${this.apiUrl}/Payment/buy-tenant-premium`, {}, { params })
-      .pipe(map((res) => res.paymentUrl || ''));
+      .post<unknown>(`${this.apiUrl}/Payment/buy-tenant-premium`, {}, { params })
+      .pipe(map((res) => paymentUrlFromResponse(res)));
   }
 
-  /** Mở VNPay tab mới; lưu đường quay lại sau khi BE redirect về /payment/result */
-  openPaymentInNewTab(paymentUrl: string, returnPath: string, context: PaymentContext): void {
+  goToVnPay(paymentUrl: string): void {
     if (!paymentUrl) return;
-    sessionStorage.setItem(RETURN_URL_KEY, returnPath);
-    sessionStorage.setItem(CONTEXT_KEY, context);
-    window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+    window.location.href = paymentUrl;
   }
 
   static saveRoomPostIdForPayment(id: string): void {
-    if (id) sessionStorage.setItem(ROOM_POST_KEY, id);
+    if (id) sessionStorage.setItem('saco_payment_room_post_id', id);
   }
 
   static getRoomPostIdForPayment(): string {
-    return sessionStorage.getItem(ROOM_POST_KEY) || '';
-  }
-
-  static consumeReturnPath(): string {
-    const path = sessionStorage.getItem(RETURN_URL_KEY) || '/';
-    sessionStorage.removeItem(RETURN_URL_KEY);
-    return path;
-  }
-
-  static consumeContext(): PaymentContext {
-    const c = sessionStorage.getItem(CONTEXT_KEY);
-    sessionStorage.removeItem(CONTEXT_KEY);
-    return c === 'tenant' ? 'tenant' : 'landlord';
+    return sessionStorage.getItem('saco_payment_room_post_id') || '';
   }
 }

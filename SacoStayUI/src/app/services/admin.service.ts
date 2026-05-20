@@ -18,6 +18,33 @@ function unwrapList(raw: unknown): unknown[] {
   return Array.isArray(nested) ? nested : [];
 }
 
+function normalizeActionResult(raw: unknown): { message?: string; status?: string } {
+  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  return {
+    message: str(o['message'] ?? o['Message']),
+    status: str(o['status'] ?? o['Status'])
+  };
+}
+
+/** Map lỗi HTTP admin (theo OpenAPI Backend_Json.md — role admin + Bearer). */
+export function adminApiErrorMessage(err: unknown, fallback: string): string {
+  const e = err as { status?: number; error?: unknown; message?: string };
+  const status = e?.status;
+  if (status === 401) return 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+  if (status === 403) {
+    return 'Tài khoản không có quyền admin (403). Đăng xuất, đăng nhập lại bằng admin / Admin@123 sau khi BE đã build lại với MapInboundClaims = false.';
+  }
+  if (status === 404) {
+    return 'API Admin không tìm thấy (404). Dừng SacoStayAPI, dotnet build, chạy lại — và đảm bảo AdminController không dùng [Authorize] ở cả class (chỉ từng action).';
+  }
+  const body = e?.error;
+  if (typeof body === 'object' && body && 'message' in (body as object)) {
+    return str((body as Record<string, unknown>)['message']) || fallback;
+  }
+  if (typeof body === 'string' && body.trim()) return body.trim();
+  return e?.message || fallback;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private readonly http = inject(HttpClient);
@@ -54,16 +81,26 @@ export class AdminService {
   }
 
   approveRoomPost(id: string): Observable<{ message?: string; status?: string }> {
-    return this.http.post<{ message?: string; status?: string }>(
-      `${this.apiUrl}/Admin/room-posts/${encodeURIComponent(id)}/approve`,
-      {}
-    );
+    return this.http
+      .post<unknown>(`${this.apiUrl}/Admin/room-posts/${encodeURIComponent(id)}/approve`, {})
+      .pipe(map((raw) => normalizeActionResult(raw)));
   }
 
   rejectRoomPost(id: string): Observable<{ message?: string; status?: string }> {
-    return this.http.post<{ message?: string; status?: string }>(
-      `${this.apiUrl}/Admin/room-posts/${encodeURIComponent(id)}/reject`,
-      {}
+    return this.http
+      .post<unknown>(`${this.apiUrl}/Admin/room-posts/${encodeURIComponent(id)}/reject`, {})
+      .pipe(map((raw) => normalizeActionResult(raw)));
+  }
+
+  /** Tin chờ xử lý: PendingApproval + PendingPayment (dashboard BE đếm cả hai). */
+  getPendingRoomPosts(): Observable<AdminRoomPostRow[]> {
+    return this.getRoomPosts().pipe(
+      map((posts) =>
+        posts.filter((p) => {
+          const s = (p.status || '').toLowerCase();
+          return s === 'pendingapproval' || s === 'pendingpayment';
+        })
+      )
     );
   }
 

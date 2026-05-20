@@ -1,12 +1,12 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { FooterComponent } from '../../components/layout/footer.component';
 import { isTenantPremium } from '../../utils/user-display';
 import { PaymentService } from '../../services/payment.service';
 import { getApiErrorMessage } from '../../services/auth.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 type FeatureRow = {
   name: string;
@@ -55,7 +55,7 @@ export class TenantPricingComponent implements OnInit {
     this.payError = '';
     this.paying = true;
     this.payment
-      .buyTenantPremium('/tenant-pricing')
+      .buyTenantPremium()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (url) => {
@@ -65,7 +65,7 @@ export class TenantPricingComponent implements OnInit {
             this.cdr.detectChanges();
             return;
           }
-          this.payment.openPaymentInNewTab(url, '/tenant-pricing', 'tenant');
+          this.payment.goToVnPay(url);
           this.cdr.detectChanges();
         },
         error: (err) => {

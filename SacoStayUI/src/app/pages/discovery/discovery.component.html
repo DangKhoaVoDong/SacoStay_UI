@@ -24,6 +24,14 @@
     </div>
   } @else if (loading) {
     <p class="flex-1 flex items-center justify-center text-gray-500">Đang tải gợi ý...</p>
+  } @else if (deckEmpty) {
+    <div class="flex-1 flex items-center justify-center p-6 text-center max-w-md mx-auto">
+      <h2 class="text-xl font-bold text-[#1A1A2E] mb-2">Chưa có gợi ý phù hợp</h2>
+      <p class="text-[#6B7280] text-sm mb-6">
+        Hệ thống chỉ hiển thị người có điểm tương hợp từ 50% trở lên sau khi bạn hoàn thành trắc nghiệm. Thử lại sau hoặc mời bạn bè tham gia.
+      </p>
+      <button type="button" class="px-6 py-2 rounded-lg bg-[#FF9F43] text-white font-medium" (click)="loadDeck()">Tải lại</button>
+    </div>
   } @else {
     <main class="flex-1 flex w-full max-w-[1600px] mx-auto h-[calc(100vh-64px)] overflow-hidden">
       <!-- Left: liked -->
@@ -163,7 +171,11 @@
                 <a routerLink="/tenant-pricing" class="block mt-3 text-center text-[#FF9F43] font-semibold">Xem gói Premium</a>
               </div>
             } @else {
-              <a routerLink="/chat" class="block w-full py-2 text-center rounded-lg bg-[#FF9F43] text-white text-sm font-medium">Nhắn tin</a>
+              <a
+                [routerLink]="['/chat']"
+                [queryParams]="{ with: currentCard.userId, name: currentCard.displayName, avatar: currentCard.avatarUrl, role: 'tenants' }"
+                class="block w-full py-2 text-center rounded-lg bg-[#FF9F43] text-white text-sm font-medium"
+              >Nhắn tin</a>
             }
           </div>
         </aside>

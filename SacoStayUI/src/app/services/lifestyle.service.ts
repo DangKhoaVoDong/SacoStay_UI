@@ -44,10 +44,23 @@ export class LifestyleService {
 
   submitAnswers(selectedOptionIds: number[]): Observable<string> {
     return this.http
-      .post(`${this.apiUrl}/Lifestyle/submit`, { SelectedOptionIds: selectedOptionIds }, { responseType: 'text' })
-      .pipe(catchError((err) => {
-        throw err;
-      }));
+      .post<unknown>(`${this.apiUrl}/Lifestyle/submit`, {
+        selectedOptionIds,
+        SelectedOptionIds: selectedOptionIds
+      })
+      .pipe(
+        map((raw) => {
+          if (typeof raw === 'string') return raw;
+          if (raw && typeof raw === 'object') {
+            const m = str((raw as Record<string, unknown>)['message'] ?? (raw as Record<string, unknown>)['Message']);
+            if (m) return m;
+          }
+          return 'Lưu trắc nghiệm thành công.';
+        }),
+        catchError((err) => {
+          throw err;
+        })
+      );
   }
 
   getSwipeDeck(limit = 10): Observable<SwipeDeckCard[]> {

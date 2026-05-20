@@ -2,7 +2,6 @@ import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NavbarComponent } from '../../../components/layout/navbar.component';
-import { PaymentService } from '../../../services/payment.service';
 import { setTenantPremium } from '../../../utils/user-display';
 
 @Component({
@@ -25,9 +24,11 @@ export class PaymentResultComponent implements OnInit {
     const qp = this.route.snapshot.queryParamMap;
     const s = (qp.get('status') || '').toLowerCase();
     this.status = s === 'success' ? 'success' : s === 'failed' ? 'failed' : 'unknown';
-    this.context = qp.get('context') === 'tenant' ? 'tenant' : 'landlord';
+    const ctxParam = (qp.get('context') || '').toLowerCase();
+    this.context = ctxParam === 'tenant' ? 'tenant' : 'landlord';
     this.orderId = qp.get('orderId') || '';
-    this.returnPath = PaymentService.consumeReturnPath();
+    this.returnPath =
+      this.context === 'tenant' ? '/tenant-pricing' : '/my-listings';
 
     if (this.status === 'success' && this.context === 'tenant') {
       setTenantPremium(true);
@@ -56,16 +57,6 @@ export class PaymentResultComponent implements OnInit {
   }
 
   goBack(): void {
-    const target = this.returnPath || (this.context === 'landlord' ? '/landlord-profile' : '/');
-    if (window.opener && !window.opener.closed) {
-      try {
-        window.opener.location.href = target;
-        window.close();
-        return;
-      } catch {
-        /* cross-origin — fallback navigate */
-      }
-    }
-    void this.router.navigateByUrl(target);
+    void this.router.navigateByUrl(this.returnPath);
   }
 }
