@@ -3,16 +3,17 @@ import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { NavbarComponent } from '../../../components/layout/navbar.component';
+import { AdminLifestyleQuizComponent } from '../admin-lifestyle-quiz/admin-lifestyle-quiz.component';
 import { AdminService, adminApiErrorMessage } from '../../../services/admin.service';
 import type { AdminDashboardStats, AdminRoomPostRow, AdminUserRow } from '../../../models/admin.models';
 import { resolveMediaUrl } from '../../../utils/media-url';
 
-type AdminTab = 'overview' | 'pending' | 'users' | 'user-reports' | 'room-reports';
+type AdminTab = 'overview' | 'pending' | 'users' | 'lifestyle' | 'user-reports' | 'room-reports';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, NavbarComponent],
+  imports: [CommonModule, NavbarComponent, AdminLifestyleQuizComponent],
   templateUrl: './admin-dashboard.component.html'
 })
 export class AdminDashboardComponent implements OnInit {

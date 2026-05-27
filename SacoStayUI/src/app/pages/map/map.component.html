@@ -1,0 +1,211 @@
+<div class="flex flex-col h-screen bg-gray-50 overflow-hidden">
+  <app-navbar />
+
+  <div class="flex flex-1 min-h-0 overflow-hidden">
+    <!-- Map -->
+    <div class="relative flex-1 min-w-0">
+      <div #mapHost class="map-host"></div>
+
+      @if (loading) {
+        <div class="absolute inset-0 z-[1001] flex items-center justify-center bg-white/70 backdrop-blur-sm">
+          <p class="text-gray-600 text-sm">Đang tải phòng trên bản đồ…</p>
+        </div>
+      }
+
+      @if (loadError) {
+        <div class="absolute top-20 left-1/2 -translate-x-1/2 z-[1001] max-w-md px-4 py-2 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+          {{ loadError }}
+        </div>
+      }
+
+      <!-- Search -->
+      <div class="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-md px-4 pointer-events-none">
+        <div class="pointer-events-auto bg-white rounded-xl shadow-lg border border-gray-100 flex items-center px-3 py-2 gap-2">
+          <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15z" />
+          </svg>
+          <input
+            type="text"
+            class="flex-1 text-sm outline-none bg-transparent"
+            placeholder="Tìm kiếm phòng trọ..."
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onFiltersChange()"
+          />
+          @if (searchQuery) {
+            <button type="button" class="text-gray-400 hover:text-gray-600" (click)="clearSearch()" aria-label="Xóa tìm kiếm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Filter toggle -->
+      <button
+        type="button"
+        class="absolute top-20 left-4 z-[1000] w-10 h-10 bg-white rounded-lg shadow-md flex items-center justify-center hover:bg-gray-50 border border-gray-100"
+        (click)="showFilters = !showFilters"
+        aria-label="Bộ lọc"
+      >
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M7 8h10M11 12h2" />
+        </svg>
+      </button>
+
+      @if (showFilters) {
+        <div class="absolute top-20 left-16 z-[1000] w-64">
+          <div class="bg-white rounded-xl shadow-xl border border-gray-100 p-4">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-bold text-gray-900 text-sm">Bộ lọc</h3>
+              <button type="button" class="text-gray-400 hover:text-gray-600" (click)="showFilters = false" aria-label="Đóng">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Thành phố</label>
+                <select
+                  class="w-full rounded-lg border border-gray-300 text-sm py-2 px-2"
+                  [(ngModel)]="filters.city"
+                  (ngModelChange)="onFiltersChange()"
+                >
+                  @for (opt of cityOptions; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện</label>
+                <select
+                  class="w-full rounded-lg border border-gray-300 text-sm py-2 px-2"
+                  [(ngModel)]="filters.district"
+                  (ngModelChange)="onFiltersChange()"
+                >
+                  @for (opt of districtOptions; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Giá tối đa: {{ (filters.priceMax / 1_000_000).toFixed(1) }}tr
+                </label>
+                <input
+                  type="range"
+                  class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#FF6B6B]"
+                  min="1000000"
+                  max="10000000"
+                  step="500000"
+                  [(ngModel)]="filters.priceMax"
+                  (ngModelChange)="onFiltersChange()"
+                />
+              </div>
+              <button
+                type="button"
+                class="w-full py-2 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A]"
+                (click)="showFilters = false"
+              >
+                Áp dụng
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Stats -->
+      <div class="absolute bottom-4 left-4 z-[1000]">
+        <div class="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg px-4 py-2 border border-gray-100 flex items-center gap-3 text-sm">
+          <span class="text-gray-500">Tìm thấy</span>
+          <span class="font-bold text-[#FF6B6B]">{{ filteredRooms.length }} phòng</span>
+          <span class="w-px h-4 bg-gray-200"></span>
+          <span class="text-gray-500">Trên bản đồ</span>
+          <span class="font-bold text-gray-900">{{ roomsOnMap.length }}</span>
+          @if (minPriceM != null) {
+            <span class="w-px h-4 bg-gray-200"></span>
+            <span class="text-gray-500">Từ</span>
+            <span class="font-bold text-gray-900">{{ minPriceM }}tr</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-[302px] bg-white border-l border-gray-100 flex flex-col shadow-xl z-10 shrink-0 hidden sm:flex">
+      <div class="p-4 border-b border-gray-100">
+        <h2 class="font-bold text-gray-900">Danh sách phòng trọ</h2>
+        <p class="text-xs text-gray-500 mt-0.5">{{ filteredRooms.length }} phòng phù hợp</p>
+      </div>
+
+      <div class="flex-1 overflow-y-auto">
+        @if (!filteredRooms.length && !loading) {
+          <div class="flex flex-col items-center justify-center h-full text-center p-6">
+            <svg class="w-10 h-10 text-gray-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314-11.314z" />
+            </svg>
+            <p class="text-gray-500 text-sm">Không tìm thấy phòng nào</p>
+          </div>
+        } @else {
+          @for (room of filteredRooms; track room.id) {
+            <button
+              type="button"
+              (click)="selectRoom(room)"
+              class="w-full text-left flex gap-3 p-3 border-b border-gray-50 transition-all duration-150"
+              [class.bg-orange-50]="selectedRoom?.id === room.id"
+              [class.border-l-2]="selectedRoom?.id === room.id"
+              [class.border-l-[#FF9F43]]="selectedRoom?.id === room.id"
+              [class.hover:bg-gray-50]="selectedRoom?.id !== room.id"
+            >
+              @if (room.imageUrl) {
+                <img [src]="room.imageUrl" [alt]="room.title" class="w-20 h-16 object-cover rounded-lg shrink-0" />
+              } @else {
+                <div class="w-20 h-16 rounded-lg bg-gray-100 shrink-0 flex items-center justify-center text-gray-300 text-xs">Ảnh</div>
+              }
+              <div class="flex-1 min-w-0">
+                <p class="line-clamp-2 mb-1" [ngClass]="sidebarTitleClass(room)">
+                  {{ room.title }}
+                </p>
+                <div class="flex items-center text-xs text-gray-500 mb-1">
+                  <svg class="w-3 h-3 mr-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314-11.314z" />
+                  </svg>
+                  <span class="truncate">{{ locationLine(room) }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-sm font-bold text-[#FF6B6B]">{{ priceShort(room.price) }}</span>
+                  @if (room.area) {
+                    <span class="text-xs text-gray-400 shrink-0">{{ room.area }}m²</span>
+                  }
+                </div>
+                @if (!hasCoords(room)) {
+                  <span class="text-[10px] text-amber-600 mt-1 block">Chưa có vị trí trên bản đồ</span>
+                }
+              </div>
+            </button>
+          }
+        }
+      </div>
+
+      @if (selectedRoom) {
+        <div class="p-4 border-t border-gray-100 bg-orange-50">
+          <div class="flex items-center justify-between mb-3 gap-2">
+            <p class="truncate flex-1 text-sm font-bold text-[#1A1A2E]">{{ selectedRoom.title }}</p>
+            <button type="button" class="text-gray-400 hover:text-gray-600 shrink-0" (click)="clearSelection()" aria-label="Bỏ chọn">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <a
+            [routerLink]="['/rooms', selectedRoom.id]"
+            class="block w-full py-3 rounded-lg bg-[#FF9F43] text-white text-center text-base font-medium hover:bg-[#FF8C2A]"
+          >
+            Xem chi tiết
+          </a>
+        </div>
+      }
+    </aside>
+  </div>
+</div>

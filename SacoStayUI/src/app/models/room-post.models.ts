@@ -17,6 +17,11 @@ export interface RoomPostSummary {
   viewCount?: number;
   vipTier?: VipTier;
   amenities?: string[];
+  /** Có trên tin đầy đủ (my-posts); search-nearby thường không trả. */
+  description?: string;
+  /** Vị trí ghim từ tin đăng (search-nearby → Location / Latitude). */
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface RoomPostDetail extends RoomPostSummary {

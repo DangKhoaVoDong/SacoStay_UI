@@ -1,3 +1,5 @@
+import { isAdminUser, userIdFromUser } from './user-display';
+
 const LEGACY_DONE_KEY = 'saco_lifestyle_completed';
 const LEGACY_SWIPE_KEY = 'saco_swipe_data';
 
@@ -31,6 +33,14 @@ export function hasCompletedLifestyleQuiz(userId: string): boolean {
 export function setLifestyleQuizCompleted(userId: string): void {
   if (!userId) return;
   localStorage.setItem(doneKey(userId), '1');
+}
+
+/** Tenant / chủ trọ: bắt buộc quiz trước profile. Admin: không. */
+export function requiresLifestyleQuiz(user: unknown): boolean {
+  if (isAdminUser(user)) return false;
+  const uid = userIdFromUser(user);
+  if (!uid) return true;
+  return !hasCompletedLifestyleQuiz(uid);
 }
 
 export function clearSwipeDataForUser(userId: string): void {

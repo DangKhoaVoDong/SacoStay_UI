@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import type {
   CreateRoomPostPayload,
@@ -13,6 +13,7 @@ import type {
   RoomPostViewerRow
 } from '../models/room-post.models';
 import { parseRoomVipTier } from '../utils/vip-tier-styles';
+import { haversineKm } from '../utils/geo';
 
 function str(v: unknown): string {
   if (v === undefined || v === null) return '';
@@ -96,18 +97,96 @@ export class RoomPostService {
 
   /**
    * OpenAPI không có GET /RoomPost/{id}.
-   * Chi tiết lấy từ my-posts (chủ trọ) + search-nearby (mọi user).
+   * Ưu tiên my-posts (entity đầy đủ: mô tả, diện tích, maxPeople), sau đó search-nearby.
    */
   getById(id: string): Observable<RoomPostDetail | null> {
     return forkJoin({
-      nearby: this.searchNearby(10.7769, 106.7009, 100),
-      mine: this.getMyPosts().pipe(catchError(() => of([] as RoomPostSummary[])))
+      browseRaw: this.http.get<unknown>(`${this.apiUrl}/RoomPost/search-nearby`, {
+        params: new HttpParams().set('userLat', '21.0285').set('userLng', '105.8542').set('radiusInKm', '80')
+      }).pipe(
+        map((raw) => unwrapList(raw).flatMap((item) => this.expandRawItems(item))),
+        catchError(() => of([] as Record<string, unknown>[]))
+      ),
+      browseRawHcm: this.http.get<unknown>(`${this.apiUrl}/RoomPost/search-nearby`, {
+        params: new HttpParams().set('userLat', '10.7769').set('userLng', '106.7009').set('radiusInKm', '80')
+      }).pipe(
+        map((raw) => unwrapList(raw).flatMap((item) => this.expandRawItems(item))),
+        catchError(() => of([] as Record<string, unknown>[]))
+      ),
+      mineRaw: this.http.get<unknown>(`${this.apiUrl}/RoomPost/my-posts`).pipe(
+        map((raw) => unwrapList(raw).map((item) => this.flattenRoomItem(item))),
+        catchError(() => of([] as Record<string, unknown>[]))
+      )
     }).pipe(
-      map(({ nearby, mine }) => {
-        const hit = [...mine, ...nearby].find((r) => r.id === id);
-        return hit ? this.summaryAsDetail(hit) : null;
+      switchMap(({ browseRaw, browseRawHcm, mineRaw }) => {
+        const allRaw = [...mineRaw, ...browseRaw, ...browseRawHcm];
+        const rawHit = allRaw.find((o) => str(o['id'] ?? o['Id'] ?? o['roomPostId'] ?? o['RoomPostId']) === id);
+
+        let detail: RoomPostDetail | null = null;
+        if (rawHit) {
+          detail = this.normalizeDetail(rawHit);
+        }
+        if (!detail) {
+          return of(null);
+        }
+
+        const lat = detail.latitude;
+        const lng = detail.longitude;
+        if (lat == null || lng == null) {
+          return of(detail);
+        }
+
+        return this.getNearbyHighlightLabels(lat, lng, id).pipe(
+          map((labels) => ({
+            ...detail!,
+            nearbyLandmarks: labels.length ? labels : detail!.nearbyLandmarks
+          }))
+        );
       })
     );
+  }
+
+  /**
+   * Địa điểm gần phòng: search-nearby quanh tọa độ tin (bán kính ~2 km), lấy 2–3 tin/điểm khác gần nhất.
+   */
+  getNearbyHighlightLabels(lat: number, lng: number, excludePostId: string): Observable<string[]> {
+    return this.searchNearby(lat, lng, 2.5).pipe(
+      map((rooms) => {
+        const labels: string[] = [];
+        const seen = new Set<string>();
+
+        for (const r of rooms) {
+          if (r.id === excludePostId) continue;
+          if (r.latitude == null || r.longitude == null) continue;
+          const km = haversineKm(lat, lng, r.latitude, r.longitude);
+          if (km < 0.08) continue;
+
+          const label = this.landmarkLabelFromRoom(r, km);
+          const key = label.toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          labels.push(label);
+          if (labels.length >= 3) break;
+        }
+
+        return labels;
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  private landmarkLabelFromRoom(room: RoomPostSummary, distanceKm: number): string {
+    const meters = distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)}km`;
+    const addr = (room.address || '').split(',')[0]?.trim();
+    if (addr && addr.length > 3 && addr.length < 60) {
+      return `${addr} (cách ~${meters})`;
+    }
+    return `${room.title} (cách ~${meters})`;
+  }
+
+  /** Mở rộng phần tử API (phẳng hoặc bọc room/Room). */
+  private expandRawItems(item: unknown): Record<string, unknown>[] {
+    return [this.flattenRoomItem(item)];
   }
 
   /**
@@ -211,11 +290,15 @@ export class RoomPostService {
   }
 
   private summaryAsDetail(summary: RoomPostSummary): RoomPostDetail {
+    const images =
+      summary.imageUrl != null
+        ? [summary.imageUrl]
+        : [];
     return {
       ...summary,
       landlordUserId: summary.landlordUserId,
-      images: summary.imageUrl ? [summary.imageUrl] : [],
-      description: undefined
+      images,
+      description: summary.description
     };
   }
 
@@ -285,6 +368,7 @@ export class RoomPostService {
       o['detailedAddress'] ?? o['DetailedAddress'] ?? o['address'] ?? o['Address']
     );
     const fullAddress = [addressStr, district, city].filter(Boolean).join(', ');
+    const coords = this.extractCoordinates(o);
     return {
       id: id || `post-${index}`,
       landlordUserId: landlordUserId || undefined,
@@ -300,8 +384,29 @@ export class RoomPostService {
       status: str(o['status'] ?? o['Status']) || undefined,
       viewCount: Number(o['viewCount'] ?? o['ViewCount'] ?? 0) || undefined,
       vipTier: parseRoomVipTier(o['vipTier'] ?? o['VipTier'] ?? o['vipLevel'] ?? o['VipLevel']),
-      amenities: this.extractAmenities(o)
+      amenities: this.extractAmenities(o),
+      description: str(o['description'] ?? o['Description']) || undefined,
+      latitude: coords.lat,
+      longitude: coords.lng
     };
+  }
+
+  private extractCoordinates(o: Record<string, unknown>): { lat?: number; lng?: number } {
+    const loc = o['location'] ?? o['Location'];
+    if (loc && typeof loc === 'object') {
+      const l = loc as Record<string, unknown>;
+      const lat = Number(l['latitude'] ?? l['Latitude'] ?? l['lat'] ?? l['Lat']);
+      const lng = Number(l['longitude'] ?? l['Longitude'] ?? l['lng'] ?? l['Lng']);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        return { lat, lng };
+      }
+    }
+    const lat = Number(o['latitude'] ?? o['Latitude'] ?? o['lat'] ?? o['Lat']);
+    const lng = Number(o['longitude'] ?? o['Longitude'] ?? o['lng'] ?? o['Lng']);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      return { lat, lng };
+    }
+    return {};
   }
 
   private extractImages(o: Record<string, unknown>): string[] {

@@ -5,8 +5,35 @@
   justify-content: center;
   align-items: center;
   padding: 20px;
+  padding-top: 5rem;
   position: relative;
   overflow: hidden;
+}
+
+.auth-home-logo {
+  position: absolute;
+  top: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 24px rgba(26, 26, 46, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-home-logo:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 12px 28px rgba(255, 159, 67, 0.25);
+}
+
+.auth-home-logo__img {
+  height: 2.75rem;
+  width: auto;
+  display: block;
 }
 
 .auth-container {

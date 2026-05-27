@@ -3,7 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
-import { isAdminUser, navProfileLabel, profileAvatarFromRaw } from '../../utils/user-display';
+import {
+    hasBasicProfileFilled,
+    isAdminUser,
+    navProfileLabel,
+    profileAvatarFromRaw
+} from '../../utils/user-display';
+import { requiresLifestyleQuiz } from '../../utils/lifestyle-storage';
 import { resolveMediaUrl } from '../../utils/media-url';
 import type { UserProfile } from '../../models/auth.models';
 
@@ -88,6 +94,24 @@ export class NavbarComponent implements OnInit {
     get avatarUrl(): string {
         const raw = profileAvatarFromRaw(this.user);
         return raw ? resolveMediaUrl(raw) : this.avatarFallbackUrl;
+    }
+
+    /** Admin: profile-setup → profile. Tenant/landlord: + quiz. Quiz xong về profile (returnUrl). */
+    get profileLink(): string[] {
+        if (!hasBasicProfileFilled(this.user)) {
+            return ['/profile-setup'];
+        }
+        if (requiresLifestyleQuiz(this.user)) {
+            return ['/lifestyle-quiz'];
+        }
+        return ['/profile', 'me'];
+    }
+
+    get profileLinkQueryParams(): Record<string, string> {
+        if (requiresLifestyleQuiz(this.user)) {
+            return { returnUrl: '/profile/me' };
+        }
+        return {};
     }
 
     toggleMenu(): void {

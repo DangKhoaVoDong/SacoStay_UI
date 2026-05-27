@@ -1,0 +1,131 @@
+<div class="p-4 sticky top-20 border border-orange-100 bg-white rounded-2xl shadow-xl max-h-[80vh] overflow-y-auto w-72 sm:w-80">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-bold text-[#1A1A2E]">Bộ lọc</h3>
+    <button type="button" class="text-sm text-[#FF9F43] hover:underline font-medium" (click)="reset()">Đặt lại</button>
+  </div>
+
+  <div class="space-y-6">
+    <div>
+      <label class="block text-sm font-medium text-[#6B7280] mb-2">Giới tính</label>
+      <div class="grid grid-cols-3 gap-2">
+        @for (g of genderOptions; track g.val) {
+          <button
+            type="button"
+            class="px-3 py-2 text-sm rounded-xl border transition-all"
+            [class.bg-[#FF9F43]]="filters.gender === g.val"
+            [class.text-white]="filters.gender === g.val"
+            [class.border-[#FF9F43]]="filters.gender === g.val"
+            [class.shadow-md]="filters.gender === g.val"
+            [class.bg-white]="filters.gender !== g.val"
+            [class.text-[#6B7280]]="filters.gender !== g.val"
+            [class.border-orange-100]="filters.gender !== g.val"
+            (click)="setGender(g.val)"
+          >
+            {{ g.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-[#6B7280] mb-2">Tình trạng phòng</label>
+      <div class="grid grid-cols-3 gap-2">
+        @for (r of hasRoomOptions; track r.val) {
+          <button
+            type="button"
+            class="px-3 py-2 text-sm rounded-xl border transition-all"
+            [class.bg-[#FF9F43]]="filters.hasRoom === r.val"
+            [class.text-white]="filters.hasRoom === r.val"
+            [class.border-[#FF9F43]]="filters.hasRoom === r.val"
+            [class.shadow-md]="filters.hasRoom === r.val"
+            [class.bg-white]="filters.hasRoom !== r.val"
+            [class.text-[#6B7280]]="filters.hasRoom !== r.val"
+            [class.border-orange-100]="filters.hasRoom !== r.val"
+            (click)="setHasRoom(r.val)"
+          >
+            {{ r.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (filters.hasRoom === 'yes') {
+      <div>
+        <label class="block text-sm font-medium text-[#6B7280] mb-2">Địa điểm phòng</label>
+        <div class="grid grid-cols-2 gap-2">
+          @for (d of districtOptions; track d.val) {
+            <button
+              type="button"
+              class="px-3 py-2 text-xs rounded-xl border transition-all text-left"
+              [class.bg-[#FF9F43]]="filters.roomDistrict === d.val"
+              [class.text-white]="filters.roomDistrict === d.val"
+              [class.border-[#FF9F43]]="filters.roomDistrict === d.val"
+              [class.shadow-md]="filters.roomDistrict === d.val"
+              [class.bg-white]="filters.roomDistrict !== d.val"
+              [class.text-[#6B7280]]="filters.roomDistrict !== d.val"
+              [class.border-orange-100]="filters.roomDistrict !== d.val"
+              (click)="setDistrict(d.val)"
+            >
+              {{ d.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-[#6B7280] mb-2">Giá phòng mong muốn</label>
+        <select
+          class="w-full rounded-xl border border-orange-100 px-3 py-2.5 text-sm text-[#1A1A2E] focus:outline-none focus:ring-2 focus:ring-[#FF9F43]/40"
+          [ngModel]="filters.roomPrice"
+          (ngModelChange)="patch({ roomPrice: $event })"
+        >
+          @for (opt of roomPriceOptions; track opt.value) {
+            <option [ngValue]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    <div>
+      <label class="block text-sm font-medium text-[#6B7280] mb-2">Độ tuổi tối đa</label>
+      <input
+        type="range"
+        min="18"
+        max="40"
+        class="w-full accent-[#FF9F43]"
+        [ngModel]="filters.maxAge"
+        (ngModelChange)="patch({ maxAge: +$event })"
+      />
+      <div class="flex justify-between text-xs text-gray-500 mt-1">
+        <span>18</span>
+        <span class="font-semibold text-[#FF9F43]">18 – {{ filters.maxAge }}</span>
+        <span>40</span>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-[#6B7280] mb-2">Độ hòa hợp tối thiểu</label>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        class="w-full accent-[#FF9F43]"
+        [ngModel]="filters.minCompatibility"
+        (ngModelChange)="patch({ minCompatibility: +$event })"
+      />
+      <div class="flex justify-between text-xs text-gray-500 mt-1">
+        <span>0%</span>
+        <span class="font-semibold text-[#FF9F43]">{{ filters.minCompatibility }}%</span>
+        <span>100%</span>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="w-full py-3 rounded-xl bg-[#FF9F43] text-white font-semibold shadow-lg shadow-orange-200 hover:bg-[#FF8C2A]"
+      (click)="applyFilters()"
+    >
+      Áp dụng
+    </button>
+  </div>
+</div>

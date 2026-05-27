@@ -35,6 +35,7 @@ export class RoomDetailComponent implements OnInit {
 
   landlordChatName = '';
   landlordChatAvatar = '';
+  nearbyLandmarksLoading = false;
 
   ngOnInit(): void {
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((u) => {
@@ -49,19 +50,29 @@ export class RoomDetailComponent implements OnInit {
       return;
     }
 
+    this.nearbyLandmarksLoading = true;
     this.roomPosts
       .getById(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((room) => {
-        this.room = room;
-        this.notFound = !room;
-        this.loading = false;
-        this.activeGalleryIndex = 0;
-        if (room && this.auth.isLoggedIn) {
-          this.roomPosts.recordView(room.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
-          this.loadLandlordChatMeta(room.landlordUserId);
+      .subscribe({
+        next: (room) => {
+          this.room = room;
+          this.notFound = !room;
+          this.loading = false;
+          this.nearbyLandmarksLoading = false;
+          this.activeGalleryIndex = 0;
+          if (room && this.auth.isLoggedIn) {
+            this.roomPosts.recordView(room.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+            this.loadLandlordChatMeta(room.landlordUserId);
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.loading = false;
+          this.nearbyLandmarksLoading = false;
+          this.notFound = true;
+          this.cdr.detectChanges();
         }
-        this.cdr.detectChanges();
       });
   }
 

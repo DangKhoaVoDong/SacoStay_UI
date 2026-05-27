@@ -157,6 +157,29 @@ Tham chiếu contract API cho team Frontend.
         }
       }
     },
+    "/api/Auth/user/{userId}": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Auth/register": {
       "post": {
         "tags": [
@@ -572,6 +595,40 @@ Tham chiếu contract API cho team Frontend.
         }
       }
     },
+    "/api/Lifestyle/my-answers": {
+      "get": {
+        "tags": [
+          "Lifestyle"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Lifestyle/answers/{userId}": {
+      "get": {
+        "tags": [
+          "Lifestyle"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Lifestyle/submit": {
       "post": {
         "tags": [
@@ -638,6 +695,14 @@ Tham chiếu contract API cho team Frontend.
               "type": "integer",
               "format": "int32",
               "default": 10
+            }
+          },
+          {
+            "name": "includeSwiped",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -745,36 +810,6 @@ Tham chiếu contract API cho team Frontend.
             "in": "query",
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "returnContext",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "default": "landlord"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Payment/buy-tenant-premium": {
-      "post": {
-        "tags": [
-          "Payment"
-        ],
-        "parameters": [
-          {
-            "name": "returnContext",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "default": "tenant"
             }
           }
         ],

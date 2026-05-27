@@ -42,7 +42,7 @@ src/
 ### 📄 `/pages`
 - **Mục đích**: Chứa các page components được mapping với routes
 - **Ví dụ**: Auth, Home, Profile, Settings
-- **Structure**: Mỗi page có 3 file: `.ts`, `.html`, `.css`
+- **Structure**: Mỗi page có `feature-name.component.ts` (+ `.html`, `.css` nếu có). **Không dùng `index.ts` barrel** — `app.routes.ts` lazy-load trực tiếp file component, ví dụ: `import('./pages/auth/auth.component')`
 
 ### 🧩 `/components`
 - **Mục đích**: Reusable components dùng ở nhiều nơi
@@ -76,7 +76,7 @@ src/
 
 ## 🔄 Luồng hoạt động
 
-1. **Route → Page**: `app.routes.ts` → `/pages/`
+1. **Route → Page**: `app.routes.ts` → `/pages/<feature>/<feature>.component.ts`
 2. **Page → Components**: Page components import từ `/components/`
 3. **Page → Services**: API calls qua `/services/`
 4. **Services → Models**: Data typing qua `/models/`

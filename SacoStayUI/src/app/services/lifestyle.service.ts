@@ -3,7 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import type { LifestyleQuestion, SwipeDeckCard } from '../models/lifestyle.models';
+import type {
+  CreateQuestionPayload,
+  LifestyleQuestion,
+  SwipeDeckCard,
+  UpdateOptionPayload,
+  UpdateQuestionPayload,
+  UserLifestyleAnswer
+} from '../models/lifestyle.models';
 
 export interface LifestyleMatchResult {
   targetUserId: string;
@@ -63,8 +70,11 @@ export class LifestyleService {
       );
   }
 
-  getSwipeDeck(limit = 10): Observable<SwipeDeckCard[]> {
-    const params = new HttpParams().set('limit', String(limit));
+  getSwipeDeck(limit = 10, includeSwiped = false): Observable<SwipeDeckCard[]> {
+    let params = new HttpParams().set('limit', String(limit));
+    if (includeSwiped) {
+      params = params.set('includeSwiped', 'true');
+    }
     return this.http.get<unknown>(`${this.apiUrl}/Lifestyle/swipe-deck`, { params }).pipe(
       map((raw) =>
         unwrapList(raw)
@@ -81,6 +91,75 @@ export class LifestyleService {
       map(() => undefined),
       catchError(() => of(undefined))
     );
+  }
+
+  /** Admin CMS: POST /api/Lifestyle/question */
+  createQuestion(payload: CreateQuestionPayload): Observable<string> {
+    const options = payload.options.map((o) => o.trim()).filter(Boolean);
+    const body = {
+      content: payload.content.trim(),
+      Content: payload.content.trim(),
+      options,
+      Options: options
+    };
+    return this.http.post<unknown>(`${this.apiUrl}/Lifestyle/question`, body).pipe(
+      map((raw) => this.messageFromResponse(raw, 'Tạo câu hỏi thành công.'))
+    );
+  }
+
+  /** Admin CMS: PUT /api/Lifestyle/question */
+  updateQuestion(payload: UpdateQuestionPayload): Observable<string> {
+    const body = {
+      id: payload.id,
+      Id: payload.id,
+      content: payload.content.trim(),
+      Content: payload.content.trim()
+    };
+    return this.http.put<unknown>(`${this.apiUrl}/Lifestyle/question`, body).pipe(
+      map((raw) => this.messageFromResponse(raw, 'Cập nhật câu hỏi thành công.'))
+    );
+  }
+
+  /** Admin CMS: PUT /api/Lifestyle/options?questionId= */
+  updateQuestionOptions(questionId: number, options: UpdateOptionPayload[]): Observable<string> {
+    const body = options
+      .map((o) => ({
+        optionId: o.optionId && o.optionId > 0 ? o.optionId : null,
+        OptionId: o.optionId && o.optionId > 0 ? o.optionId : null,
+        content: o.content.trim(),
+        Content: o.content.trim()
+      }))
+      .filter((o) => o.content.length > 0);
+
+    const params = new HttpParams().set('questionId', String(questionId));
+    return this.http.put<unknown>(`${this.apiUrl}/Lifestyle/options`, body, { params }).pipe(
+      map((raw) => this.messageFromResponse(raw, 'Cập nhật đáp án thành công.'))
+    );
+  }
+
+  private messageFromResponse(raw: unknown, fallback: string): string {
+    if (typeof raw === 'string' && raw.trim()) return raw.trim();
+    if (raw && typeof raw === 'object') {
+      const m = str((raw as Record<string, unknown>)['message'] ?? (raw as Record<string, unknown>)['Message']);
+      if (m) return m;
+    }
+    return fallback;
+  }
+
+  getMyAnswers(): Observable<UserLifestyleAnswer[]> {
+    return this.http.get<unknown>(`${this.apiUrl}/Lifestyle/my-answers`).pipe(
+      map((raw) => this.normalizeAnswers(raw)),
+      catchError(() => of([]))
+    );
+  }
+
+  getUserAnswers(userId: string): Observable<UserLifestyleAnswer[]> {
+    return this.http
+      .get<unknown>(`${this.apiUrl}/Lifestyle/answers/${encodeURIComponent(userId)}`)
+      .pipe(
+        map((raw) => this.normalizeAnswers(raw)),
+        catchError(() => of([]))
+      );
   }
 
   getMatchingScore(targetUserId: string): Observable<LifestyleMatchResult> {
@@ -125,6 +204,26 @@ export class LifestyleService {
       })
       .filter((x): x is { id: number; content: string } => !!x);
     return { id, content, options };
+  }
+
+  private normalizeAnswers(raw: unknown): UserLifestyleAnswer[] {
+    return unwrapList(raw)
+      .map((item) => {
+        if (!item || typeof item !== 'object') return null;
+        const o = item as Record<string, unknown>;
+        const questionId = Number(o['questionId'] ?? o['QuestionId']);
+        const optionId = Number(o['optionId'] ?? o['OptionId']);
+        const questionContent = str(o['questionContent'] ?? o['QuestionContent']);
+        const optionContent = str(o['optionContent'] ?? o['OptionContent']);
+        if (!Number.isFinite(questionId) || !Number.isFinite(optionId) || !optionContent) return null;
+        return {
+          questionId,
+          questionContent,
+          optionId,
+          optionContent
+        } satisfies UserLifestyleAnswer;
+      })
+      .filter((x): x is UserLifestyleAnswer => !!x);
   }
 
   private normalizeSwipeCard(item: unknown): SwipeDeckCard | null {

@@ -70,7 +70,10 @@ export class TenantPricingComponent implements OnInit {
         },
         error: (err) => {
           this.paying = false;
-          this.payError = getApiErrorMessage(err) || 'Không tạo được link thanh toán.';
+          const msg = getApiErrorMessage(err) || (err instanceof Error ? err.message : '');
+          this.payError =
+            msg ||
+            'Không tạo được link thanh toán. Backend hiện chỉ hỗ trợ POST /api/Payment/buy-package (gói chủ trọ).';
           this.cdr.detectChanges();
         }
       });

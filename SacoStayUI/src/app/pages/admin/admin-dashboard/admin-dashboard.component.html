@@ -88,6 +88,17 @@
         </button>
         <button
           type="button"
+          (click)="setTab('lifestyle')"
+          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+          [class.bg-white]="activeTab === 'lifestyle'"
+          [class.text-gray-900]="activeTab === 'lifestyle'"
+          [class.shadow-sm]="activeTab === 'lifestyle'"
+          [class.text-gray-500]="activeTab !== 'lifestyle'"
+        >
+          Quiz lối sống
+        </button>
+        <button
+          type="button"
           (click)="setTab('user-reports')"
           class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
           [class.bg-white]="activeTab === 'user-reports'"
@@ -224,6 +235,10 @@
             </table>
           </div>
         </div>
+      }
+
+      @if (activeTab === 'lifestyle') {
+        <app-admin-lifestyle-quiz />
       }
 
       @if (activeTab === 'user-reports' || activeTab === 'room-reports') {

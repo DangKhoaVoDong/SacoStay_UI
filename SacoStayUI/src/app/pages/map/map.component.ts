@@ -1,40 +1,253 @@
-import { Component } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  ElementRef,
+  inject,
+  OnDestroy,
+  ViewChild
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import * as L from 'leaflet';
 import { NavbarComponent } from '../../components/layout/navbar.component';
-import { FooterComponent } from '../../components/layout/footer.component';
+import { RoomPostService } from '../../services/room-post.service';
+import type { RoomPostSummary } from '../../models/room-post.models';
+import { cityMatches, districtMatches } from '../../utils/room-filters';
+import { createHouseMarkerIcon, DEFAULT_MAP_CENTER, MAP_CITY_CENTERS } from '../../utils/map-markers';
+import { getVipTierSidebarTitleClass, sortRoomsByVipTier } from '../../utils/vip-tier-styles';
+
+interface MapFilters {
+  city: string;
+  district: string;
+  priceMax: number;
+}
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [RouterLink, NavbarComponent, FooterComponent],
-  template: `
-    <div class="min-h-screen flex flex-col bg-[#FFF8F0]">
-      <app-navbar />
-      <div class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-        <h1 class="text-3xl font-bold text-[#1A1A2E] mb-2">Bản đồ phòng trọ</h1>
-        <p class="text-gray-500 mb-8">Xem vị trí các phòng trọ trên bản đồ (đang hoàn thiện).</p>
-        <div
-          class="rounded-2xl border border-orange-100 bg-white h-[min(60vh,520px)] flex flex-col items-center justify-center text-gray-500 shadow-sm"
-        >
-          <svg class="w-16 h-16 text-[#FF9F43] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 16.382V5.618a1 1 0 00-1.447-.894L15 7m0 13V7m0 0L9 4"
-            />
-          </svg>
-          <p class="mb-4">Bản đồ tương tác sẽ sớm có mặt.</p>
-          <a
-            routerLink="/rooms"
-            class="px-4 py-2 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A]"
-          >
-            Xem danh sách phòng
-          </a>
-        </div>
-      </div>
-      <app-footer />
-    </div>
-  `
+  imports: [CommonModule, FormsModule, RouterLink, NavbarComponent],
+  templateUrl: './map.component.html',
+  styleUrls: ['./map.component.css']
 })
-export class MapComponent {}
+export class MapComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('mapHost', { static: true }) mapHost!: ElementRef<HTMLDivElement>;
+
+  allRooms: RoomPostSummary[] = [];
+  filteredRooms: RoomPostSummary[] = [];
+  selectedRoom: RoomPostSummary | null = null;
+
+  loading = true;
+  loadError = '';
+  searchQuery = '';
+  showFilters = false;
+
+  filters: MapFilters = {
+    city: 'all',
+    district: 'all',
+    priceMax: 10_000_000
+  };
+
+  readonly cityOptions = [
+    { value: 'all', label: 'Tất cả' },
+    { value: 'Hà Nội', label: 'Hà Nội' },
+    { value: 'TP.HCM', label: 'TP.HCM' }
+  ];
+
+  readonly districtOptions = [
+    { value: 'all', label: 'Tất cả' },
+    { value: 'Cầu Giấy', label: 'Cầu Giấy' },
+    { value: 'Đống Đa', label: 'Đống Đa' },
+    { value: 'Hai Bà Trưng', label: 'Hai Bà Trưng' },
+    { value: 'Tây Hồ', label: 'Tây Hồ' },
+    { value: 'Bình Thạnh', label: 'Bình Thạnh' },
+    { value: 'Quận 7', label: 'Quận 7' },
+    { value: 'Quận 1', label: 'Quận 1' },
+    { value: 'Quận 3', label: 'Quận 3' },
+    { value: 'Quận 10', label: 'Quận 10' }
+  ];
+
+  private map?: L.Map;
+  private readonly markerLayer = L.layerGroup();
+  private readonly roomPosts = inject(RoomPostService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
+
+  get roomsOnMap(): RoomPostSummary[] {
+    return this.filteredRooms.filter((r) => this.hasCoords(r));
+  }
+
+  get minPriceM(): string | null {
+    const prices = this.filteredRooms.map((r) => r.price).filter((p): p is number => !!p && p > 0);
+    if (!prices.length) return null;
+    return (Math.min(...prices) / 1_000_000).toFixed(1);
+  }
+
+  ngAfterViewInit(): void {
+    this.initMap();
+    this.roomPosts
+      .listForBrowse()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (list) => {
+          this.allRooms = list;
+          this.applyFilters();
+          this.loading = false;
+          this.loadError = '';
+          setTimeout(() => {
+            this.map?.invalidateSize();
+            this.syncMarkers();
+          }, 150);
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.loading = false;
+          this.loadError = 'Không tải được danh sách phòng. Kiểm tra API và thử lại.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.map?.remove();
+  }
+
+  onFiltersChange(): void {
+    this.applyFilters();
+    this.syncMarkers();
+    this.cdr.detectChanges();
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.onFiltersChange();
+  }
+
+  selectRoom(room: RoomPostSummary): void {
+    this.selectedRoom = room;
+    this.syncMarkers();
+    if (this.hasCoords(room) && this.map) {
+      this.map.flyTo([room.latitude!, room.longitude!], 16, { duration: 1.2 });
+    }
+    this.cdr.detectChanges();
+  }
+
+  clearSelection(): void {
+    this.selectedRoom = null;
+    this.syncMarkers();
+    this.cdr.detectChanges();
+  }
+
+  hasCoords(room: RoomPostSummary): boolean {
+    return (
+      room.latitude != null &&
+      room.longitude != null &&
+      Number.isFinite(room.latitude) &&
+      Number.isFinite(room.longitude)
+    );
+  }
+
+  locationLine(room: RoomPostSummary): string {
+    return [room.district, room.city].filter(Boolean).join(', ') || room.address || '—';
+  }
+
+  priceShort(price?: number): string {
+    if (!price) return 'Liên hệ';
+    return `${(price / 1_000_000).toFixed(1)}tr/tháng`;
+  }
+
+  formatPriceVnd(price?: number): string {
+    if (!price) return 'Liên hệ';
+    return (
+      new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price) +
+      '/tháng'
+    );
+  }
+
+  sidebarTitleClass(room: RoomPostSummary): string {
+    return getVipTierSidebarTitleClass(room.vipTier, this.selectedRoom?.id === room.id);
+  }
+
+  private initMap(): void {
+    this.map = L.map(this.mapHost.nativeElement, { zoomControl: false }).setView(DEFAULT_MAP_CENTER, 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(this.map);
+
+    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+    this.markerLayer.addTo(this.map);
+
+    setTimeout(() => this.map?.invalidateSize(), 200);
+  }
+
+  private applyFilters(): void {
+    const q = this.searchQuery.trim().toLowerCase();
+    const filtered = this.allRooms.filter((room) => {
+      if (!cityMatches(room.city, room.address, this.filters.city)) return false;
+      if (!districtMatches(room.district, room.address, this.filters.district)) return false;
+      if (room.price != null && room.price > 0 && room.price > this.filters.priceMax) return false;
+      if (q) {
+        const title = room.title.toLowerCase();
+        const district = (room.district ?? '').toLowerCase();
+        const city = (room.city ?? '').toLowerCase();
+        const addr = (room.address ?? '').toLowerCase();
+        if (!title.includes(q) && !district.includes(q) && !city.includes(q) && !addr.includes(q)) {
+          return false;
+        }
+      }
+      return true;
+    });
+    this.filteredRooms = sortRoomsByVipTier(filtered);
+  }
+
+  private syncMarkers(): void {
+    if (!this.map) return;
+    this.markerLayer.clearLayers();
+
+    for (const room of this.roomsOnMap) {
+      const selected = this.selectedRoom?.id === room.id;
+      const marker = L.marker([room.latitude!, room.longitude!], {
+        icon: createHouseMarkerIcon(selected)
+      });
+
+      const thumb = room.imageUrl || '';
+      const popupHtml = `
+        <div class="w-48">
+          ${thumb ? `<img src="${thumb}" alt="" class="w-full h-24 object-cover rounded mb-2" />` : ''}
+          <p class="font-bold text-sm text-gray-900 leading-tight mb-1">${this.escapeHtml(room.title)}</p>
+          <p class="text-xs text-gray-500 mb-1">${this.escapeHtml(this.locationLine(room))}</p>
+          <p class="text-sm font-bold text-[#FF6B6B]">${this.escapeHtml(this.formatPriceVnd(room.price))}</p>
+        </div>
+      `;
+      marker.bindPopup(popupHtml);
+      marker.on('click', () => this.selectRoom(room));
+      this.markerLayer.addLayer(marker);
+    }
+
+    if (this.selectedRoom && this.hasCoords(this.selectedRoom)) {
+      return;
+    }
+
+    const onMap = this.roomsOnMap;
+    if (onMap.length === 1) {
+      this.map.setView([onMap[0].latitude!, onMap[0].longitude!], 14);
+    } else if (onMap.length > 1) {
+      const bounds = L.latLngBounds(onMap.map((r) => [r.latitude!, r.longitude!] as [number, number]));
+      this.map.fitBounds(bounds, { padding: [48, 48], maxZoom: 14 });
+    } else if (this.filters.city !== 'all' && MAP_CITY_CENTERS[this.filters.city]) {
+      this.map.setView(MAP_CITY_CENTERS[this.filters.city], 12);
+    }
+  }
+
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+}

@@ -117,12 +117,14 @@
               </div>
             </div>
 
-            @if (room.description) {
-              <div class="mb-8">
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Mô tả</h3>
+            <div class="mb-8">
+              <h3 class="text-xl font-bold text-gray-900 mb-4">Mô tả</h3>
+              @if (room.description) {
                 <p class="text-gray-600 whitespace-pre-line">{{ room.description }}</p>
-              </div>
-            }
+              } @else {
+                <p class="text-gray-500 text-sm italic">Chưa có mô tả chi tiết cho tin này.</p>
+              }
+            </div>
 
             @if (room.amenities?.length) {
               <div class="mb-8">
@@ -200,9 +202,11 @@
               </div>
             }
 
-            @if (room.nearbyLandmarks?.length) {
-              <div class="mt-6 pt-6 border-t border-gray-100">
-                <h4 class="font-bold text-gray-900 mb-3">Địa điểm gần đó</h4>
+            <div class="mt-6 pt-6 border-t border-gray-100">
+              <h4 class="font-bold text-gray-900 mb-3">Địa điểm gần đó</h4>
+              @if (nearbyLandmarksLoading) {
+                <p class="text-sm text-gray-500">Đang tìm địa điểm quanh phòng…</p>
+              } @else if (room.nearbyLandmarks?.length) {
                 <ul class="space-y-2">
                   @for (item of room.nearbyLandmarks; track item) {
                     <li class="flex items-center text-sm text-gray-600">
@@ -213,8 +217,11 @@
                     </li>
                   }
                 </ul>
-              </div>
-            }
+                <p class="text-xs text-gray-400 mt-2">Gợi ý từ các tin trọ trong bán kính ~2 km (search-nearby).</p>
+              } @else {
+                <p class="text-sm text-gray-500">Chưa có điểm tham chiếu gần vị trí ghim.</p>
+              }
+            </div>
           </div>
         </div>
       </div>

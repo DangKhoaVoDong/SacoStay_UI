@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 function paymentUrlFromResponse(raw: unknown): string {
@@ -34,12 +34,28 @@ export class PaymentService {
       .pipe(map((res) => paymentUrlFromResponse(res)));
   }
 
-  /** Người thuê Premium: POST /api/Payment/buy-tenant-premium */
+  /**
+   * Người thuê Premium — BE git hiện tại chỉ có `buy-package` (chủ trọ).
+   * `buy-tenant-premium` chưa có → FE báo lỗi rõ thay vì 404 chung chung.
+   */
   buyTenantPremium(): Observable<string> {
     const params = new HttpParams().set('returnContext', 'tenant');
     return this.http
       .post<unknown>(`${this.apiUrl}/Payment/buy-tenant-premium`, {}, { params })
-      .pipe(map((res) => paymentUrlFromResponse(res)));
+      .pipe(
+        map((res) => paymentUrlFromResponse(res)),
+        catchError((err: { status?: number }) => {
+          if (err?.status === 404) {
+            return throwError(
+              () =>
+                new Error(
+                  'API thanh toán Premium người thuê chưa có trên backend (POST /api/Payment/buy-tenant-premium). Nhờ team BE bổ sung endpoint này.'
+                )
+            );
+          }
+          return throwError(() => err);
+        })
+      );
   }
 
   goToVnPay(paymentUrl: string): void {

@@ -243,7 +243,12 @@ export function isLandlordUser(user: unknown): boolean {
   return roles.some((r) => String(r).toLowerCase().includes('landlord'));
 }
 
-/** Id user từ profile JWT / Auth (dùng cho cache theo tài khoản). */
+/** Đã nhập họ tên cơ bản (sau profile-setup). */
+export function hasBasicProfileFilled(user: unknown): boolean {
+  const { firstName, lastName } = profileFirstLastSeed(user);
+  return !!(firstName && lastName);
+}
+
 export function userIdFromUser(user: unknown): string {
   if (!user || typeof user !== 'object') return '';
   const u = user as Record<string, unknown>;

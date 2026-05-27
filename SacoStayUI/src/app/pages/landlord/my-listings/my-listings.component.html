@@ -1,8 +1,14 @@
 <app-landlord-layout>
-  <div class="max-w-4xl mx-auto space-y-6">
+  <div class="w-full max-w-4xl mx-auto space-y-6">
     @if (paymentBanner) {
       <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
         {{ paymentBanner }}
+      </div>
+    }
+
+    @if (actionError) {
+      <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ actionError }}
       </div>
     }
 
@@ -26,23 +32,40 @@
     } @else {
       <div class="space-y-4">
         @for (post of posts; track post.id) {
-          <a [routerLink]="['/rooms', post.id]" class="block bg-white rounded-2xl border border-gray-100 p-4 flex gap-4 shadow-sm hover:shadow-md transition-shadow">
-            @if (post.imageUrl) {
-              <img [src]="post.imageUrl" [alt]="post.title" class="w-24 h-24 rounded-xl object-cover shrink-0" />
-            } @else {
-              <div class="w-24 h-24 rounded-xl bg-gray-100 shrink-0"></div>
+          <div class="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col sm:flex-row gap-4 shadow-sm hover:shadow-md transition-shadow">
+            <a [routerLink]="['/rooms', post.id]" class="flex gap-4 flex-1 min-w-0">
+              @if (post.imageUrl) {
+                <img [src]="post.imageUrl" [alt]="post.title" class="w-24 h-24 rounded-xl object-cover shrink-0" />
+              } @else {
+                <div class="w-24 h-24 rounded-xl bg-gray-100 shrink-0"></div>
+              }
+              <div class="min-w-0 flex-1">
+                <h2 class="font-bold text-[#1A1A2E] truncate">{{ post.title }}</h2>
+                @if (post.address) {
+                  <p class="text-sm text-gray-500 truncate">{{ post.address }}</p>
+                }
+                <p class="text-sm font-semibold text-[#FF9F43] mt-1">{{ formatPrice(post.price) }}</p>
+                @if (post.status) {
+                  <span class="inline-block mt-2 text-xs px-2 py-1 rounded font-medium" [ngClass]="statusClass(post.status)">
+                    {{ statusLabel(post.status) }}
+                  </span>
+                }
+              </div>
+            </a>
+
+            @if (isPendingPayment(post.status)) {
+              <div class="flex sm:flex-col gap-2 shrink-0 sm:items-stretch sm:justify-center">
+                <button
+                  type="button"
+                  (click)="continuePayment(post, $event)"
+                  [disabled]="payingId === post.id"
+                  class="px-4 py-2 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A] disabled:opacity-60 whitespace-nowrap"
+                >
+                  {{ payingId === post.id ? 'Đang chuyển…' : 'Thanh toán' }}
+                </button>
+              </div>
             }
-            <div class="min-w-0 flex-1">
-              <h2 class="font-bold text-[#1A1A2E] truncate">{{ post.title }}</h2>
-              @if (post.address) {
-                <p class="text-sm text-gray-500 truncate">{{ post.address }}</p>
-              }
-              <p class="text-sm font-semibold text-[#FF9F43] mt-1">{{ formatPrice(post.price) }}</p>
-              @if (post.status) {
-                <span class="inline-block mt-2 text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">{{ post.status }}</span>
-              }
-            </div>
-          </a>
+          </div>
         }
       </div>
     }

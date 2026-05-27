@@ -26,6 +26,23 @@ export function sortRoomsByVipTier<T extends RoomPostSummary>(rooms: T[]): T[] {
   });
 }
 
+/** Tiêu đề tin trong sidebar / danh sách nhỏ. */
+export function getVipTierSidebarTitleClass(tier?: VipTier | string, selected = false): string {
+  if (selected) return 'text-[#FF9F43] font-bold text-sm';
+  const t = typeof tier === 'string' ? parseRoomVipTier(tier) : tier ?? 'free';
+  const base = 'text-sm font-bold leading-tight';
+  switch (t) {
+    case 'vip3':
+      return `${base} text-[#EF4444]`;
+    case 'vip2':
+      return `${base} text-[#F59E0B]`;
+    case 'vip1':
+      return `${base} text-[#FF9F43]`;
+    default:
+      return `${base} text-[#1A1A2E]`;
+  }
+}
+
 export function getVipTierTitleClass(tier?: VipTier | string): string {
   const t = typeof tier === 'string' ? parseRoomVipTier(tier) : tier ?? 'free';
   const base = 'text-2xl md:text-3xl font-bold uppercase leading-snug';

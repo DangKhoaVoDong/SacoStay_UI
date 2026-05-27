@@ -1,0 +1,24 @@
+:host {
+  display: block;
+}
+
+.map-host {
+  width: 100%;
+  height: 100%;
+}
+
+:host ::ng-deep .leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+:host ::ng-deep .leaflet-popup-content-wrapper {
+  border-radius: 0.75rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+:host ::ng-deep .leaflet-popup-content {
+  margin: 0.75rem;
+  min-width: 12rem;
+}
