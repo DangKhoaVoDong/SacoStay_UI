@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 function paymentUrlFromResponse(raw: unknown): string {
@@ -15,52 +15,43 @@ function paymentUrlFromResponse(raw: unknown): string {
   ).trim();
 }
 
-export type PaymentContext = 'landlord' | 'tenant';
-
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  /** Chủ trọ: POST /api/Payment/buy-package */
+  /** Chủ trọ: POST /api/Payment/buy-landlord-package */
   buyLandlordPackage(roomPostId: string, packageName: string): Observable<string> {
-    const params = new HttpParams()
-      .set('roomPostId', roomPostId)
-      .set('packageName', packageName.toUpperCase())
-      .set('returnContext', 'landlord');
-
+    const body = {
+      roomPostId,
+      RoomPostId: roomPostId,
+      packageName: packageName.toUpperCase(),
+      PackageName: packageName.toUpperCase()
+    };
     return this.http
-      .post<unknown>(`${this.apiUrl}/Payment/buy-package`, {}, { params })
+      .post<unknown>(`${this.apiUrl}/Payment/buy-landlord-package`, body)
       .pipe(map((res) => paymentUrlFromResponse(res)));
   }
 
-  /**
-   * Người thuê Premium — BE git hiện tại chỉ có `buy-package` (chủ trọ).
-   * `buy-tenant-premium` chưa có → FE báo lỗi rõ thay vì 404 chung chung.
-   */
-  buyTenantPremium(): Observable<string> {
-    const params = new HttpParams().set('returnContext', 'tenant');
+  /** Người thuê: POST /api/Payment/buy-tenant-package — gói PREMIUM */
+  buyTenantPremium(packageName = 'PREMIUM'): Observable<string> {
+    const body = {
+      packageName: packageName.toUpperCase(),
+      PackageName: packageName.toUpperCase()
+    };
     return this.http
-      .post<unknown>(`${this.apiUrl}/Payment/buy-tenant-premium`, {}, { params })
-      .pipe(
-        map((res) => paymentUrlFromResponse(res)),
-        catchError((err: { status?: number }) => {
-          if (err?.status === 404) {
-            return throwError(
-              () =>
-                new Error(
-                  'API thanh toán Premium người thuê chưa có trên backend (POST /api/Payment/buy-tenant-premium). Nhờ team BE bổ sung endpoint này.'
-                )
-            );
-          }
-          return throwError(() => err);
-        })
-      );
+      .post<unknown>(`${this.apiUrl}/Payment/buy-tenant-package`, body)
+      .pipe(map((res) => paymentUrlFromResponse(res)));
   }
 
-  goToVnPay(paymentUrl: string): void {
+  goToPayOS(paymentUrl: string): void {
     if (!paymentUrl) return;
     window.location.href = paymentUrl;
+  }
+
+  /** @deprecated dùng goToPayOS */
+  goToVnPay(paymentUrl: string): void {
+    this.goToPayOS(paymentUrl);
   }
 
   static saveRoomPostIdForPayment(id: string): void {

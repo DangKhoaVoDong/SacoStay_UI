@@ -50,27 +50,74 @@ export function compatibilityColorClass(score: number): string {
   return 'bg-gray-100 text-gray-700 border-gray-200';
 }
 
+/** Nhãn ngắn theo id câu (22 = tình trạng phòng, 23 = giá phòng — khớp DB hiện tại). */
+const QUESTION_LABEL_BY_ID: Record<number, string> = {
+  2: 'Giờ Giấc',
+  22: 'Tình trạng phòng',
+  23: 'Ngân sách thuê phòng'
+};
+
+/** Thứ tự quan trọng: câu dài / cụ thể trước, tránh trùng nhãn chung. */
 const CATEGORY_RULES: { pattern: RegExp; label: string }[] = [
-  { pattern: /giờ|giấc|ngủ/i, label: 'Giờ giấc' },
-  { pattern: /tiếng ồn|ồn ào/i, label: 'Tiếng ồn' },
+  { pattern: /tình trạng phòng|đã có phòng|chưa có phòng|đang tìm phòng/i, label: 'Tình trạng phòng' },
+  { pattern: /giá phòng|ngân sách|mức giá|tiền trọ|tiền phòng/i, label: 'Ngân sách thuê' },
+  { pattern: /giờ.*(ngủ|về|sinh hoạt)|giờ giấc|thức khuya|dậy sớm/i, label: 'Giờ Giấc' },
+  {
+    pattern: /thoải mái.*(hút thuốc|người hút)|sống cùng.*(người )?hút thuốc|cảm thấy thoải mái.*hút thuốc/i,
+    label: 'Thoải mái khi ở gần người hút thuốc'
+  },
+  { pattern: /học tập|làm việc.*(nhà|tại nhà)|wfh|work from home/i, label: 'Học / làm việc tại nhà' },
+  { pattern: /môi trường sống|yên tĩnh|tiếng ồn|ồn ào/i, label: 'Môi trường sống' },
+  { pattern: /gọn gàng|ngăn nắp/i, label: 'Gọn gàng & ngăn nắp' },
+  { pattern: /mức độ sạch sẽ.*roommate|sạch sẽ.*đồng phòng|kỳ vọng.*sạch/i, label: 'Kỳ vọng vệ sinh' },
+  { pattern: /vệ sinh|dọn dẹp|lau chùi/i, label: 'Vệ sinh chung' },
+  { pattern: /nấu ăn|bếp|nồi niêu/i, label: 'Nấu ăn' },
+  { pattern: /tần suất.*khách|khách.*thường xuyên|khách.*bao lâu/i, label: 'Tần suất khách' },
+  { pattern: /khách|bạn bè.*(qua|nhà|đến)/i, label: 'Khách đến nhà' },
+  { pattern: /(^bạn )?có hút thuốc|bạn hút thuốc|thói quen hút thuốc|hút thuốc không|hút thuốc hay/i, label: 'Hút thuốc' },
   { pattern: /hút thuốc|thuốc lá/i, label: 'Hút thuốc' },
-  { pattern: /nấu ăn|bếp/i, label: 'Nấu ăn' },
-  { pattern: /cuối tuần|weekend/i, label: 'Cuối tuần' },
-  { pattern: /vệ sinh|dọn/i, label: 'Vệ sinh' },
-  { pattern: /khách|bạn bè/i, label: 'Khách khứa' },
   { pattern: /thú cưng|pet/i, label: 'Thú cưng' },
-  { pattern: /làm tại nhà|work from home|wfh/i, label: 'Làm tại nhà' },
-  { pattern: /chia sẻ|đồ dùng/i, label: 'Chia sẻ đồ' },
-  { pattern: /phòng trọ|tình trạng phòng|đang ở/i, label: 'Tình trạng phòng' },
-  { pattern: /giá phòng|ngân sách|mức giá/i, label: 'Giá phòng' }
+  { pattern: /mối quan hệ.*roommate|quan hệ.*đồng phòng/i, label: 'Quan hệ với roommate' },
+  { pattern: /góp ý|phản hồi.*roommate|nhắc nhở/i, label: 'Cách góp ý' },
+  { pattern: /không gian riêng|riêng tư/i, label: 'Không gian riêng' },
+  { pattern: /trách nhiệm|đúng hạn|chia việc|hóa đơn/i, label: 'Trách nhiệm chung' },
+  { pattern: /bất đồng|tranh chấp|mâu thuẫn/i, label: 'Xử lý bất đồng' },
+  { pattern: /căng thẳng|mệt mỏi|stress/i, label: 'Khi căng thẳng' },
+  { pattern: /cảm thấy.*roommate.*(đồ|dùng)|dùng chung.*đồ|mượn đồ/i, label: 'Dùng chung đồ' },
+  { pattern: /roommate.*(vào phòng|phòng ngủ|không gian)/i, label: 'Vào phòng riêng' },
+  { pattern: /chia sẻ.*(tiền|điện|nước)|chi phí chung/i, label: 'Chia chi phí' },
+  { pattern: /chia sẻ|đồ dùng/i, label: 'Chia sẻ đồ dùng' },
+  { pattern: /cuối tuần|weekend/i, label: 'Cuối tuần' },
+  { pattern: /nghe nhạc|tiệc|party|giải trí/i, label: 'Giải trí' },
+  { pattern: /roommate/i, label: 'Thói quen đồng phòng' },
+  { pattern: /làm tại nhà/i, label: 'Làm tại nhà' },
+  { pattern: /phòng trọ|đang ở/i, label: 'Tình trạng phòng' }
 ];
+
+function shortenQuestionFallback(questionContent: string): string {
+  const q = questionContent.trim();
+  if (!q) return 'Lối sống';
+  const cleaned = q
+    .replace(/^bạn\s+/i, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[?.!]+$/g, '');
+  if (cleaned.length <= 42) return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  return `${cleaned.slice(0, 40).trim()}…`;
+}
 
 export function lifestyleCategoryLabel(questionContent: string): string {
   const q = questionContent.trim();
   for (const { pattern, label } of CATEGORY_RULES) {
     if (pattern.test(q)) return label;
   }
-  return q.length > 36 ? `${q.slice(0, 36)}…` : q;
+  return shortenQuestionFallback(q);
+}
+
+/** Nhãn hiển thị cho một câu trả lời (ưu tiên id, sau đó nội dung câu hỏi). */
+export function lifestyleAnswerLabel(answer: UserLifestyleAnswer): string {
+  const byId = QUESTION_LABEL_BY_ID[answer.questionId];
+  if (byId) return byId;
+  return lifestyleCategoryLabel(answer.questionContent);
 }
 
 export function isRoomStatusQuestion(questionContent: string): boolean {

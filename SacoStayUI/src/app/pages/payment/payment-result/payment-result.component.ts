@@ -1,7 +1,9 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavbarComponent } from '../../../components/layout/navbar.component';
+import { AuthService } from '../../../services/auth.service';
 import { setTenantPremium } from '../../../utils/user-display';
 
 @Component({
@@ -13,6 +15,8 @@ import { setTenantPremium } from '../../../utils/user-display';
 export class PaymentResultComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
   status: 'success' | 'failed' | 'unknown' = 'unknown';
@@ -27,14 +31,16 @@ export class PaymentResultComponent implements OnInit {
     const ctxParam = (qp.get('context') || '').toLowerCase();
     this.context = ctxParam === 'tenant' ? 'tenant' : 'landlord';
     this.orderId = qp.get('orderId') || '';
-    this.returnPath =
-      this.context === 'tenant' ? '/tenant-pricing' : '/my-listings';
+    this.returnPath = this.context === 'tenant' ? '/discovery' : '/my-listings';
 
     if (this.status === 'success' && this.context === 'tenant') {
       setTenantPremium(true);
     }
 
-    this.cdr.detectChanges();
+    this.auth
+      .refreshProfile()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cdr.detectChanges());
   }
 
   get title(): string {

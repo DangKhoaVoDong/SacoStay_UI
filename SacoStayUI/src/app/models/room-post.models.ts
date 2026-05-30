@@ -73,6 +73,13 @@ export interface RoomListFilters {
 }
 
 /** Payload đăng tin — gửi multipart PascalCase theo OpenAPI POST /RoomPost/create */
+/** PUT /api/RoomPost/{id}/status */
+export interface UpdateRoomPostStatusPayload {
+  status: 'active' | 'inactive';
+  /** Số người đang ở (0 … maxPeople). */
+  currentPeople?: number;
+}
+
 export interface CreateRoomPostPayload {
   title: string;
   description: string;

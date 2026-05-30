@@ -3,6 +3,12 @@ import * as signalR from '@microsoft/signalr';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 
+function resolveChatHubUrl(): string {
+  const api = environment.apiUrl.replace(/\/+$/, '');
+  const base = api.replace(/\/api$/i, '');
+  return environment.chatHubUrl?.trim() || `${base}/chatHub`;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChatHubService {
   private readonly auth = inject(AuthService);
@@ -12,6 +18,14 @@ export class ChatHubService {
   async sendPrivateMessage(receiverId: string, message: string): Promise<void> {
     const conn = await this.getConnection();
     await conn.invoke('SendPrivateMessage', receiverId, message);
+  }
+
+  disconnect(): void {
+    if (this.connection) {
+      void this.connection.stop();
+    }
+    this.connection = null;
+    this.startPromise = null;
   }
 
   private getConnection(): Promise<signalR.HubConnection> {
@@ -28,23 +42,42 @@ export class ChatHubService {
       return this.startPromise;
     }
 
-    const hubUrl = `${environment.chatHubUrl}?access_token=${encodeURIComponent(token)}`;
-
     this.connection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl, {
+      .withUrl(resolveChatHubUrl(), {
         accessTokenFactory: () => this.auth.token || '',
+        transport:
+          signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling,
         withCredentials: true
       })
       .withAutomaticReconnect()
       .build();
 
-    this.startPromise = this.connection.start().then(() => {
-      if (!this.connection) {
-        throw new Error('Không kết nối được chat hub');
-      }
-      return this.connection;
-    });
+    this.startPromise = this.connection
+      .start()
+      .then(() => {
+        if (!this.connection) {
+          throw new Error('Không kết nối được chat hub');
+        }
+        return this.connection;
+      })
+      .catch((err: unknown) => {
+        this.resetConnection();
+        throw this.mapHubError(err);
+      });
 
     return this.startPromise;
+  }
+
+  private resetConnection(): void {
+    this.connection = null;
+    this.startPromise = null;
+  }
+
+  private mapHubError(err: unknown): Error {
+    const raw = err instanceof Error ? err.message : String(err ?? '');
+    if (/401|Unauthorized/i.test(raw)) {
+      return new Error('Phiên đăng nhập hết hạn hoặc token không hợp lệ. Vui lòng đăng nhập lại.');
+    }
+    return err instanceof Error ? err : new Error(raw || 'Không kết nối được chat hub');
   }
 }

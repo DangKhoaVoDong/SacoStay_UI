@@ -1,27 +1,18 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { filter, switchMap, take } from 'rxjs/operators';
+import { filter, switchMap, take, skip } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import { NavbarComponent } from '../../components/layout/navbar.component';
-import { LifestyleTagComponent } from '../../components/profile/lifestyle-tag.component';
+import { LifestyleAnswersPanelComponent } from '../../components/profile/lifestyle-answers-panel.component';
 import { DiscoveryFilterPanelComponent } from '../../components/discovery/discovery-filter-panel.component';
 import { AuthService } from '../../services/auth.service';
 import { LifestyleService } from '../../services/lifestyle.service';
 import { DiscoveryProfileService, type DiscoveryCard } from '../../services/discovery-profile.service';
-import { isTenantPremium, userIdFromUser } from '../../utils/user-display';
-import {
-  hasCompletedLifestyleQuiz,
-  loadSwipeData,
-  saveSwipeData,
-  type SwipeData
-} from '../../utils/lifestyle-storage';
-import {
-  loadDiscoveryWishlist,
-  saveDiscoveryWishlist,
-  type DiscoveryWishlistItem
-} from '../../utils/discovery-wishlist-storage';
+import { setTenantPremium, userIdFromUser } from '../../utils/user-display';
+import { hasCompletedLifestyleQuiz, setLifestyleQuizCompleted } from '../../utils/lifestyle-storage';
+import type { WishlistItem as ApiWishlistItem, SwipeQuota } from '../../models/lifestyle.models';
 import {
   DEFAULT_DISCOVERY_FILTERS,
   FREE_WEEKLY_SWIPE_LIMIT,
@@ -30,10 +21,19 @@ import {
 } from '../../utils/discovery-filters';
 import type { UserLifestyleAnswer } from '../../models/lifestyle.models';
 
+/** Sidebar wishlist — đồng bộ từ GET /api/Lifestyle/my-likes */
+export type DiscoveryWishlistItem = ApiWishlistItem;
+
 @Component({
   selector: 'app-discovery',
   standalone: true,
-  imports: [CommonModule, RouterLink, NavbarComponent, LifestyleTagComponent, DiscoveryFilterPanelComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    NavbarComponent,
+    LifestyleAnswersPanelComponent,
+    DiscoveryFilterPanelComponent
+  ],
   templateUrl: './discovery.component.html'
 })
 export class DiscoveryComponent implements OnInit {
@@ -44,13 +44,18 @@ export class DiscoveryComponent implements OnInit {
   deck: DiscoveryCard[] = [];
   currentIndex = 0;
   likedUsers: DiscoveryWishlistItem[] = [];
-  swipeData: SwipeData = { count: 0, resetDate: new Date().toISOString() };
+  swipeQuota: SwipeQuota = {
+    isPremium: false,
+    weeklyLimit: FREE_WEEKLY_SWIPE_LIMIT,
+    usedThisWeek: 0,
+    remaining: FREE_WEEKLY_SWIPE_LIMIT,
+    weekResetAt: new Date().toISOString()
+  };
   showUpgradePrompt = false;
   showFilterPanel = false;
   activeFilters: DiscoveryFilters = { ...DEFAULT_DISCOVERY_FILTERS };
   draftFilters: DiscoveryFilters = { ...DEFAULT_DISCOVERY_FILTERS };
 
-  /** Animation khi thả: like = vuốt phải→trái (thẻ bay sang trái); pass = ngược lại */
   swipeAnim: 'like' | 'pass' | null = null;
   dragX = 0;
   private dragging = false;
@@ -60,7 +65,6 @@ export class DiscoveryComponent implements OnInit {
   private userId = '';
   private myAnswers: UserLifestyleAnswer[] = [];
 
-  readonly isPremium = isTenantPremium();
   readonly freeSwipeLimit = FREE_WEEKLY_SWIPE_LIMIT;
 
   private readonly lifestyle = inject(LifestyleService);
@@ -70,7 +74,30 @@ export class DiscoveryComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  get isPremium(): boolean {
+    return this.swipeQuota.isPremium;
+  }
+
+  /** Số người duy nhất trong wishlist (tránh đếm trùng khi DB còn bản ghi cũ). */
+  get wishlistCount(): number {
+    return new Set(this.likedUsers.map((u) => u.userId)).size;
+  }
+
   ngOnInit(): void {
+    this.enterDiscovery();
+
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        filter((e) => e.urlAfterRedirects.split('?')[0].includes('/discovery')),
+        skip(1),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => this.enterDiscovery());
+  }
+
+  /** Mỗi lần vào /discovery: tải lại deck (gồm người đã swipe) + wishlist + quota. */
+  private enterDiscovery(): void {
     const id = userIdFromUser(this.auth.getCurrentUser());
     if (id) {
       this.bootstrapForUser(id);
@@ -87,15 +114,17 @@ export class DiscoveryComponent implements OnInit {
 
   private bootstrapForUser(userId: string): void {
     this.userId = userId;
-    this.swipeData = loadSwipeData(userId);
-    this.likedUsers = loadDiscoveryWishlist(userId);
+    this.currentIndex = 0;
+    this.swipeAnim = null;
+    this.dragX = 0;
     if (!hasCompletedLifestyleQuiz(userId)) {
       this.needsQuiz = true;
       this.loading = false;
       this.cdr.detectChanges();
       return;
     }
-    this.loadDeck(false);
+    this.needsQuiz = false;
+    this.loadDeck(true);
   }
 
   get currentCard(): DiscoveryCard | null {
@@ -107,7 +136,8 @@ export class DiscoveryComponent implements OnInit {
   }
 
   get remainingSwipes(): number {
-    return this.isPremium ? 999 : Math.max(0, this.freeSwipeLimit - this.swipeData.count);
+    if (this.isPremium) return 999;
+    return this.swipeQuota.remaining ?? Math.max(0, this.freeSwipeLimit - this.swipeQuota.usedThisWeek);
   }
 
   get remainingSwipesLabel(): string {
@@ -115,9 +145,10 @@ export class DiscoveryComponent implements OnInit {
   }
 
   get daysUntilReset(): number {
-    const resetDate = new Date(this.swipeData.resetDate);
-    const days = Math.floor((Date.now() - resetDate.getTime()) / (1000 * 60 * 60 * 24));
-    return Math.max(0, 7 - days);
+    const reset = new Date(this.swipeQuota.weekResetAt);
+    if (Number.isNaN(reset.getTime())) return 7;
+    const days = Math.ceil((reset.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, days);
   }
 
   get cardTitleLine(): string {
@@ -182,7 +213,7 @@ export class DiscoveryComponent implements OnInit {
     } else if (this.currentIndex >= this.deck.length) {
       this.currentIndex = Math.max(0, this.deck.length - 1);
     }
-    this.deckEmpty = this.deck.length === 0;
+    this.deckEmpty = this.allCards.length === 0;
   }
 
   loadDeck(includeSwiped: boolean): void {
@@ -190,11 +221,16 @@ export class DiscoveryComponent implements OnInit {
     const limit = this.isPremium ? 100 : 50;
     forkJoin({
       deck: this.lifestyle.getSwipeDeck(limit, includeSwiped),
-      myAnswers: this.lifestyle.getMyAnswers()
+      myAnswers: this.lifestyle.getMyAnswers(),
+      wishlist: this.lifestyle.getMyLikes(),
+      quota: this.lifestyle.getSwipeQuota()
     })
       .pipe(
-        switchMap(({ deck, myAnswers }) => {
+        switchMap(({ deck, myAnswers, wishlist, quota }) => {
           this.myAnswers = myAnswers;
+          this.likedUsers = wishlist;
+          this.swipeQuota = quota;
+          if (this.swipeQuota.isPremium) setTenantPremium(true);
           if (!deck.length) return of([] as DiscoveryCard[]);
           return this.discoveryProfiles.enrichDeck(deck, myAnswers);
         }),
@@ -203,7 +239,6 @@ export class DiscoveryComponent implements OnInit {
       .subscribe({
         next: (cards) => {
           this.allCards = cards;
-          this.syncWishlistWithDeck(cards);
           this.applyFiltersToDeck(true);
           this.loading = false;
           this.needsQuiz = false;
@@ -218,6 +253,27 @@ export class DiscoveryComponent implements OnInit {
 
   reloadDeck(): void {
     this.loadDeck(true);
+  }
+
+  private refreshQuota(): void {
+    this.lifestyle
+      .getSwipeQuota()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((q) => {
+        this.swipeQuota = q;
+        if (q.isPremium) setTenantPremium(true);
+        this.cdr.detectChanges();
+      });
+  }
+
+  private refreshWishlist(): void {
+    this.lifestyle
+      .getMyLikes()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((list) => {
+        this.likedUsers = list;
+        this.cdr.detectChanges();
+      });
   }
 
   onCardPointerDown(event: PointerEvent): void {
@@ -250,7 +306,6 @@ export class DiscoveryComponent implements OnInit {
     }
   }
 
-  /** Vuốt phải→trái = thích; trái→phải = bỏ qua */
   handleLikeButton(): void {
     this.commitSwipe(true);
   }
@@ -259,8 +314,37 @@ export class DiscoveryComponent implements OnInit {
     this.commitSwipe(false);
   }
 
+  private isInWishlist(userId: string): boolean {
+    return this.likedUsers.some((u) => u.userId === userId);
+  }
+
+  /** Hiển thị ngay trên sidebar; API đồng bộ sau khi swipe thành công. */
+  private addToWishlistOptimistic(card: DiscoveryCard): void {
+    if (this.isInWishlist(card.userId)) return;
+    const item: DiscoveryWishlistItem = {
+      userId: card.userId,
+      displayName: card.displayName,
+      avatarUrl: card.avatarUrl,
+      matchingScore: card.matchingScore,
+      likedAt: new Date().toISOString()
+    };
+    this.likedUsers = [item, ...this.likedUsers];
+    this.cdr.detectChanges();
+  }
+
+  private removeFromWishlistOptimistic(userId: string): void {
+    this.likedUsers = this.likedUsers.filter((u) => u.userId !== userId);
+    this.cdr.detectChanges();
+  }
+
+  genderLabel(gender: DiscoveryCard['gender']): string {
+    if (gender === 'male') return 'Nam';
+    if (gender === 'female') return 'Nữ';
+    return 'Khác';
+  }
+
   private commitSwipe(isLike: boolean): void {
-    if (!this.isPremium && this.swipeData.count >= this.freeSwipeLimit) {
+    if (!this.isPremium && this.remainingSwipes <= 0) {
       this.showUpgradePrompt = true;
       this.dragX = 0;
       return;
@@ -272,21 +356,27 @@ export class DiscoveryComponent implements OnInit {
     this.dragX = 0;
     this.cdr.detectChanges();
 
-    setTimeout(() => {
-      if (!this.isPremium) {
-        const next = { ...this.swipeData, count: this.swipeData.count + 1 };
-        this.swipeData = next;
-        saveSwipeData(this.userId, next);
-      }
+    if (isLike) {
+      this.addToWishlistOptimistic(card);
+    }
 
+    setTimeout(() => {
       this.lifestyle
         .swipeUser(card.userId, isLike)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe();
-
-      if (isLike) {
-        this.addToWishlist(card);
-      }
+        .subscribe({
+          next: () => {
+            if (isLike) {
+              this.refreshWishlist();
+            }
+            this.refreshQuota();
+          },
+          error: () => {
+            if (isLike) {
+              this.removeFromWishlistOptimistic(card.userId);
+            }
+          }
+        });
 
       this.swipeAnim = null;
       this.currentIndex += 1;
@@ -294,24 +384,15 @@ export class DiscoveryComponent implements OnInit {
     }, 280);
   }
 
-  /** Thêm vào wishlist — không trùng userId (kể cả sau tải lại trang). */
-  private addToWishlist(card: DiscoveryCard): void {
-    if (this.likedUsers.some((u) => u.userId === card.userId)) return;
-    const item: DiscoveryWishlistItem = {
-      userId: card.userId,
-      displayName: card.displayName,
-      avatarUrl: card.avatarUrl,
-      matchingScore: card.matchingScore
-    };
-    this.likedUsers = [item, ...this.likedUsers];
-    saveDiscoveryWishlist(this.userId, this.likedUsers);
-  }
-
   removeFromWishlist(userId: string, event?: Event): void {
     event?.stopPropagation();
-    this.likedUsers = this.likedUsers.filter((u) => u.userId !== userId);
-    saveDiscoveryWishlist(this.userId, this.likedUsers);
-    this.cdr.detectChanges();
+    this.lifestyle
+      .removeLike(userId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.likedUsers = this.likedUsers.filter((u) => u.userId !== userId);
+        this.cdr.detectChanges();
+      });
   }
 
   focusWishlistCard(userId: string): void {
@@ -331,23 +412,6 @@ export class DiscoveryComponent implements OnInit {
 
   isWishlistCardActive(userId: string): boolean {
     return this.currentCard?.userId === userId;
-  }
-
-  /** Cập nhật snapshot wishlist từ deck mới tải (giữ thứ tự, bỏ trùng). */
-  private syncWishlistWithDeck(cards: DiscoveryCard[]): void {
-    if (!this.likedUsers.length) return;
-    const byId = new Map(cards.map((c) => [c.userId, c]));
-    this.likedUsers = this.likedUsers.map((item) => {
-      const fresh = byId.get(item.userId);
-      if (!fresh) return item;
-      return {
-        userId: fresh.userId,
-        displayName: fresh.displayName,
-        avatarUrl: fresh.avatarUrl,
-        matchingScore: fresh.matchingScore
-      };
-    });
-    saveDiscoveryWishlist(this.userId, this.likedUsers);
   }
 
   scoreColor(score: number): string {

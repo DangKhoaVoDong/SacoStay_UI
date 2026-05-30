@@ -1,8 +1,9 @@
 import * as L from 'leaflet';
+import { getVipTierMarkerColor, type VipTier } from './vip-tier-styles';
 
 /** Icon nhà tùy chỉnh (MagicPattern). */
-export function createHouseMarkerIcon(selected: boolean): L.DivIcon {
-  const color = selected ? '#FF6B6B' : '#FF9F43';
+export function createHouseMarkerIcon(selected: boolean, tier?: VipTier | string): L.DivIcon {
+  const color = getVipTierMarkerColor(tier, selected);
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="36" height="42" viewBox="0 0 36 42">
       <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">

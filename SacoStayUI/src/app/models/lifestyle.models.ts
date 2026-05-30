@@ -14,6 +14,22 @@ export interface SwipeDeckCard {
   matchingScore: number;
 }
 
+export interface WishlistItem {
+  userId: string;
+  displayName: string;
+  avatarUrl: string;
+  matchingScore: number;
+  likedAt?: string;
+}
+
+export interface SwipeQuota {
+  isPremium: boolean;
+  weeklyLimit: number | null;
+  usedThisWeek: number;
+  remaining: number | null;
+  weekResetAt: string;
+}
+
 /** POST /api/Lifestyle/question */
 export interface CreateQuestionPayload {
   content: string;

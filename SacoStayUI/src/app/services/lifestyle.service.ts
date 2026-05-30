@@ -3,13 +3,16 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { resolveMediaUrl } from '../utils/media-url';
 import type {
   CreateQuestionPayload,
   LifestyleQuestion,
   SwipeDeckCard,
+  SwipeQuota,
   UpdateOptionPayload,
   UpdateQuestionPayload,
-  UserLifestyleAnswer
+  UserLifestyleAnswer,
+  WishlistItem
 } from '../models/lifestyle.models';
 
 export interface LifestyleMatchResult {
@@ -184,6 +187,82 @@ export class LifestyleService {
           })
         )
       );
+  }
+
+  getMyLikes(): Observable<WishlistItem[]> {
+    return this.http.get<unknown>(`${this.apiUrl}/Lifestyle/my-likes`).pipe(
+      map((raw) => this.normalizeWishlist(raw)),
+      catchError(() => of([]))
+    );
+  }
+
+  removeLike(targetUserId: string): Observable<void> {
+    return this.http
+      .delete<unknown>(`${this.apiUrl}/Lifestyle/my-likes/${encodeURIComponent(targetUserId)}`)
+      .pipe(map(() => undefined), catchError(() => of(undefined)));
+  }
+
+  getSwipeQuota(): Observable<SwipeQuota> {
+    return this.http.get<unknown>(`${this.apiUrl}/Lifestyle/swipe-quota`).pipe(
+      map((raw) => this.normalizeSwipeQuota(raw)),
+      catchError(() =>
+        of({
+          isPremium: false,
+          weeklyLimit: 10,
+          usedThisWeek: 0,
+          remaining: 10,
+          weekResetAt: new Date().toISOString()
+        })
+      )
+    );
+  }
+
+  private normalizeWishlist(raw: unknown): WishlistItem[] {
+    const byUser = new Map<string, WishlistItem>();
+    for (const item of unwrapList(raw)) {
+      if (!item || typeof item !== 'object') continue;
+      const o = item as Record<string, unknown>;
+      const userId = str(o['userId'] ?? o['UserId']);
+      if (!userId) continue;
+      const avatarRaw = str(o['avatarUrl'] ?? o['AvatarUrl']);
+      const likedAt = str(o['likedAt'] ?? o['LikedAt']) || undefined;
+      const entry: WishlistItem = {
+        userId,
+        displayName: str(o['displayName'] ?? o['DisplayName']) || userId,
+        avatarUrl: avatarRaw
+          ? resolveMediaUrl(avatarRaw)
+          : `https://ui-avatars.com/api/?name=${encodeURIComponent(str(o['displayName'] ?? o['DisplayName']) || userId)}&background=FF9F43&color=fff`,
+        matchingScore: Number(o['matchingScore'] ?? o['MatchingScore'] ?? 0),
+        likedAt
+      };
+      const prev = byUser.get(userId);
+      if (!prev) {
+        byUser.set(userId, entry);
+        continue;
+      }
+      const prevTime = prev.likedAt ? Date.parse(prev.likedAt) : 0;
+      const nextTime = likedAt ? Date.parse(likedAt) : 0;
+      if (nextTime >= prevTime) byUser.set(userId, entry);
+    }
+    return [...byUser.values()].sort((a, b) => {
+      const ta = a.likedAt ? Date.parse(a.likedAt) : 0;
+      const tb = b.likedAt ? Date.parse(b.likedAt) : 0;
+      return tb - ta;
+    });
+  }
+
+  private normalizeSwipeQuota(raw: unknown): SwipeQuota {
+    const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+    const isPremium = o['isPremium'] === true || o['IsPremium'] === true;
+    const weeklyLimitRaw = o['weeklyLimit'] ?? o['WeeklyLimit'];
+    const remainingRaw = o['remaining'] ?? o['Remaining'];
+    return {
+      isPremium,
+      weeklyLimit: weeklyLimitRaw == null ? null : Number(weeklyLimitRaw),
+      usedThisWeek: Number(o['usedThisWeek'] ?? o['UsedThisWeek'] ?? 0),
+      remaining: remainingRaw == null ? null : Number(remainingRaw),
+      weekResetAt: str(o['weekResetAt'] ?? o['WeekResetAt']) || new Date().toISOString()
+    };
   }
 
   private normalizeQuestion(item: unknown): LifestyleQuestion | null {

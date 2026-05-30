@@ -12,55 +12,142 @@
         Quay lại danh sách
       </button>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-1 space-y-6">
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
-            <img
-              [src]="selectedViewer.avatarUrl"
-              [alt]="selectedViewer.displayName"
-              class="w-32 h-32 rounded-full object-cover mx-auto border-4 border-white shadow-md"
-            />
-            <h1 class="mt-4 text-2xl font-bold text-[#1A1A2E]">{{ selectedViewer.displayName }}</h1>
-            <p class="text-gray-500 text-sm mt-1">Mã người xem: {{ selectedViewer.tenantId }}</p>
-            <p class="text-gray-500 text-sm mt-2 flex items-center justify-center gap-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {{ selectedViewer.viewTimeLabel }}
-            </p>
-            <div class="mt-6">
-              <a
-                [routerLink]="['/landlord-chat']"
-                [queryParams]="chatQueryForViewer(selectedViewer)"
-                class="inline-flex items-center justify-center w-full px-4 py-2 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A] shadow-lg shadow-orange-200"
+      @if (viewerProfileLoading) {
+        <p class="text-center text-gray-500 py-16">Đang tải hồ sơ người xem…</p>
+      } @else if (viewerProfileError) {
+        <div class="text-center py-16">
+          <p class="text-red-600 mb-4">{{ viewerProfileError }}</p>
+          <button type="button" (click)="closeViewer()" class="text-[#FF9F43] font-medium hover:underline">Quay lại danh sách</button>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+              <div class="relative inline-block">
+                <img
+                  [src]="selectedViewer.avatarUrl"
+                  [alt]="selectedViewer.displayName"
+                  class="w-32 h-32 rounded-full object-cover mx-auto border-4 border-white shadow-md"
+                />
+                @if (viewerVerified) {
+                  <div class="absolute bottom-1 right-1 bg-blue-500 text-white p-1 rounded-full border-2 border-white">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                }
+              </div>
+              <h1 class="mt-4 text-2xl font-bold text-[#1A1A2E]">{{ selectedViewer.displayName }}</h1>
+              @if (viewerAge !== null) {
+                <p class="text-gray-500 text-sm mt-1">{{ viewerAge }} tuổi · {{ viewerGenderLabel }}</p>
+              } @else {
+                <p class="text-gray-500 text-sm mt-1">{{ viewerGenderLabel }}</p>
+              }
+              <p class="text-gray-500 text-sm mt-2">{{ viewerJobLabel }}</p>
+              @if (viewerLocation) {
+                <p class="text-gray-500 text-sm mt-1 flex items-center justify-center gap-1">
+                  <span>📍</span> {{ viewerLocation }}
+                </p>
+              }
+              <p class="text-gray-400 text-xs mt-3 flex items-center justify-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Xem tin {{ selectedViewer.viewTimeLabel }}
+              </p>
+              <div class="mt-6">
+                <a
+                  [routerLink]="['/landlord-chat']"
+                  [queryParams]="chatQueryForViewer(selectedViewer)"
+                  class="inline-flex items-center justify-center w-full px-4 py-2.5 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A] shadow-lg shadow-orange-200"
+                >
+                  Nhắn tin
+                </a>
+              </div>
+            </div>
+
+            <div class="bg-orange-50/50 rounded-2xl border border-orange-100 p-6">
+              <h3 class="font-bold text-gray-900 mb-2">Tin đã xem</h3>
+              <p class="text-sm text-gray-700">{{ selectedViewer.roomTitle || '—' }}</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-orange-100 p-6">
+              <h3 class="font-bold text-gray-900 mb-3">Tình trạng phòng</h3>
+              <span
+                class="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                [class.bg-green-100]="viewerRoomHasRoom"
+                [class.text-green-800]="viewerRoomHasRoom"
+                [class.bg-yellow-100]="!viewerRoomHasRoom"
+                [class.text-yellow-800]="!viewerRoomHasRoom"
               >
-                Nhắn tin
-              </a>
+                {{ viewerRoomStatusLabel }}
+              </span>
+              @if (viewerRoomPriceLabel) {
+                <p class="text-sm text-gray-600 mt-2">
+                  <span class="font-medium text-gray-900">Ngân sách:</span> {{ viewerRoomPriceLabel }}
+                </p>
+              }
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h3 class="font-bold text-gray-900 mb-2">Giới thiệu</h3>
+              <p class="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                {{ viewerBio || 'Chưa có giới thiệu.' }}
+              </p>
             </div>
           </div>
 
-          <div class="bg-white rounded-2xl shadow-sm border border-orange-100 p-6 bg-orange-50/50">
-            <h3 class="font-bold text-gray-900 mb-2">Tin đã xem</h3>
-            <p class="text-sm text-gray-700">{{ selectedViewer.roomTitle || '—' }}</p>
+          <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-[#FF6B6B]/20 p-6 bg-gradient-to-r from-[#FFF5F5] to-white">
+              <div class="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 class="text-xl font-bold text-[#1A1A2E]">Độ hòa hợp lối sống</h2>
+                  <p class="text-gray-600 text-sm mt-1">
+                    @if (landlordLifestyleAnswers.length) {
+                      So sánh trắc nghiệm của bạn với người xem tin
+                    } @else {
+                      Hoàn thành trắc nghiệm lối sống để xem chi tiết điểm trùng khớp
+                    }
+                  </p>
+                </div>
+                <app-compatibility-badge [score]="matchScore ?? 0" size="lg" />
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h3 class="font-bold text-gray-900 mb-4">Chi tiết lối sống</h3>
+              @if (!viewerDisplayAnswers.length) {
+                <p class="text-sm text-gray-500">Người này chưa hoàn thành trắc nghiệm lối sống.</p>
+              } @else {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  @for (answer of viewerDisplayAnswers; track answer.questionId) {
+                    <div
+                      class="rounded-xl border p-3"
+                      [class.border-green-200]="isAnswerMatch(answer)"
+                      [class.bg-green-50/40]="isAnswerMatch(answer)"
+                      [class.border-orange-100]="!isAnswerMatch(answer)"
+                      [class.bg-[#FFFBF7]]="!isAnswerMatch(answer)"
+                    >
+                      <div class="flex items-center gap-2 mb-1.5">
+                        <span
+                          class="w-2 h-2 rounded-full shrink-0"
+                          [class.bg-green-500]="isAnswerMatch(answer)"
+                          [class.bg-gray-300]="!isAnswerMatch(answer)"
+                        ></span>
+                        <p class="text-xs font-semibold text-[#FF9F43]">{{ categoryLabel(answer) }}</p>
+                        @if (isAnswerMatch(answer)) {
+                          <span class="text-[10px] font-medium text-green-700 ml-auto">Trùng khớp</span>
+                        }
+                      </div>
+                      <p class="text-sm text-gray-800 leading-snug pl-4">{{ answer.optionContent }}</p>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
           </div>
         </div>
-
-        <div class="lg:col-span-2 space-y-6">
-          <div class="bg-white rounded-2xl shadow-sm border border-[#FF6B6B]/20 p-6 bg-gradient-to-r from-[#FFF5F5] to-white">
-            <h2 class="text-xl font-bold text-[#1A1A2E]">Độ hòa hợp lối sống</h2>
-            <p class="text-gray-600 text-sm mt-1">Từ API Lifestyle/match (cần cả hai đã làm trắc nghiệm)</p>
-            @if (matchLoading) {
-              <p class="mt-4 text-gray-500">Đang tính...</p>
-            } @else {
-              <p class="mt-4 text-4xl font-black text-[#FF9F43]">{{ matchScore ?? 0 }}%</p>
-            }
-          </div>
-
-          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
-            API analytics hiện chỉ trả <strong>TenantId</strong> và thời gian xem. Tên, ảnh, lối sống chi tiết sẽ hiển thị khi backend bổ sung endpoint hồ sơ người xem.
-          </div>
-        </div>
-      </div>
+      }
     </div>
   } @else {
     <div class="max-w-5xl mx-auto space-y-4">
@@ -116,7 +203,7 @@
               </div>
               <div>
                 <p class="text-sm font-semibold text-gray-900">{{ getViewerLimitLabel() }}</p>
-                <p class="text-xs text-gray-500 mt-0.5">Nâng cấp gói ELITE trên tin để xem đủ danh sách (theo backend)</p>
+                <p class="text-xs text-gray-500 mt-0.5">Nâng cấp gói ELITE trên tin để xem đủ danh sách</p>
               </div>
             </div>
             <a routerLink="/landlord-pricing" class="px-4 py-2 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A] shrink-0 text-center">

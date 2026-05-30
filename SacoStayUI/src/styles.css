@@ -12,7 +12,7 @@
   --auth-primary-hover: #FF8C2A;
   --auth-bg-left: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --auth-card-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  --auth-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --auth-font: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Base styles */

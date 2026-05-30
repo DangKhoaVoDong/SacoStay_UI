@@ -3,25 +3,23 @@
 
   <div class="flex-1">
     <!-- Hero: cùng layout cho khách và đã đăng nhập -->
-    <section class="relative bg-[#FFF8F0] py-20 lg:py-32 overflow-hidden">
+    <section class="home-hero relative py-20 lg:py-32 overflow-hidden">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div class="text-center max-w-3xl mx-auto">
-          <h1 class="text-4xl md:text-6xl font-black text-[#1A1A2E] mb-6 leading-tight tracking-tight">
+          <h1 class="home-hero-title text-4xl md:text-6xl font-bold text-[#1A1A2E] mb-6 leading-tight tracking-tight">
             Tìm bạn ở ghép <span class="text-[#FF9F43]">hợp gu</span><br />
             Sống vui mỗi ngày
           </h1>
-          <p class="text-xl text-[#6B7280] mb-10 leading-relaxed">
+          <p class="home-hero-sub text-lg md:text-xl text-[#6B7280] mb-10 leading-relaxed max-w-2xl mx-auto">
             SacoStay giúp bạn tìm người ở ghép phù hợp dựa trên thói quen sinh
             hoạt và tính cách. Không còn lo lắng về việc "lệch pha" khi sống
             chung.
           </p>
-          <div class="flex flex-col sm:flex-row justify-center gap-4">
-            <a routerLink="/discovery"
-              class="bg-[#FF9F43] text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-[#FF8C2A] shadow-lg shadow-orange-200 transition-colors">
+          <div class="home-hero-actions flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-4">
+            <a routerLink="/discovery" class="home-hero-btn home-hero-btn-primary">
               Tìm bạn ngay
             </a>
-            <a routerLink="/rooms"
-              class="border-2 border-[#FF9F43] text-[#FF9F43] px-8 py-3 rounded-lg text-lg font-medium hover:bg-[#FF9F43] hover:text-white transition-colors">
+            <a routerLink="/rooms" class="home-hero-btn home-hero-btn-secondary">
               Xem phòng trọ
             </a>
           </div>

@@ -5,6 +5,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import type {
   CreateRoomPostPayload,
+  UpdateRoomPostStatusPayload,
   RoomOccupant,
   RoomPostAnalytics,
   RoomPostDetail,
@@ -213,6 +214,26 @@ export class RoomPostService {
     return this.http.post<unknown>(`${this.apiUrl}/RoomPost/create`, fd);
   }
 
+  /** PUT /api/RoomPost/{id}/status — active | inactive + số người tối đa. */
+  updatePostStatus(postId: string, body: UpdateRoomPostStatusPayload): Observable<void> {
+    const payload: Record<string, unknown> = {
+      status: body.status,
+      Status: body.status
+    };
+    if (body.currentPeople != null && body.currentPeople >= 0) {
+      payload['currentPeople'] = body.currentPeople;
+      payload['CurrentPeople'] = body.currentPeople;
+    }
+    return this.http
+      .put<unknown>(`${this.apiUrl}/RoomPost/${encodeURIComponent(postId)}/status`, payload)
+      .pipe(map(() => undefined));
+  }
+
+  /** DELETE /api/RoomPost/{id} — tin trạng thái Hidden (đã bị từ chối / ẩn). */
+  deletePost(postId: string): Observable<void> {
+    return this.http.delete<unknown>(`${this.apiUrl}/RoomPost/${encodeURIComponent(postId)}`).pipe(map(() => undefined));
+  }
+
   recordView(postId: string): Observable<void> {
     return this.http.post<unknown>(`${this.apiUrl}/RoomPost/${encodeURIComponent(postId)}/view`, {}).pipe(
       map(() => undefined),
@@ -355,7 +376,11 @@ export class RoomPostService {
     const maxNum = Number(o['maxPeople'] ?? o['MaxPeople'] ?? o['maxOccupants'] ?? o['MaxOccupants'] ?? 0);
     const currentNum = Number(o['currentPeople'] ?? o['CurrentPeople'] ?? o['currentOccupants'] ?? 0);
     const occupants = o['currentOccupants'] ?? o['CurrentOccupants'];
-    let currentPeople = Number.isFinite(currentNum) && currentNum > 0 ? currentNum : undefined;
+    let currentPeople =
+      Number.isFinite(currentNum) && currentNum >= 0 ? currentNum : undefined;
+    if (currentPeople === undefined && Number.isFinite(maxNum) && maxNum > 0) {
+      currentPeople = 0;
+    }
     if (!currentPeople && Array.isArray(occupants)) {
       currentPeople = occupants.length;
     }
@@ -383,7 +408,9 @@ export class RoomPostService {
       imageUrl: imageUrl ? resolveMediaUrl(imageUrl) : undefined,
       status: str(o['status'] ?? o['Status']) || undefined,
       viewCount: Number(o['viewCount'] ?? o['ViewCount'] ?? 0) || undefined,
-      vipTier: parseRoomVipTier(o['vipTier'] ?? o['VipTier'] ?? o['vipLevel'] ?? o['VipLevel']),
+      vipTier: parseRoomVipTier(
+        o['packageTier'] ?? o['PackageTier'] ?? o['vipTier'] ?? o['VipTier'] ?? o['vipLevel'] ?? o['VipLevel']
+      ),
       amenities: this.extractAmenities(o),
       description: str(o['description'] ?? o['Description']) || undefined,
       latitude: coords.lat,

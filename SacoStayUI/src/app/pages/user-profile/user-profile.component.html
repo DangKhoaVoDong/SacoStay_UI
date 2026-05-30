@@ -181,22 +181,27 @@
                 }
               </p>
             } @else {
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @for (answer of displayAnswers; track answer.questionId) {
-                  <div class="flex items-start">
-                    <span
-                      class="mt-1.5 w-2 h-2 rounded-full mr-3 shrink-0"
-                      [class.bg-green-500]="isAnswerMatch(answer)"
-                      [class.bg-gray-300]="!isAnswerMatch(answer)"
-                    ></span>
-                    <div>
-                      <span class="text-xs text-gray-500 uppercase tracking-wider font-semibold block">
-                        {{ categoryLabel(answer.questionContent) }}
-                      </span>
-                      <div class="mt-1">
-                        <app-lifestyle-tag [optionContent]="answer.optionContent" />
-                      </div>
+                  <div
+                    class="rounded-xl border p-3"
+                    [class.border-green-200]="isAnswerMatch(answer)"
+                    [class.bg-green-50/40]="isAnswerMatch(answer)"
+                    [class.border-orange-100]="!isAnswerMatch(answer)"
+                    [class.bg-[#FFFBF7]]="!isAnswerMatch(answer)"
+                  >
+                    <div class="flex items-center gap-2 mb-1.5">
+                      <span
+                        class="w-2 h-2 rounded-full shrink-0"
+                        [class.bg-green-500]="isAnswerMatch(answer)"
+                        [class.bg-gray-300]="!isAnswerMatch(answer)"
+                      ></span>
+                      <p class="text-xs font-semibold text-[#FF9F43]">{{ categoryLabel(answer) }}</p>
+                      @if (isAnswerMatch(answer)) {
+                        <span class="text-[10px] font-medium text-green-700 ml-auto">Trùng khớp</span>
+                      }
                     </div>
+                    <p class="text-sm text-gray-800 leading-snug pl-4">{{ answer.optionContent }}</p>
                   </div>
                 }
               </div>

@@ -1,10 +1,3 @@
-# SacoStay API - OpenAPI JSON
-
-Nguồn: trích từ `PROJECT_STRUCTURE.md` (mục **BACKEND ENDPOINT JSON/YAML**).
-
-Tham chiếu contract API cho team Frontend.
-
-```json
 {
   "openapi": "3.0.1",
   "info": {
@@ -741,6 +734,52 @@ Tham chiếu contract API cho team Frontend.
         }
       }
     },
+    "/api/Lifestyle/my-likes": {
+      "get": {
+        "tags": [
+          "Lifestyle"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Lifestyle/my-likes/{targetUserId}": {
+      "delete": {
+        "tags": [
+          "Lifestyle"
+        ],
+        "parameters": [
+          {
+            "name": "targetUserId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Lifestyle/swipe-quota": {
+      "get": {
+        "tags": [
+          "Lifestyle"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Lifestyle/options": {
       "put": {
         "tags": [
@@ -791,27 +830,72 @@ Tham chiếu contract API cho team Frontend.
         }
       }
     },
-    "/api/Payment/buy-package": {
+    "/api/Payment/buy-landlord-package": {
       "post": {
         "tags": [
           "Payment"
         ],
-        "parameters": [
-          {
-            "name": "roomPostId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "packageName",
-            "in": "query",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuyLandlordPackageDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuyLandlordPackageDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuyLandlordPackageDTO"
+              }
             }
           }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Payment/buy-tenant-package": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuyTenantPackageDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuyTenantPackageDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BuyTenantPackageDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Payment/payos-return": {
+      "get": {
+        "tags": [
+          "Payment"
         ],
         "responses": {
           "200": {
@@ -820,7 +904,19 @@ Tham chiếu contract API cho team Frontend.
         }
       }
     },
-    "/api/Payment/vnpay-return": {
+    "/api/Payment/payos-webhook": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Payment/history": {
       "get": {
         "tags": [
           "Payment"
@@ -1015,6 +1111,71 @@ Tham chiếu contract API cho team Frontend.
         }
       }
     },
+    "/api/RoomPost/{id}/status": {
+      "put": {
+        "tags": [
+          "RoomPost"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoomPostStatusDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoomPostStatusDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoomPostStatusDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/RoomPost/{id}": {
+      "delete": {
+        "tags": [
+          "RoomPost"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/RoomPost/{id}/view": {
       "post": {
         "tags": [
@@ -1041,6 +1202,30 @@ Tham chiếu contract API cho team Frontend.
   },
   "components": {
     "schemas": {
+      "BuyLandlordPackageDTO": {
+        "type": "object",
+        "properties": {
+          "roomPostId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "packageName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BuyTenantPackageDTO": {
+        "type": "object",
+        "properties": {
+          "packageName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateQuestionDTO": {
         "type": "object",
         "properties": {
@@ -1181,6 +1366,21 @@ Tham chiếu contract API cho team Frontend.
           },
           "content": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateRoomPostStatusDTO": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentPeople": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           }
         },

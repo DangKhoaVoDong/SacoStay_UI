@@ -26,7 +26,7 @@ module.exports = {
         'saco-gray': '#6B7280',
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+        sans: ['Plus Jakarta Sans', 'Inter', 'ui-sans-serif', 'system-ui'],
       },
       boxShadow: {
         'saco': '0 20px 40px rgba(0, 0, 0, 0.1)',

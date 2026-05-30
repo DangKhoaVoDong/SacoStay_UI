@@ -28,7 +28,7 @@
     <div class="flex-1 flex items-center justify-center p-6 text-center max-w-md mx-auto">
       <h2 class="text-xl font-bold text-[#1A1A2E] mb-2">Chưa có người để gợi ý</h2>
       <p class="text-[#6B7280] text-sm mb-6">
-        Không có ai phù hợp bộ lọc hiện tại, hoặc chưa có người thuê trọ khác hoàn thành trắc nghiệm. Thử đặt lại bộ lọc hoặc tải lại nhé!
+        Chưa có người thuê trọ khác hoàn thành trắc nghiệm, hoặc bộ lọc đang quá hẹp. Thử đặt lại bộ lọc hoặc tải lại nhé!
       </p>
       <button type="button" class="px-6 py-2 rounded-lg bg-[#FF9F43] text-white font-medium" (click)="reloadDeck()">
         Tải lại
@@ -40,7 +40,7 @@
       <aside class="hidden lg:flex w-72 flex-col bg-white border-r border-orange-100 shrink-0">
         <div class="p-4 border-b border-orange-100">
           <h3 class="font-bold text-gray-900">Danh sách yêu thích</h3>
-          <p class="text-xs text-gray-500 mt-0.5">{{ likedUsers.length }} người</p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ wishlistCount }} người</p>
         </div>
         <div class="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3 content-start">
           @if (likedUsers.length) {
@@ -237,25 +237,36 @@
                 {{ currentCard.displayName }}@if (currentCard.age !== null) {, {{ currentCard.age }}}
               </p>
               <p class="text-sm text-gray-500">{{ currentCard.jobLabel }}</p>
+              <p
+                class="inline-flex mt-2 items-center gap-1 text-sm font-bold px-3 py-1 rounded-full"
+                [style.background]="scoreColor(currentCard.matchingScore) + '22'"
+                [style.color]="scoreColor(currentCard.matchingScore)"
+              >
+                {{ currentCard.matchingScore }}% phù hợp
+              </p>
             </div>
 
-            <div class="space-y-2 text-sm text-gray-600">
+            <div class="space-y-2.5 text-sm text-gray-700 rounded-xl border border-orange-50 bg-[#FFFBF7] p-3">
+              <div class="flex items-center gap-2">
+                <span class="text-gray-400 w-5 text-center">👤</span>
+                <span>{{ genderLabel(currentCard.gender) }}</span>
+              </div>
               @if (currentCard.location) {
                 <div class="flex items-center gap-2">
-                  <span class="text-gray-400">📍</span>
+                  <span class="text-gray-400 w-5 text-center">📍</span>
                   <span>{{ currentCard.location }}</span>
                 </div>
               }
+              <div class="flex items-center gap-2">
+                <span class="text-gray-400 w-5 text-center">🏠</span>
+                <span>{{ currentCard.roomStatusLabel }}</span>
+              </div>
               @if (currentCard.roomPriceLabel) {
                 <div class="flex items-center gap-2">
-                  <span class="text-gray-400">💰</span>
+                  <span class="text-gray-400 w-5 text-center">💰</span>
                   <span>{{ currentCard.roomPriceLabel }}</span>
                 </div>
               }
-              <div class="flex items-center gap-2">
-                <span class="text-gray-400">🏠</span>
-                <span>{{ currentCard.roomStatusLabel }}</span>
-              </div>
             </div>
 
             <div>
@@ -269,11 +280,7 @@
               <h4 class="font-semibold text-gray-900 mb-3">Chi tiết lối sống</h4>
               @if (isPremium) {
                 @if (currentCard.lifestyleAnswers.length) {
-                  <div class="flex flex-wrap gap-2">
-                    @for (a of currentCard.lifestyleAnswers; track a.questionId) {
-                      <app-lifestyle-tag [optionContent]="a.optionContent" />
-                    }
-                  </div>
+                  <app-lifestyle-answers-panel [answers]="currentCard.lifestyleAnswers" />
                 } @else {
                   <p class="text-sm text-gray-500">Chưa có dữ liệu lối sống.</p>
                 }

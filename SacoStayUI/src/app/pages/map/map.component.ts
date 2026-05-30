@@ -211,7 +211,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     for (const room of this.roomsOnMap) {
       const selected = this.selectedRoom?.id === room.id;
       const marker = L.marker([room.latitude!, room.longitude!], {
-        icon: createHouseMarkerIcon(selected)
+        icon: createHouseMarkerIcon(selected, room.vipTier)
       });
 
       const thumb = room.imageUrl || '';

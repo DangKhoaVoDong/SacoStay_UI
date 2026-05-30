@@ -2,7 +2,11 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import type { RoomPostSummary } from '../../models/room-post.models';
-import { getVipTierTitleClass } from '../../utils/vip-tier-styles';
+import {
+  getVipTierCardArticleClass,
+  getVipTierPriceBadgeClass,
+  getVipTierTitleClass
+} from '../../utils/vip-tier-styles';
 
 @Component({
   selector: 'app-room-card',
@@ -13,8 +17,16 @@ import { getVipTierTitleClass } from '../../utils/vip-tier-styles';
 export class RoomCardComponent {
   @Input({ required: true }) room!: RoomPostSummary;
 
+  get articleClass(): string {
+    return getVipTierCardArticleClass(this.room.vipTier);
+  }
+
   get titleClass(): string {
-    return getVipTierTitleClass(this.room.vipTier) + ' text-sm leading-snug line-clamp-2';
+    return getVipTierTitleClass(this.room.vipTier, true) + ' line-clamp-2';
+  }
+
+  get priceBadgeClass(): string {
+    return getVipTierPriceBadgeClass(this.room.vipTier);
   }
 
   formatPrice(price?: number): string {
@@ -24,12 +36,5 @@ export class RoomCardComponent {
 
   get displayAddress(): string {
     return this.room.address || [this.room.district, this.room.city].filter(Boolean).join(', ') || '—';
-  }
-
-  get peopleLabel(): string {
-    const cur = this.room.currentPeople ?? 0;
-    const max = this.room.maxPeople;
-    if (!max) return '';
-    return `${cur || 0}/${max} người`;
   }
 }
