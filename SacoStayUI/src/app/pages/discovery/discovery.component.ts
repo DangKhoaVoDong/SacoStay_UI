@@ -5,7 +5,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter, switchMap, take, skip } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import { NavbarComponent } from '../../components/layout/navbar.component';
-import { LifestyleAnswersPanelComponent } from '../../components/profile/lifestyle-answers-panel.component';
 import { DiscoveryFilterPanelComponent } from '../../components/discovery/discovery-filter-panel.component';
 import { AuthService } from '../../services/auth.service';
 import { LifestyleService } from '../../services/lifestyle.service';
@@ -31,7 +30,6 @@ export type DiscoveryWishlistItem = ApiWishlistItem;
     CommonModule,
     RouterLink,
     NavbarComponent,
-    LifestyleAnswersPanelComponent,
     DiscoveryFilterPanelComponent
   ],
   templateUrl: './discovery.component.html'
@@ -168,10 +166,10 @@ export class DiscoveryComponent implements OnInit {
 
   get cardDragStyle(): Record<string, string> {
     if (this.swipeAnim === 'like') {
-      return { transform: 'translateX(-120%) rotate(-18deg)', opacity: '0' };
+      return { transform: 'translateX(120%) rotate(18deg)', opacity: '0' };
     }
     if (this.swipeAnim === 'pass') {
-      return { transform: 'translateX(120%) rotate(18deg)', opacity: '0' };
+      return { transform: 'translateX(-120%) rotate(-18deg)', opacity: '0' };
     }
     if (this.dragging || this.dragX !== 0) {
       const rot = Math.max(-18, Math.min(18, this.dragX * 0.06));
@@ -181,11 +179,11 @@ export class DiscoveryComponent implements OnInit {
   }
 
   get likeOverlayOpacity(): number {
-    return Math.min(1, Math.max(0, -this.dragX / 100));
+    return Math.min(1, Math.max(0, this.dragX / 100));
   }
 
   get passOverlayOpacity(): number {
-    return Math.min(1, Math.max(0, this.dragX / 100));
+    return Math.min(1, Math.max(0, -this.dragX / 100));
   }
 
   startQuiz(): void {
@@ -230,7 +228,7 @@ export class DiscoveryComponent implements OnInit {
           this.myAnswers = myAnswers;
           this.likedUsers = wishlist;
           this.swipeQuota = quota;
-          if (this.swipeQuota.isPremium) setTenantPremium(true);
+          if (this.userId) setTenantPremium(this.swipeQuota.isPremium, this.userId);
           if (!deck.length) return of([] as DiscoveryCard[]);
           return this.discoveryProfiles.enrichDeck(deck, myAnswers);
         }),
@@ -261,7 +259,7 @@ export class DiscoveryComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((q) => {
         this.swipeQuota = q;
-        if (q.isPremium) setTenantPremium(true);
+        if (this.userId) setTenantPremium(q.isPremium, this.userId);
         this.cdr.detectChanges();
       });
   }
@@ -296,9 +294,9 @@ export class DiscoveryComponent implements OnInit {
     this.pointerId = null;
 
     const threshold = 80;
-    if (this.dragX < -threshold) {
+    if (this.dragX > threshold) {
       this.commitSwipe(true);
-    } else if (this.dragX > threshold) {
+    } else if (this.dragX < -threshold) {
       this.commitSwipe(false);
     } else {
       this.dragX = 0;

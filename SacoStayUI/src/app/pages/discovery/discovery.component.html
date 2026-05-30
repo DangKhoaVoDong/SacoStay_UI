@@ -64,7 +64,7 @@
                 </span>
                 <button
                   type="button"
-                  class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all"
+                  class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#ffbd59] transition-all"
                   title="Xóa khỏi danh sách"
                   (click)="removeFromWishlist(u.userId, $event)"
                 >
@@ -133,16 +133,16 @@
               <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent pointer-events-none"></div>
 
               <div
-                class="absolute top-10 left-6 border-4 border-[#2ECC71] rounded-xl px-3 py-1 -rotate-12 pointer-events-none transition-opacity"
+                class="absolute top-10 left-6 border-4 border-[#ffbd59] rounded-xl px-3 py-1 -rotate-12 pointer-events-none transition-opacity"
+                [style.opacity]="swipeAnim === 'pass' ? 1 : passOverlayOpacity"
+              >
+                <span class="text-[#ffbd59] font-black text-xl">Lượt sau 👋</span>
+              </div>
+              <div
+                class="absolute top-10 right-6 border-4 border-[#2ECC71] rounded-xl px-3 py-1 rotate-12 pointer-events-none transition-opacity"
                 [style.opacity]="swipeAnim === 'like' ? 1 : likeOverlayOpacity"
               >
                 <span class="text-[#2ECC71] font-black text-xl">Phù hợp ✨</span>
-              </div>
-              <div
-                class="absolute top-10 right-6 border-4 border-red-500 rounded-xl px-3 py-1 rotate-12 pointer-events-none transition-opacity"
-                [style.opacity]="swipeAnim === 'pass' ? 1 : passOverlayOpacity"
-              >
-                <span class="text-red-500 font-black text-xl">Lượt sau 👋</span>
               </div>
 
               <div class="absolute bottom-0 left-0 right-0 p-6 text-white z-10 space-y-3 pointer-events-none">
@@ -187,7 +187,7 @@
                 {{ isPremium ? 'Bạn đã xem hết gợi ý hiện tại.' : 'Bạn đã xem hết gợi ý hoặc hết lượt swipe tuần này.' }}
               </p>
               @if (!isPremium) {
-                <a routerLink="/tenant-pricing" class="px-6 py-2 rounded-lg bg-gradient-to-r from-[#FF9F43] to-[#FF6B6B] text-white font-medium">
+                <a routerLink="/tenant-pricing" class="px-6 py-2 rounded-lg bg-[#ffbd59] hover:bg-[#f5a832] text-white font-medium">
                   Nâng cấp Premium
                 </a>
               }
@@ -201,7 +201,7 @@
         @if (hasMoreCards && currentCard) {
           <div class="flex items-center justify-center gap-8 mt-6">
             <button type="button" class="flex flex-col items-center gap-1" (click)="handlePassButton()">
-              <span class="w-14 h-14 rounded-full bg-white shadow-lg border border-red-100 flex items-center justify-center text-red-500 hover:scale-110 transition-transform">
+              <span class="w-14 h-14 rounded-full bg-white shadow-lg border border-[#ffbd59]/30 flex items-center justify-center text-[#ffbd59] hover:scale-110 transition-transform">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -217,7 +217,7 @@
               <span class="text-xs font-bold text-gray-500">Gửi lượt thích</span>
             </button>
           </div>
-          <p class="text-xs text-gray-400 mt-3 hidden sm:block">Vuốt phải → trái để thích • trái → phải để bỏ qua</p>
+          <p class="text-xs text-gray-400 mt-3 hidden sm:block">Vuốt phải để thích • vuốt trái để bỏ qua</p>
         }
       </section>
 
@@ -276,37 +276,12 @@
               </p>
             </div>
 
-            <div>
-              <h4 class="font-semibold text-gray-900 mb-3">Chi tiết lối sống</h4>
-              @if (isPremium) {
-                @if (currentCard.lifestyleAnswers.length) {
-                  <app-lifestyle-answers-panel [answers]="currentCard.lifestyleAnswers" />
-                } @else {
-                  <p class="text-sm text-gray-500">Chưa có dữ liệu lối sống.</p>
-                }
-                <a
-                  [routerLink]="['/profile', currentCard.userId]"
-                  class="block mt-4 text-center text-sm text-[#FF9F43] font-medium hover:underline"
-                >
-                  Xem hồ sơ đầy đủ
-                </a>
-              } @else {
-                <div class="rounded-xl border border-orange-100 bg-orange-50/60 p-4 text-center">
-                  <div class="w-10 h-10 rounded-full bg-white mx-auto mb-3 flex items-center justify-center text-gray-400 shadow-sm">
-                    🔒
-                  </div>
-                  <p class="text-sm text-gray-600 mb-4">
-                    Nâng cấp Premium để xem đầy đủ thông tin lối sống và tăng cơ hội tìm được người phù hợp
-                  </p>
-                  <a
-                    routerLink="/tenant-pricing"
-                    class="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-gradient-to-r from-[#FF9F43] to-[#FF6B6B] text-white text-sm font-semibold"
-                  >
-                    👑 Nâng cấp Premium
-                  </a>
-                </div>
-              }
-            </div>
+            <a
+              [routerLink]="['/profile', currentCard.userId]"
+              class="block text-center text-sm text-[#FF9F43] font-medium hover:underline"
+            >
+              Xem hồ sơ đầy đủ
+            </a>
 
             @if (isPremium) {
               <a
@@ -336,7 +311,7 @@
         <p class="text-gray-600 text-sm mb-6">
           Bạn đã dùng hết {{ freeSwipeLimit }} lượt swipe miễn phí trong tuần. Nâng cấp để lướt không giới hạn!
         </p>
-        <a routerLink="/tenant-pricing" class="block w-full py-3 rounded-lg bg-gradient-to-r from-[#FF9F43] to-[#FF6B6B] text-white font-medium">
+        <a routerLink="/tenant-pricing" class="block w-full py-3 rounded-lg bg-[#ffbd59] hover:bg-[#f5a832] text-white font-medium">
           Nâng cấp Premium
         </a>
       </div>

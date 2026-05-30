@@ -22,6 +22,8 @@ module.exports = {
         // SacoStay brand colors
         'saco-orange': '#FF9F43',
         'saco-orange-dark': '#FF8C2A',
+        'saco-brand': '#ffbd59',
+        'saco-brand-dark': '#f5a832',
         'saco-blue': '#1A1A2E',
         'saco-gray': '#6B7280',
       },
@@ -50,5 +52,13 @@ module.exports = {
       },
     },
   },
+  safelist: [
+    'text-[#2563EB]',
+    'text-[#F59E0B]',
+    'text-[#EF4444]',
+    'bg-[#2563EB]',
+    'bg-[#F59E0B]',
+    'bg-[#EF4444]',
+  ],
   plugins: [],
 }

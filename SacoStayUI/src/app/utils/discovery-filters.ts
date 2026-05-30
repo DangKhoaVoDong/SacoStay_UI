@@ -41,7 +41,7 @@ export interface DiscoveryFilterableCard {
 }
 
 /** Số lượt swipe miễn phí / tuần (Premium = không giới hạn). */
-export const FREE_WEEKLY_SWIPE_LIMIT = 10;
+export const FREE_WEEKLY_SWIPE_LIMIT = 5;
 
 export function profileGenderFromRaw(gender: unknown): ProfileGender {
   if (gender === true || gender === 'male') return 'male';

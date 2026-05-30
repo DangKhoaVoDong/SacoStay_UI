@@ -20,7 +20,8 @@ import {
   readTempRegisterProfile,
   clearTempRegisterProfile,
   applyTempRegisterProfileToUser,
-  userIdFromUser
+  userIdFromUser,
+  clearLegacyTenantPremiumKey
 } from '../utils/user-display';
 import { clearLegacyLifestyleKeys, clearSwipeDataForUser } from '../utils/lifestyle-storage';
 import { ChatPeerProfileService } from './chat-peer-profile.service';
@@ -120,6 +121,7 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('user');
     sessionStorage.removeItem(SESSION_PENDING_ROLE_KEY);
+    clearLegacyTenantPremiumKey();
     localStorage.removeItem('identity_verification_status');
     localStorage.removeItem('landlord_upgrade_status');
     this.currentUser.next(null);

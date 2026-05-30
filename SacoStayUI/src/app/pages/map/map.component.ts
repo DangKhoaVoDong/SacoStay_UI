@@ -11,7 +11,8 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { filter, skip } from 'rxjs/operators';
 import * as L from 'leaflet';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { RoomPostService } from '../../services/room-post.service';
@@ -48,7 +49,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   filters: MapFilters = {
     city: 'all',
     district: 'all',
-    priceMax: 10_000_000
+    priceMax: 50_000_000
   };
 
   readonly cityOptions = [
@@ -73,8 +74,10 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private map?: L.Map;
   private readonly markerLayer = L.layerGroup();
   private readonly roomPosts = inject(RoomPostService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly markerByRoomId = new Map<string, L.Marker>();
 
   get roomsOnMap(): RoomPostSummary[] {
     return this.filteredRooms.filter((r) => this.hasCoords(r));
@@ -88,6 +91,21 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.initMap();
+    this.loadRooms();
+
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        filter((e) => e.urlAfterRedirects.split('?')[0].includes('/map')),
+        skip(1),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => this.loadRooms());
+  }
+
+  private loadRooms(): void {
+    this.loading = true;
+    this.loadError = '';
     this.roomPosts
       .listForBrowse()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -131,6 +149,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     this.syncMarkers();
     if (this.hasCoords(room) && this.map) {
       this.map.flyTo([room.latitude!, room.longitude!], 16, { duration: 1.2 });
+      const marker = this.markerByRoomId.get(room.id);
+      marker?.openPopup();
     }
     this.cdr.detectChanges();
   }
@@ -168,7 +188,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   }
 
   sidebarTitleClass(room: RoomPostSummary): string {
-    return getVipTierSidebarTitleClass(room.vipTier, this.selectedRoom?.id === room.id);
+    const base = getVipTierSidebarTitleClass(room.vipTier, this.selectedRoom?.id === room.id);
+    return this.selectedRoom?.id === room.id ? base : `${base} line-clamp-2`;
   }
 
   private initMap(): void {
@@ -207,6 +228,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private syncMarkers(): void {
     if (!this.map) return;
     this.markerLayer.clearLayers();
+    this.markerByRoomId.clear();
 
     for (const room of this.roomsOnMap) {
       const selected = this.selectedRoom?.id === room.id;
@@ -214,18 +236,14 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         icon: createHouseMarkerIcon(selected, room.vipTier)
       });
 
-      const thumb = room.imageUrl || '';
-      const popupHtml = `
-        <div class="w-48">
-          ${thumb ? `<img src="${thumb}" alt="" class="w-full h-24 object-cover rounded mb-2" />` : ''}
-          <p class="font-bold text-sm text-gray-900 leading-tight mb-1">${this.escapeHtml(room.title)}</p>
-          <p class="text-xs text-gray-500 mb-1">${this.escapeHtml(this.locationLine(room))}</p>
-          <p class="text-sm font-bold text-[#FF6B6B]">${this.escapeHtml(this.formatPriceVnd(room.price))}</p>
-        </div>
-      `;
-      marker.bindPopup(popupHtml);
+      marker.bindPopup(this.buildMarkerPopupHtml(room), {
+        maxWidth: 280,
+        minWidth: 220,
+        className: 'saco-room-popup'
+      });
       marker.on('click', () => this.selectRoom(room));
       this.markerLayer.addLayer(marker);
+      this.markerByRoomId.set(room.id, marker);
     }
 
     if (this.selectedRoom && this.hasCoords(this.selectedRoom)) {
@@ -241,6 +259,26 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     } else if (this.filters.city !== 'all' && MAP_CITY_CENTERS[this.filters.city]) {
       this.map.setView(MAP_CITY_CENTERS[this.filters.city], 12);
     }
+  }
+
+  private buildMarkerPopupHtml(room: RoomPostSummary): string {
+    const thumb = room.imageUrl || '';
+    const detailUrl = `/rooms/${encodeURIComponent(room.id)}`;
+    return `
+      <div class="map-popup-card">
+        ${
+          thumb
+            ? `<img src="${this.escapeHtml(thumb)}" alt="" class="map-popup-card__img" />`
+            : '<div class="map-popup-card__img map-popup-card__img--empty">Chưa có ảnh</div>'
+        }
+        <div class="map-popup-card__body">
+          <p class="map-popup-card__title">${this.escapeHtml(room.title)}</p>
+          <p class="map-popup-card__location">${this.escapeHtml(this.locationLine(room))}</p>
+          <p class="map-popup-card__price">${this.escapeHtml(this.formatPriceVnd(room.price))}</p>
+          <a href="${detailUrl}" class="map-popup-card__link">Xem chi tiết →</a>
+        </div>
+      </div>
+    `;
   }
 
   private escapeHtml(text: string): string {

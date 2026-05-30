@@ -3,6 +3,8 @@ import * as signalR from '@microsoft/signalr';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
 
+export type ChatIncomingHandler = (senderId: string, message: string) => void;
+
 function resolveChatHubUrl(): string {
   const api = environment.apiUrl.replace(/\/+$/, '');
   const base = api.replace(/\/api$/i, '');
@@ -14,6 +16,16 @@ export class ChatHubService {
   private readonly auth = inject(AuthService);
   private connection: signalR.HubConnection | null = null;
   private startPromise: Promise<signalR.HubConnection> | null = null;
+  private readonly incomingHandlers = new Set<ChatIncomingHandler>();
+
+  onIncomingMessage(handler: ChatIncomingHandler): () => void {
+    this.incomingHandlers.add(handler);
+    return () => this.incomingHandlers.delete(handler);
+  }
+
+  async ensureConnected(): Promise<signalR.HubConnection> {
+    return this.getConnection();
+  }
 
   async sendPrivateMessage(receiverId: string, message: string): Promise<void> {
     const conn = await this.getConnection();
@@ -51,6 +63,15 @@ export class ChatHubService {
       })
       .withAutomaticReconnect()
       .build();
+
+    this.connection.on('ReceiveMessage', (senderId: string, message: string) => {
+      const sid = String(senderId ?? '').trim();
+      const text = String(message ?? '').trim();
+      if (!sid || !text) return;
+      for (const handler of this.incomingHandlers) {
+        handler(sid, text);
+      }
+    });
 
     this.startPromise = this.connection
       .start()

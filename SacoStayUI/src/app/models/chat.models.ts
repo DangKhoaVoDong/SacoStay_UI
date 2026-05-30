@@ -29,3 +29,10 @@ export interface SendChatMessageRequest {
   otherUserId: string;
   content: string;
 }
+
+/** Hội thoại từ GET /api/Chat/conversations */
+export interface ChatConversationSummary {
+  otherUserId: string;
+  lastMessageText: string;
+  lastMessageAt?: string;
+}

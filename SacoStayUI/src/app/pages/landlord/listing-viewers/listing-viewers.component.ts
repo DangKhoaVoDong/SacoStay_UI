@@ -37,6 +37,7 @@ import {
   type VipTier
 } from '../../../utils/user-display';
 import { resolveMediaUrl } from '../../../utils/media-url';
+import { normalizeLandlordPackageCode } from '../../../utils/vip-tier-styles';
 
 export interface ViewerDisplayRow extends RoomPostViewerRow {
   displayName: string;
@@ -313,7 +314,7 @@ export class ListingViewersComponent implements OnInit {
     );
     const totalViews = rows.reduce((s, r) => s + r.totalViewsIn24H, 0);
     const isLimited = rows.some((r) => r.isLimitedView);
-    const packageName = rows[0]?.currentPackage ?? 'BASIC';
+    const packageName = normalizeLandlordPackageCode(rows[0]?.currentPackage ?? 'BASIC');
     return { viewers, totalViews, isLimited, package: packageName };
   }
 

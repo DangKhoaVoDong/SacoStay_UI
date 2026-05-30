@@ -280,13 +280,30 @@ export function resolveVipTier(user: unknown): VipTier {
   return 'free';
 }
 
-const TENANT_PREMIUM_KEY = 'saco_tenant_premium';
+const TENANT_PREMIUM_KEY_PREFIX = 'saco_tenant_premium_';
+/** Key cũ (dùng chung mọi account) — chỉ để dọn khi đăng xuất / migrate. */
+const LEGACY_TENANT_PREMIUM_KEY = 'saco_tenant_premium';
 
-export function isTenantPremium(): boolean {
-  return sessionStorage.getItem(TENANT_PREMIUM_KEY) === 'premium';
+function tenantPremiumStorageKey(userId: string): string {
+  return `${TENANT_PREMIUM_KEY_PREFIX}${userId}`;
 }
 
-export function setTenantPremium(enabled: boolean): void {
-  if (enabled) sessionStorage.setItem(TENANT_PREMIUM_KEY, 'premium');
-  else sessionStorage.removeItem(TENANT_PREMIUM_KEY);
+export function clearLegacyTenantPremiumKey(): void {
+  sessionStorage.removeItem(LEGACY_TENANT_PREMIUM_KEY);
+}
+
+/** Cache premium theo từng user (không dùng khi chưa có userId). */
+export function isTenantPremium(userId?: string | null): boolean {
+  const id = (userId ?? '').trim();
+  if (!id) return false;
+  return sessionStorage.getItem(tenantPremiumStorageKey(id)) === 'premium';
+}
+
+export function setTenantPremium(enabled: boolean, userId?: string | null): void {
+  const id = (userId ?? '').trim();
+  if (!id) return;
+  const key = tenantPremiumStorageKey(id);
+  if (enabled) sessionStorage.setItem(key, 'premium');
+  else sessionStorage.removeItem(key);
+  clearLegacyTenantPremiumKey();
 }

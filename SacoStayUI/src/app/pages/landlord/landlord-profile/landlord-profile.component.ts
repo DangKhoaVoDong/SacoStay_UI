@@ -100,7 +100,7 @@ export class LandlordProfileComponent implements OnInit {
       case 'vip2':
         return { name: 'VIP 2', stars: 3, color: 'text-[#F59E0B]', border: 'border-[#F59E0B]' };
       case 'vip1':
-        return { name: 'VIP 1', stars: 2, color: 'text-[#FF9F43]', border: 'border-[#FF9F43]' };
+        return { name: 'VIP 1', stars: 2, color: 'text-[#2563EB]', border: 'border-[#2563EB]' };
       default:
         return { name: 'Free', stars: 1, color: 'text-gray-400', border: 'border-gray-300' };
     }

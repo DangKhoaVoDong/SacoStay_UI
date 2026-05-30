@@ -92,7 +92,9 @@
                   }
                 </td>
                 <td class="p-6 text-center bg-orange-50/30">
-                  @if (isPremium) {
+                  @if (loadingPremium) {
+                    <span class="text-sm text-gray-500">Đang kiểm tra gói…</span>
+                  } @else if (isPremium) {
                     <div class="flex items-center justify-center gap-2 text-green-600 font-bold">
                       <span>✓</span> Đang sử dụng
                     </div>
@@ -101,7 +103,7 @@
                       type="button"
                       (click)="handleUpgrade()"
                       [disabled]="paying"
-                      class="w-full py-3 px-4 rounded-lg text-white font-bold bg-gradient-to-r from-[#FF9F43] to-[#FF6B6B] hover:from-[#FF8C2A] hover:to-[#FF5252] shadow-lg transition-colors disabled:opacity-50"
+                      class="w-full py-3 px-4 rounded-lg text-white font-bold bg-[#ffbd59] hover:bg-[#f5a832] shadow-lg transition-colors disabled:opacity-50"
                     >
                       {{ paying ? 'Đang mở VNPay…' : '⚡ Thanh toán VNPay' }}
                     </button>

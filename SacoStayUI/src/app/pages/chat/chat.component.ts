@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { forkJoin, interval, of, switchMap } from 'rxjs';
+import { forkJoin, interval, of, switchMap, startWith } from 'rxjs';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { FooterComponent } from '../../components/layout/footer.component';
 import { LandlordLayoutComponent } from '../../components/layout/landlord/landlord-layout.component';
@@ -12,7 +12,12 @@ import { ChatService } from '../../services/chat.service';
 import { ChatHubService } from '../../services/chat-hub.service';
 import { ChatPeerProfileService, isGenericChatLabel } from '../../services/chat-peer-profile.service';
 import { loadStoredChatContacts, upsertStoredChatContact } from '../../utils/chat-contacts-storage';
-import type { ChatConversation, ChatMessage, ChatParticipant } from '../../models/chat.models';
+import type {
+  ChatConversation,
+  ChatConversationSummary,
+  ChatMessage,
+  ChatParticipant
+} from '../../models/chat.models';
 
 export type ChatHostShell = 'tenant' | 'landlord';
 
@@ -101,6 +106,24 @@ export class ChatComponent implements OnInit {
       this.loadContactList();
     }
 
+    this.chatHub.ensureConnected().catch(() => undefined);
+
+    const unsubHub = this.chatHub.onIncomingMessage((senderId, text) =>
+      this.handleIncomingMessage(senderId, text)
+    );
+    this.destroyRef.onDestroy(() => unsubHub());
+
+    interval(20_000)
+      .pipe(
+        startWith(0),
+        takeUntilDestroyed(this.destroyRef),
+        switchMap(() => (this.currentUserId ? this.chatService.getConversations() : of([])))
+      )
+      .subscribe((summaries) => {
+        this.mergeServerConversations(summaries);
+        this.cdr.detectChanges();
+      });
+
     interval(12_000)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
@@ -150,44 +173,128 @@ export class ChatComponent implements OnInit {
     this.listLoading = true;
     this.listError = '';
     this.conversations = this.buildContactsFromStorage();
-    const ids = this.conversations.map((c) => c.otherUser.id);
-    if (!ids.length) {
-      this.listLoading = false;
-      this.tryOpenPendingChat();
-      this.cdr.detectChanges();
-      return;
-    }
 
-    forkJoin(ids.map((id) => this.peerProfiles.fetchPeer(id)))
+    forkJoin({
+      summaries: this.chatService.getConversations()
+    })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (peers) => {
-          for (const p of peers) {
-            this.applyPeerToConversation(p);
+        next: ({ summaries }) => {
+          this.mergeServerConversations(summaries);
+          const ids = this.conversations.map((c) => c.otherUser.id);
+          if (!ids.length) {
+            this.listLoading = false;
+            this.tryOpenPendingChat();
+            this.cdr.detectChanges();
+            return;
           }
-          this.listLoading = false;
-          if (
-            !this.activeOtherUserId &&
-            this.conversations.length > 0 &&
-            !this.pendingWith &&
-            this.hostShell !== 'landlord'
-          ) {
-            this.selectConversation(this.conversations[0].otherUser.id);
-          }
-          this.tryOpenPendingChat();
-          this.cdr.detectChanges();
+
+          forkJoin(ids.map((id) => this.peerProfiles.fetchPeer(id)))
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (peers) => {
+                for (const p of peers) {
+                  this.applyPeerToConversation(p);
+                }
+                this.finishContactListLoad();
+              },
+              error: () => this.finishContactListLoad()
+            });
         },
         error: () => {
-          this.listLoading = false;
-          this.tryOpenPendingChat();
-          this.cdr.detectChanges();
+          const ids = this.conversations.map((c) => c.otherUser.id);
+          if (!ids.length) {
+            this.finishContactListLoad();
+            return;
+          }
+          forkJoin(ids.map((id) => this.peerProfiles.fetchPeer(id)))
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (peers) => {
+                for (const p of peers) {
+                  this.applyPeerToConversation(p);
+                }
+                this.finishContactListLoad();
+              },
+              error: () => this.finishContactListLoad()
+            });
         }
       });
   }
 
+  private finishContactListLoad(): void {
+    this.listLoading = false;
+    if (
+      !this.activeOtherUserId &&
+      this.conversations.length > 0 &&
+      !this.pendingWith &&
+      this.hostShell !== 'landlord'
+    ) {
+      this.selectConversation(this.conversations[0].otherUser.id);
+    }
+    this.tryOpenPendingChat();
+    this.cdr.detectChanges();
+  }
+
+  private mergeServerConversations(summaries: ChatConversationSummary[]): void {
+    for (const s of summaries) {
+      this.ensureConversationForUser(s.otherUserId);
+      const conv = this.conversations.find((c) => this.sameUserId(c.otherUser.id, s.otherUserId));
+      if (conv) {
+        if (s.lastMessageText) conv.lastMessageText = s.lastMessageText;
+        if (s.lastMessageAt) conv.lastMessageAt = s.lastMessageAt;
+      }
+    }
+    this.conversations.sort((a, b) => {
+      const ta = a.lastMessageAt ? Date.parse(a.lastMessageAt) : 0;
+      const tb = b.lastMessageAt ? Date.parse(b.lastMessageAt) : 0;
+      return tb - ta;
+    });
+  }
+
+  private handleIncomingMessage(senderId: string, text: string): void {
+    if (!this.currentUserId) return;
+
+    if (this.sameUserId(senderId, this.currentUserId)) {
+      if (this.activeOtherUserId) {
+        this.loadMessages();
+      }
+      return;
+    }
+
+    this.ensureConversationForUser(senderId);
+    this.refreshConversationPreview(senderId, text);
+
+    if (this.activeOtherUserId && this.sameUserId(this.activeOtherUserId, senderId)) {
+      this.messages = [
+        ...this.messages,
+        {
+          senderId,
+          text,
+          sentAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+          isMine: false
+        }
+      ];
+      this.scrollMessagesToBottom();
+    }
+    this.cdr.detectChanges();
+  }
+
+  private refreshConversationPreview(otherUserId: string, lastText: string, sentAt?: string): void {
+    const conv = this.conversations.find((c) => this.sameUserId(c.otherUser.id, otherUserId));
+    if (conv) {
+      conv.lastMessageText = lastText;
+      conv.lastMessageAt = sentAt || new Date().toISOString();
+    }
+  }
+
+  private sameUserId(a: string, b: string): boolean {
+    return a.trim().toLowerCase() === b.trim().toLowerCase();
+  }
+
   selectConversation(otherUserId: string): void {
     if (!otherUserId || !this.currentUserId) return;
-    this.activeOtherUserId = otherUserId;
+    this.activeOtherUserId = otherUserId.trim();
     this.messages = [];
     this.messagesError = '';
 
@@ -283,7 +390,7 @@ export class ChatComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((peer) => {
         this.applyPeerToConversation(peer);
-        if (this.activeOtherUserId !== withId) {
+        if (!this.activeOtherUserId || !this.sameUserId(this.activeOtherUserId, withId)) {
           this.selectConversation(withId);
         }
         this.cdr.detectChanges();
@@ -310,7 +417,7 @@ export class ChatComponent implements OnInit {
       });
     }
 
-    const existing = this.conversations.find((c) => c.otherUser.id === userId);
+    const existing = this.conversations.find((c) => this.sameUserId(c.otherUser.id, userId));
     if (existing) {
       existing.otherUser.displayName = name;
       if (roles) existing.otherUser.roles = roles;
@@ -362,11 +469,8 @@ export class ChatComponent implements OnInit {
   }
 
   private refreshActiveConversationPreview(lastText: string, sentAt?: string): void {
-    const conv = this.conversations.find((c) => c.otherUser.id === this.activeOtherUserId);
-    if (conv) {
-      conv.lastMessageText = lastText;
-      conv.lastMessageAt = sentAt || new Date().toISOString();
-    }
+    if (!this.activeOtherUserId) return;
+    this.refreshConversationPreview(this.activeOtherUserId, lastText, sentAt);
   }
 
   private scrollMessagesToBottom(): void {

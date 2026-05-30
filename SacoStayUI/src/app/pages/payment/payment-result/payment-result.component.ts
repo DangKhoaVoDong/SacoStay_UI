@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavbarComponent } from '../../../components/layout/navbar.component';
 import { AuthService } from '../../../services/auth.service';
-import { setTenantPremium } from '../../../utils/user-display';
+import { setTenantPremium, userIdFromUser } from '../../../utils/user-display';
 
 @Component({
   selector: 'app-payment-result',
@@ -33,14 +33,16 @@ export class PaymentResultComponent implements OnInit {
     this.orderId = qp.get('orderId') || '';
     this.returnPath = this.context === 'tenant' ? '/discovery' : '/my-listings';
 
-    if (this.status === 'success' && this.context === 'tenant') {
-      setTenantPremium(true);
-    }
-
     this.auth
       .refreshProfile()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.cdr.detectChanges());
+      .subscribe((profile) => {
+        if (this.status === 'success' && this.context === 'tenant') {
+          const userId = userIdFromUser(profile ?? this.auth.getCurrentUser());
+          if (userId) setTenantPremium(true, userId);
+        }
+        this.cdr.detectChanges();
+      });
   }
 
   get title(): string {

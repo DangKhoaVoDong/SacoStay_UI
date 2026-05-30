@@ -1,12 +1,18 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { FooterComponent } from '../../components/layout/footer.component';
-import { isTenantPremium } from '../../utils/user-display';
+import {
+  clearLegacyTenantPremiumKey,
+  isTenantPremium,
+  setTenantPremium,
+  userIdFromUser
+} from '../../utils/user-display';
+import { AuthService, getApiErrorMessage } from '../../services/auth.service';
+import { LifestyleService } from '../../services/lifestyle.service';
 import { PaymentService } from '../../services/payment.service';
-import { getApiErrorMessage } from '../../services/auth.service';
 
 type FeatureRow = {
   name: string;
@@ -21,12 +27,14 @@ type FeatureRow = {
   templateUrl: './tenant-pricing.component.html'
 })
 export class TenantPricingComponent implements OnInit {
-  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly lifestyle = inject(LifestyleService);
   private readonly payment = inject(PaymentService);
   private readonly destroyRef = inject(DestroyRef);
 
   isPremium = false;
+  loadingPremium = true;
   paying = false;
   payError = '';
 
@@ -47,8 +55,49 @@ export class TenantPricingComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.isPremium = isTenantPremium();
+    clearLegacyTenantPremiumKey();
+    this.auth.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadPremiumStatus());
+
+    if (this.auth.isLoggedIn) {
+      this.auth
+        .refreshProfile()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.loadPremiumStatus());
+    } else {
+      this.loadPremiumStatus();
+    }
+  }
+
+  private loadPremiumStatus(): void {
+    const userId = userIdFromUser(this.auth.getCurrentUser());
+    if (!this.auth.isLoggedIn || !userId) {
+      this.isPremium = false;
+      this.loadingPremium = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.isPremium = isTenantPremium(userId);
+    this.loadingPremium = true;
     this.cdr.detectChanges();
+
+    this.lifestyle
+      .getSwipeQuota()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (quota) => {
+          this.isPremium = quota.isPremium;
+          setTenantPremium(quota.isPremium, userId);
+          this.loadingPremium = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.loadingPremium = false;
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   handleUpgrade(): void {

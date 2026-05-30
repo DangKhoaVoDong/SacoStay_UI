@@ -12,13 +12,67 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
-:host ::ng-deep .leaflet-popup-content-wrapper {
+:host ::ng-deep .leaflet-popup.saco-room-popup .leaflet-popup-content-wrapper {
   border-radius: 0.75rem;
   padding: 0;
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-:host ::ng-deep .leaflet-popup-content {
-  margin: 0.75rem;
-  min-width: 12rem;
+:host ::ng-deep .leaflet-popup.saco-room-popup .leaflet-popup-content {
+  margin: 0;
+  width: 220px !important;
+}
+
+:host ::ng-deep .map-popup-card__img {
+  display: block;
+  width: 100%;
+  height: 7rem;
+  object-fit: cover;
+  object-position: center;
+}
+
+:host ::ng-deep .map-popup-card__img--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+:host ::ng-deep .map-popup-card__body {
+  padding: 0.75rem;
+}
+
+:host ::ng-deep .map-popup-card__title {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #1a1a2e;
+  line-height: 1.25;
+  margin: 0 0 0.25rem;
+}
+
+:host ::ng-deep .map-popup-card__location {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0 0 0.35rem;
+}
+
+:host ::ng-deep .map-popup-card__price {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #ffbd59;
+  margin: 0 0 0.5rem;
+}
+
+:host ::ng-deep .map-popup-card__link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffbd59;
+  text-decoration: none;
+}
+
+:host ::ng-deep .map-popup-card__link:hover {
+  text-decoration: underline;
 }

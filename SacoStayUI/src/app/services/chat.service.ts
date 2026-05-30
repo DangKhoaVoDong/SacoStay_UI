@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import type { ChatMessage } from '../models/chat.models';
+import type { ChatConversationSummary, ChatMessage } from '../models/chat.models';
 
 function str(v: unknown): string {
   if (v === undefined || v === null) return '';
@@ -42,6 +42,14 @@ export class ChatService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
+  /** GET /api/Chat/conversations — hội thoại từ DB (mọi thiết bị đều thấy). */
+  getConversations(): Observable<ChatConversationSummary[]> {
+    return this.http.get<unknown>(`${this.apiUrl}/Chat/conversations`).pipe(
+      map((raw) => this.normalizeConversations(raw)),
+      catchError(() => of([]))
+    );
+  }
+
   /** GET /api/Chat/history/{otherUserId} — BE trả senderId, message, sentAt. */
   getHistory(otherUserId: string, currentUserId: string): Observable<ChatMessage[]> {
     return this.http.get<unknown>(`${this.apiUrl}/Chat/history/${encodeURIComponent(otherUserId)}`).pipe(
@@ -56,6 +64,24 @@ export class ChatService {
 
   isLandlordRole(roles: string[] | undefined): boolean {
     return (roles ?? []).some((r) => String(r).toLowerCase().includes('landlord'));
+  }
+
+  private normalizeConversations(raw: unknown): ChatConversationSummary[] {
+    const result: ChatConversationSummary[] = [];
+    for (const item of unwrapList(raw)) {
+      if (!item || typeof item !== 'object') continue;
+      const o = item as Record<string, unknown>;
+      const otherUserId = pickStr(o, 'otherUserId', 'OtherUserId', 'userId', 'UserId');
+      if (!otherUserId) continue;
+      const lastMessageText = pickStr(o, 'lastMessage', 'LastMessage', 'message', 'Message', 'text', 'Text');
+      const lastMessageAt = pickStr(o, 'lastSentAt', 'LastSentAt', 'sentAt', 'SentAt');
+      result.push({
+        otherUserId,
+        lastMessageText: lastMessageText || '—',
+        lastMessageAt: lastMessageAt || undefined
+      });
+    }
+    return result;
   }
 
   private normalizeMessages(raw: unknown, currentUserId: string, otherUserId: string): ChatMessage[] {

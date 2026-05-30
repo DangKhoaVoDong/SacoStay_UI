@@ -13,7 +13,7 @@ import type {
   RoomPostViewAnalytics,
   RoomPostViewerRow
 } from '../models/room-post.models';
-import { parseRoomVipTier } from '../utils/vip-tier-styles';
+import { normalizeLandlordPackageCode, parseRoomVipTier } from '../utils/vip-tier-styles';
 import { haversineKm } from '../utils/geo';
 
 function str(v: unknown): string {
@@ -82,8 +82,8 @@ export class RoomPostService {
   /** Gộp tin từ Hà Nội + TP.HCM (API chỉ có search-nearby, không có GET danh sách). */
   listForBrowse(): Observable<RoomPostSummary[]> {
     return forkJoin([
-      this.searchNearby(21.0285, 105.8542, 80),
-      this.searchNearby(10.7769, 106.7009, 80)
+      this.searchNearby(21.0285, 105.8542, 150),
+      this.searchNearby(10.7769, 106.7009, 150)
     ]).pipe(map(([hn, hcm]) => this.dedupeById([...hn, ...hcm])));
   }
 
@@ -271,8 +271,10 @@ export class RoomPostService {
     const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
     const id = str(o['roomId'] ?? o['RoomId'] ?? o['postId'] ?? o['PostId']) || postId;
     const roomTitle = str(o['roomTitle'] ?? o['RoomTitle'] ?? o['title'] ?? o['Title']);
-    const currentPackage = str(o['currentPackage'] ?? o['CurrentPackage'] ?? 'BASIC') || 'BASIC';
-    const isLimitedView = Boolean(o['isLimitedView'] ?? o['IsLimitedView'] ?? currentPackage.toUpperCase() !== 'ELITE');
+    const currentPackage = normalizeLandlordPackageCode(
+      o['currentPackage'] ?? o['CurrentPackage'] ?? o['packageTier'] ?? o['PackageTier'] ?? 'BASIC'
+    );
+    const isLimitedView = Boolean(o['isLimitedView'] ?? o['IsLimitedView'] ?? currentPackage !== 'ELITE');
     const totalViewsIn24H = Number(o['totalViewsIn24H'] ?? o['TotalViewsIn24H'] ?? 0);
     const viewersRaw = o['viewers'] ?? o['Viewers'];
     const viewers = unwrapList(viewersRaw)

@@ -208,9 +208,9 @@ export class LifestyleService {
       catchError(() =>
         of({
           isPremium: false,
-          weeklyLimit: 10,
+          weeklyLimit: 5,
           usedThisWeek: 0,
-          remaining: 10,
+          remaining: 5,
           weekResetAt: new Date().toISOString()
         })
       )

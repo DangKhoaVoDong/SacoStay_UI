@@ -5,7 +5,7 @@ import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/rout
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
-import { clearTempRegisterProfile } from '../../utils/user-display';
+import { clearTempRegisterProfile, isAdminUser } from '../../utils/user-display';
 
 @Component({
   selector: 'app-auth',
@@ -56,6 +56,10 @@ export class AuthComponent implements OnInit {
   }
 
   private navigateAfterAuth(): void {
+    if (isAdminUser(this.authService.getCurrentUser())) {
+      void this.router.navigateByUrl('/admin');
+      return;
+    }
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     const target =
       returnUrl && !returnUrl.startsWith('/login') && !returnUrl.startsWith('/register')
