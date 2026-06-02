@@ -18,6 +18,7 @@ import { NavbarComponent } from '../../components/layout/navbar.component';
 import { RoomPostService } from '../../services/room-post.service';
 import type { RoomPostSummary } from '../../models/room-post.models';
 import { cityMatches, districtMatches } from '../../utils/room-filters';
+import { FILTER_CITY_OPTIONS, districtFilterOptions } from '../../utils/vietnam-districts';
 import { createHouseMarkerIcon, DEFAULT_MAP_CENTER, MAP_CITY_CENTERS } from '../../utils/map-markers';
 import { getVipTierSidebarTitleClass, sortRoomsByVipTier } from '../../utils/vip-tier-styles';
 
@@ -52,24 +53,11 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     priceMax: 50_000_000
   };
 
-  readonly cityOptions = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'Hà Nội', label: 'Hà Nội' },
-    { value: 'TP.HCM', label: 'TP.HCM' }
-  ];
+  readonly cityOptions = FILTER_CITY_OPTIONS;
 
-  readonly districtOptions = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'Cầu Giấy', label: 'Cầu Giấy' },
-    { value: 'Đống Đa', label: 'Đống Đa' },
-    { value: 'Hai Bà Trưng', label: 'Hai Bà Trưng' },
-    { value: 'Tây Hồ', label: 'Tây Hồ' },
-    { value: 'Bình Thạnh', label: 'Bình Thạnh' },
-    { value: 'Quận 7', label: 'Quận 7' },
-    { value: 'Quận 1', label: 'Quận 1' },
-    { value: 'Quận 3', label: 'Quận 3' },
-    { value: 'Quận 10', label: 'Quận 10' }
-  ];
+  get districtOptions() {
+    return districtFilterOptions(this.filters.city);
+  }
 
   private map?: L.Map;
   private readonly markerLayer = L.layerGroup();
@@ -131,6 +119,11 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.map?.remove();
+  }
+
+  onCityFilterChange(): void {
+    this.filters = { ...this.filters, district: 'all' };
+    this.onFiltersChange();
   }
 
   onFiltersChange(): void {

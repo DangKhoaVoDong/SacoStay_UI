@@ -126,8 +126,25 @@
             <div>
               <label class="block text-sm font-semibold text-gray-800 mb-2.5">Quận/Huyện</label>
               <div class="flex flex-wrap gap-2">
-                @for (opt of districtOptions; track opt.value) {
+                @for (opt of visibleDistrictOptions; track opt.value) {
                   <button type="button" (click)="setDistrict(opt.value)" [class]="chipBtn(filters.district === opt.value)">{{ opt.label }}</button>
+                }
+                @if (hasMoreDistrictOptions && !districtOptionsExpanded) {
+                  <button
+                    type="button"
+                    (click)="expandDistrictOptions()"
+                    [class]="chipBtn(false)"
+                    class="!min-w-[2.75rem] font-semibold"
+                    [attr.aria-label]="'Xem thêm ' + hiddenDistrictCount + ' quận/huyện'"
+                    title="Xem thêm quận/huyện"
+                  >
+                    +
+                  </button>
+                }
+                @if (hasMoreDistrictOptions && districtOptionsExpanded) {
+                  <button type="button" (click)="collapseDistrictOptions()" [class]="chipBtn(false)">
+                    Thu gọn
+                  </button>
                 }
               </div>
             </div>

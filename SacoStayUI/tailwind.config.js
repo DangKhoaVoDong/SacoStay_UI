@@ -59,6 +59,10 @@ module.exports = {
     'bg-[#2563EB]',
     'bg-[#F59E0B]',
     'bg-[#EF4444]',
+    'text-[21px]',
+    'text-[19px]',
+    'text-[17px]',
+    'text-[15px]',
   ],
   plugins: [],
 }

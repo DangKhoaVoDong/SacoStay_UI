@@ -81,7 +81,7 @@ export function normalizeAuthUser(raw: unknown): Record<string, unknown> {
   if (avatarFromList) {
     o['avatar'] = avatarFromList;
   }
-  const imgs = profileImagesListFromRaw(o);
+  const imgs = personalProfileImagesListFromRaw(o);
   if (imgs.length) {
     o['profileImages'] = imgs;
   }
@@ -183,14 +183,69 @@ export function clearTempRegisterProfile(): void {
   localStorage.removeItem('temp_phone');
 }
 
-/** URL ảnh đại diện — API trả ProfileImage (mảng) hoặc avatar. */
+/** Avatar upload (profile-setup) — thư mục S3 `users/avatars`. */
+export function isAvatarMediaUrl(url: string): boolean {
+  const lower = url.toLowerCase();
+  return (
+    lower.includes('/users/avatars/') ||
+    lower.includes('users/avatars') ||
+    lower.includes('users%2favatars')
+  );
+}
+
+/** Ảnh cá nhân discovery — thư mục `users/profile` hoặc `users/profiles`. */
+export function isPersonalProfileMediaUrl(url: string): boolean {
+  const lower = url.toLowerCase();
+  return (
+    lower.includes('/users/profile/') ||
+    lower.includes('/users/profiles/') ||
+    lower.includes('users/profile') ||
+    lower.includes('users/profiles') ||
+    lower.includes('users%2fprofile')
+  );
+}
+
+/** Chỉ ảnh cá nhân (không gồm avatar). */
+export function personalProfileImagesListFromRaw(user: unknown): string[] {
+  const all = profileImagesListFromRaw(user);
+  const personal = all.filter((u) => isPersonalProfileMediaUrl(u));
+  if (personal.length) return personal;
+  return [];
+}
+
+/** URL ảnh đại diện — field riêng hoặc URL trong thư mục avatars; không lấy ảnh cá nhân. */
 export function profileAvatarFromRaw(user: unknown): string {
   if (!user || typeof user !== 'object') return '';
   const u = user as Record<string, unknown>;
   const direct = str(u['avatar'] ?? u['Avatar'] ?? u['AvatarUrl'] ?? u['avatarUrl']);
   if (direct) return direct;
-  const list = profileImagesListFromRaw(u);
-  return list[0] ?? '';
+  const all = profileImagesListFromRaw(u);
+  const fromAvatars = all.find((u) => isAvatarMediaUrl(u));
+  if (fromAvatars) return fromAvatars;
+  const personal = personalProfileImagesListFromRaw(u);
+  if (personal.length) return '';
+  return all[0] ?? '';
+}
+
+/** Danh sách URL từ GET /api/User/profile-images hoặc mảng string trên user. */
+export function profileImageUrlsFromApiList(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item) => {
+        if (typeof item === 'string') return str(item);
+        if (item && typeof item === 'object') {
+          const o = item as Record<string, unknown>;
+          return str(o['url'] ?? o['Url']);
+        }
+        return '';
+      })
+      .filter(Boolean);
+  }
+  if (!raw || typeof raw !== 'object') return [];
+  const o = raw as Record<string, unknown>;
+  const nested = o['images'] ?? o['Images'] ?? o['data'] ?? o['Data'];
+  if (nested !== undefined) return profileImageUrlsFromApiList(nested);
+  return [];
 }
 
 export function profileImagesListFromRaw(user: unknown): string[] {
@@ -198,7 +253,7 @@ export function profileImagesListFromRaw(user: unknown): string[] {
   const u = user as Record<string, unknown>;
   const raw = u['profileImages'] ?? u['ProfileImages'] ?? u['profileImage'] ?? u['ProfileImage'];
   if (Array.isArray(raw)) {
-    return raw.map((x) => str(x)).filter(Boolean);
+    return profileImageUrlsFromApiList(raw);
   }
   if (typeof raw === 'string' && raw.trim()) return [raw.trim()];
   return [];
@@ -262,6 +317,10 @@ const LANDLORD_PACKAGE_KEY = 'saco_landlord_package';
 /** Gói VIP chủ trọ mock (elite/pro/lite/basic) — dùng đến khi có API thanh toán. */
 export function setMockLandlordPackage(tierId: string): void {
   sessionStorage.setItem(LANDLORD_PACKAGE_KEY, tierId.toLowerCase());
+}
+
+export function clearMockLandlordPackage(): void {
+  sessionStorage.removeItem(LANDLORD_PACKAGE_KEY);
 }
 
 export function resolveVipTier(user: unknown): VipTier {

@@ -81,7 +81,7 @@
       </aside>
 
       <!-- Center: swipe -->
-      <section class="flex-1 relative flex flex-col items-center justify-center p-4 overflow-hidden min-w-0">
+      <section class="flex-1 relative flex flex-col items-center min-h-0 p-4 pt-2 overflow-hidden min-w-0">
         @if (!isPremium) {
           <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-2 bg-white border-2 border-orange-200 rounded-xl shadow-lg text-sm flex items-center gap-2">
             <span class="text-[#FF9F43]">⚡</span>
@@ -114,7 +114,10 @@
           </div>
         }
 
-        <div class="relative w-full max-w-md h-[min(650px,70vh)] mt-8 touch-none select-none">
+        <div class="flex-1 flex flex-col items-center justify-center min-h-0 w-full max-w-[400px] mx-auto">
+          <div
+            class="relative w-full flex-1 min-h-[520px] max-h-[min(840px,calc(100vh-11.5rem))] touch-none select-none"
+          >
           @if (hasMoreCards && currentCard) {
             <article
               class="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl bg-gray-900 cursor-grab active:cursor-grabbing transition-transform duration-300 ease-out"
@@ -124,12 +127,25 @@
               (pointerup)="onCardPointerUp($event)"
               (pointercancel)="onCardPointerUp($event)"
             >
-              <img
-                [src]="currentCard.avatarUrl"
-                [alt]="currentCard.displayName"
-                class="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
-                draggable="false"
-              />
+              @for (card of [currentCard]; track card.userId) {
+                <img
+                  [src]="currentCardImageUrl"
+                  [alt]="card.displayName"
+                  class="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+                  draggable="false"
+                />
+              }
+              @if (currentCardPhotoCount > 1) {
+                <div class="absolute top-3 left-3 right-3 flex gap-1 z-20 pointer-events-none">
+                  @for (i of photoDotIndices(); track i) {
+                    <span
+                      class="h-1 flex-1 rounded-full transition-colors"
+                      [class.bg-white]="$index === currentCardPhotoIndex"
+                      [class.bg-white/35]="$index !== currentCardPhotoIndex"
+                    ></span>
+                  }
+                </div>
+              }
               <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent pointer-events-none"></div>
 
               <div
@@ -148,7 +164,7 @@
               <div class="absolute bottom-0 left-0 right-0 p-6 text-white z-10 space-y-3 pointer-events-none">
                 <div class="flex items-end justify-between gap-3">
                   <div class="min-w-0 flex-1">
-                    <h2 class="text-2xl font-black truncate">{{ cardTitleLine }}</h2>
+                    <h2 class="text-2xl font-black truncate !text-white">{{ cardTitleLine }}</h2>
                     @if (cardMetaLine) {
                       <p class="text-sm text-gray-200 mt-1 truncate">📍 {{ cardMetaLine }}</p>
                     }
@@ -167,16 +183,11 @@
                   <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#FF9F43] text-white">
                     🏠 {{ currentCard.roomStatusLabel }}
                   </span>
-                  @for (tag of currentCard.highlights; track tag) {
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm border border-white/30">
-                      {{ tag }}
-                    </span>
-                  }
                 </div>
               </div>
             </article>
           } @else {
-            <div class="flex flex-col items-center justify-center h-full text-center px-4">
+            <div class="flex flex-col items-center justify-center h-full min-h-[520px] text-center px-4">
               <div class="w-20 h-20 bg-white rounded-full shadow-md flex items-center justify-center mb-4">
                 <svg class="w-10 h-10 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -196,10 +207,11 @@
               </button>
             </div>
           }
+          </div>
         </div>
 
         @if (hasMoreCards && currentCard) {
-          <div class="flex items-center justify-center gap-8 mt-6">
+          <div class="flex items-center justify-center gap-8 mt-3 shrink-0">
             <button type="button" class="flex flex-col items-center gap-1" (click)="handlePassButton()">
               <span class="w-14 h-14 rounded-full bg-white shadow-lg border border-[#ffbd59]/30 flex items-center justify-center text-[#ffbd59] hover:scale-110 transition-transform">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,7 +229,9 @@
               <span class="text-xs font-bold text-gray-500">Gửi lượt thích</span>
             </button>
           </div>
-          <p class="text-xs text-gray-400 mt-3 hidden sm:block">Vuốt phải để thích • vuốt trái để bỏ qua</p>
+          <p class="text-xs text-gray-400 mt-3 hidden sm:block">
+            Chạm thẻ để đổi ảnh • vuốt phải thích • vuốt trái bỏ qua
+          </p>
         }
       </section>
 
@@ -228,11 +242,13 @@
             <h3 class="font-bold text-gray-900 text-lg">Chi tiết hồ sơ</h3>
 
             <div class="text-center">
-              <img
-                [src]="currentCard.avatarUrl"
-                class="w-20 h-20 rounded-full object-cover mx-auto border-4 border-white shadow-md"
-                [alt]="currentCard.displayName"
-              />
+              @for (card of [currentCard]; track card.userId) {
+                <img
+                  [src]="sidebarAvatarUrl"
+                  class="w-20 h-20 rounded-full object-cover mx-auto border-4 border-white shadow-md bg-gray-100"
+                  [alt]="card.displayName"
+                />
+              }
               <p class="font-bold text-lg mt-3 text-gray-900">
                 {{ currentCard.displayName }}@if (currentCard.age !== null) {, {{ currentCard.age }}}
               </p>
@@ -289,7 +305,7 @@
                 [queryParams]="{
                   with: currentCard.userId,
                   name: currentCard.displayName,
-                  avatar: currentCard.avatarUrl,
+                  avatar: sidebarAvatarUrl,
                   role: 'tenant'
                 }"
                 class="block w-full py-3 text-center rounded-xl bg-[#FF9F43] text-white font-medium hover:bg-[#FF8C2A]"

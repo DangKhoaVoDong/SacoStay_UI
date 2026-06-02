@@ -1,43 +1,152 @@
 @if (isOpen) {
   <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50" (click)="close()"></div>
-    <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 z-10">
-      <h2 class="text-lg font-bold text-gray-900 mb-2">Báo cáo {{ type === 'room' ? 'tin đăng' : 'người dùng' }}</h2>
-      @if (targetName) {
-        <p class="text-sm text-gray-500 mb-4 truncate">{{ targetName }}</p>
-      }
-      @if (!submitted) {
-        <label class="block text-sm font-medium text-gray-700 mb-2">Lý do báo cáo</label>
-        <textarea
-          [(ngModel)]="reason"
-          rows="4"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF9F43] focus:border-[#FF9F43] outline-none"
-          placeholder="Mô tả vấn đề..."
-        ></textarea>
-        <div class="flex justify-end gap-3 mt-6">
-          <button type="button" (click)="close()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
-            Hủy
-          </button>
-          <button
-            type="button"
-            (click)="submit()"
-            [disabled]="!reason.trim()"
-            class="px-4 py-2 text-sm font-medium rounded-lg bg-[#EF4444] text-white hover:bg-[#DC2626] disabled:opacity-50"
-          >
-            Gửi báo cáo
-          </button>
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" (click)="close()"></div>
+
+    <div class="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border-0">
+      <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <h3 class="font-bold text-gray-900">
+              Báo cáo {{ type === 'room' ? 'phòng trọ' : 'người dùng' }}
+            </h3>
+            @if (targetName) {
+              <p class="text-xs text-gray-500 truncate max-w-[240px]">{{ targetName }}</p>
+            }
+          </div>
         </div>
-      } @else {
-        <p class="text-sm text-gray-600 mb-6">
-          Cảm ơn bạn đã gửi báo cáo. Đội ngũ SacoStay sẽ xem xét trong thời gian sớm nhất.
-        </p>
         <button
           type="button"
           (click)="close()"
-          class="w-full px-4 py-2 text-sm font-medium rounded-lg bg-[#FF9F43] text-white hover:bg-[#FF8C2A]"
+          class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+          aria-label="Đóng"
         >
-          Đóng
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
+      </div>
+
+      @if (submitted()) {
+        <div class="p-8 text-center">
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Đã gửi báo cáo</h3>
+          <p class="text-gray-600 mb-6">
+            Cảm ơn bạn đã báo cáo. Quản trị viên sẽ xem xét trong thời gian sớm nhất.
+          </p>
+          <button
+            type="button"
+            (click)="close()"
+            class="w-full px-4 py-3 rounded-xl bg-[#FF9F43] text-white font-semibold hover:bg-[#FF8C2A] transition-colors"
+          >
+            Đóng
+          </button>
+        </div>
+      } @else {
+        <div class="p-6 space-y-6">
+          <div>
+            <label class="block text-sm font-semibold text-gray-900 mb-3">
+              Lý do báo cáo <span class="text-red-500">*</span>
+            </label>
+            <div class="space-y-2">
+              @for (reason of reasons; track reason) {
+                <label
+                  class="flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all duration-150"
+                  [class.border-red-400]="selectedReasons.includes(reason)"
+                  [class.bg-red-50]="selectedReasons.includes(reason)"
+                  [class.border-gray-100]="!selectedReasons.includes(reason)"
+                  [class.hover:border-gray-200]="!selectedReasons.includes(reason)"
+                  [class.hover:bg-gray-50]="!selectedReasons.includes(reason)"
+                >
+                  <input
+                    type="checkbox"
+                    class="rounded text-red-500 focus:ring-red-500 w-4 h-4"
+                    [checked]="selectedReasons.includes(reason)"
+                    (change)="toggleReason(reason)"
+                  />
+                  <span
+                    class="text-sm font-medium"
+                    [class.text-red-700]="selectedReasons.includes(reason)"
+                    [class.text-gray-700]="!selectedReasons.includes(reason)"
+                  >
+                    {{ reason }}
+                  </span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-900 mb-2">Chi tiết bổ sung</label>
+            <textarea
+              [(ngModel)]="details"
+              placeholder="Mô tả chi tiết vấn đề bạn gặp phải..."
+              class="block w-full rounded-xl border border-gray-200 shadow-sm focus:border-red-400 focus:ring-red-400 sm:text-sm py-3 px-4 min-h-[100px] resize-none outline-none"
+              maxlength="500"
+            ></textarea>
+            <p class="mt-1 text-xs text-gray-400 text-right">{{ details.length }}/500</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-900 mb-2">Ảnh minh chứng (không bắt buộc)</label>
+            <div class="flex flex-wrap gap-3">
+              @for (item of evidence; track item.previewUrl; let idx = $index) {
+                <div class="relative w-20 h-20 rounded-xl border border-gray-200 overflow-hidden group">
+                  <img [src]="item.previewUrl" alt="" class="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    (click)="removeImage(idx)"
+                    class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Xóa ảnh"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              }
+              @if (canAddImage) {
+                <label
+                  class="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 hover:border-red-300 hover:bg-red-50 flex flex-col items-center justify-center text-gray-400 hover:text-red-400 transition-all cursor-pointer"
+                >
+                  <input type="file" accept="image/jpeg,image/png,image/jpg" class="hidden" (change)="onFileSelected($event)" />
+                  <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span class="text-[10px] font-medium">Tải ảnh</span>
+                </label>
+              }
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Tối đa 3 ảnh, JPG/PNG dưới 5MB</p>
+          </div>
+
+          @if (errorMessage()) {
+            <p class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{{ errorMessage() }}</p>
+          }
+
+          <div class="pt-2">
+            <button
+              type="button"
+              (click)="submit()"
+              [disabled]="selectedReasons.length === 0 || isSubmitting()"
+              class="w-full px-4 py-3 rounded-xl bg-[#EF4444] text-white font-semibold hover:bg-[#DC2626] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              @if (isSubmitting()) {
+                Đang gửi…
+              } @else {
+                Gửi báo cáo
+              }
+            </button>
+          </div>
+        </div>
       }
     </div>
   </div>

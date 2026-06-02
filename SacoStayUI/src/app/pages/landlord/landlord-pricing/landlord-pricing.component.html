@@ -85,16 +85,16 @@
           <tr>
             <td class="p-4 border border-gray-200 bg-gray-50"></td>
             <td class="p-4 border border-gray-200 text-center">
-              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FDA4AF] hover:bg-[#F43F5E] text-white font-medium transition-colors" (click)="handleSelectPackage('elite')" [disabled]="isPaying('elite') || !roomPostId">{{ isPaying('elite') ? 'Đang xử lý…' : 'Thanh toán VNPay' }}</button>
+              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FDA4AF] hover:bg-[#F43F5E] text-white font-medium transition-colors" (click)="handleSelectPackage('elite')" [disabled]="isPaying('elite') || !roomPostId">{{ isPaying('elite') ? 'Đang xử lý…' : 'Thanh toán' }}</button>
             </td>
             <td class="p-4 border border-gray-200 text-center">
-              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FB923C] hover:bg-[#F97316] text-white font-medium transition-colors" (click)="handleSelectPackage('pro')" [disabled]="isPaying('pro') || !roomPostId">{{ isPaying('pro') ? 'Đang xử lý…' : 'Thanh toán VNPay' }}</button>
+              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FB923C] hover:bg-[#F97316] text-white font-medium transition-colors" (click)="handleSelectPackage('pro')" [disabled]="isPaying('pro') || !roomPostId">{{ isPaying('pro') ? 'Đang xử lý…' : 'Thanh toán' }}</button>
             </td>
             <td class="p-4 border border-gray-200 text-center">
-              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FCD34D] hover:bg-[#F59E0B] text-gray-900 font-medium transition-colors" (click)="handleSelectPackage('lite')" [disabled]="isPaying('lite') || !roomPostId">{{ isPaying('lite') ? 'Đang xử lý…' : 'Thanh toán VNPay' }}</button>
+              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FCD34D] hover:bg-[#F59E0B] text-gray-900 font-medium transition-colors" (click)="handleSelectPackage('lite')" [disabled]="isPaying('lite') || !roomPostId">{{ isPaying('lite') ? 'Đang xử lý…' : 'Thanh toán' }}</button>
             </td>
             <td class="p-4 border border-gray-200 text-center">
-              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FEF3C7] hover:bg-[#FDE68A] text-gray-900 font-medium transition-colors" (click)="handleSelectPackage('basic')" [disabled]="isPaying('basic') || !roomPostId">{{ isPaying('basic') ? 'Đang xử lý…' : 'Thanh toán VNPay' }}</button>
+              <button type="button" class="w-full py-2.5 rounded-lg bg-[#FEF3C7] hover:bg-[#FDE68A] text-gray-900 font-medium transition-colors" (click)="handleSelectPackage('basic')" [disabled]="isPaying('basic') || !roomPostId">{{ isPaying('basic') ? 'Đang xử lý…' : 'Thanh toán' }}</button>
             </td>
           </tr>
         </tbody>
@@ -102,7 +102,7 @@
     </div>
 
     <p class="mt-6 text-sm text-[#6B7280] italic font-medium">
-      (*) Các tin VIP sẽ được hiển thị ngay sau khi khách hàng đăng tin mà không cần chờ kiểm duyệt. Tin đăng sẽ được kiểm duyệt nội dung sau.
+      (*) Các tin VIP sẽ được ưu tiên kiểm duyệt trong thời gian sớm nhất ngay sau khi khách hàng đăng tin.
     </p>
   </div>
 </app-landlord-layout>

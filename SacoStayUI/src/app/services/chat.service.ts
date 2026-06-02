@@ -75,10 +75,12 @@ export class ChatService {
       if (!otherUserId) continue;
       const lastMessageText = pickStr(o, 'lastMessage', 'LastMessage', 'message', 'Message', 'text', 'Text');
       const lastMessageAt = pickStr(o, 'lastSentAt', 'LastSentAt', 'sentAt', 'SentAt');
+      const lastSenderId = pickStr(o, 'lastSenderId', 'LastSenderId', 'senderId', 'SenderId');
       result.push({
         otherUserId,
         lastMessageText: lastMessageText || '—',
-        lastMessageAt: lastMessageAt || undefined
+        lastMessageAt: lastMessageAt || undefined,
+        lastSenderId: lastSenderId || undefined
       });
     }
     return result;

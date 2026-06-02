@@ -1,11 +1,12 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LandlordSidebarComponent } from './landlord-sidebar.component';
+import { NotificationBellComponent } from '../../shared/notification-bell/notification-bell.component';
 
 @Component({
   selector: 'app-landlord-layout',
   standalone: true,
-  imports: [CommonModule, LandlordSidebarComponent],
+  imports: [CommonModule, LandlordSidebarComponent, NotificationBellComponent],
   templateUrl: './landlord-layout.component.html'
 })
 export class LandlordLayoutComponent {

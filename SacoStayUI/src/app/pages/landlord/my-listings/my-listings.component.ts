@@ -18,6 +18,7 @@ import { getVipTierInlineBadgeClass, vipTierPackageLabel } from '../../../utils/
 })
 export class MyListingsComponent implements OnInit {
   posts: RoomPostSummary[] = [];
+  highlightPostId = '';
   loading = true;
   paymentBanner = '';
   actionError = '';
@@ -40,10 +41,12 @@ export class MyListingsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
-    if (this.route.snapshot.queryParamMap.get('payment') === 'completed') {
+    const q = this.route.snapshot.queryParamMap;
+    if (q.get('payment') === 'completed') {
       this.paymentBanner =
         'Thanh toán thành công. Tin đăng chuyển sang chờ admin duyệt (nếu là tin mới).';
     }
+    this.highlightPostId = q.get('roomPostId') ?? '';
     this.loadPosts();
   }
 

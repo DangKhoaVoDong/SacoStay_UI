@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
+import { ChatUnreadService } from '../../services/chat-unread.service';
+import { NotificationCenterService } from '../../services/notification-center.service';
+import { NotificationBellComponent } from '../shared/notification-bell/notification-bell.component';
 import {
     hasBasicProfileFilled,
     isAdminUser,
@@ -23,7 +26,7 @@ interface NavLink {
 @Component({
     selector: 'app-navbar',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, NotificationBellComponent],
     templateUrl: './navbar.component.html'
 })
 export class NavbarComponent implements OnInit {
@@ -35,6 +38,9 @@ export class NavbarComponent implements OnInit {
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly cdr = inject(ChangeDetectorRef);
+    private readonly chatUnreadSvc = inject(ChatUnreadService);
+    private readonly notificationCenter = inject(NotificationCenterService);
+    readonly chatUnread = this.chatUnreadSvc.totalUnread;
 
     navLinks: NavLink[] = [
         { name: 'Tìm bạn', href: '/discovery', icon: 'search', roles: ['tenant'] },
@@ -59,7 +65,11 @@ export class NavbarComponent implements OnInit {
             this.cdr.detectChanges();
         });
         if (this.authService.isLoggedIn) {
+            this.chatUnreadSvc.bindOwnerFromSession();
+            this.notificationCenter.bindFromSession();
             this.authService.refreshProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+                this.chatUnreadSvc.bindOwnerFromSession();
+                this.notificationCenter.bindFromSession();
                 this.cdr.detectChanges();
             });
         }

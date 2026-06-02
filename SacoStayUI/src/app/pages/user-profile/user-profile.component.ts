@@ -7,6 +7,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { ReportModalComponent } from '../../components/shared/report-modal/report-modal.component';
+import { ProfilePhotosModalComponent } from '../../components/profile/profile-photos-modal/profile-photos-modal.component';
 import { CompatibilityBadgeComponent } from '../../components/profile/compatibility-badge.component';
 import { AuthService } from '../../services/auth.service';
 import { LifestyleService } from '../../services/lifestyle.service';
@@ -44,6 +45,7 @@ import type { UserLifestyleAnswer } from '../../models/lifestyle.models';
     RouterLink,
     NavbarComponent,
     ReportModalComponent,
+    ProfilePhotosModalComponent,
     CompatibilityBadgeComponent
   ],
   templateUrl: './user-profile.component.html'
@@ -53,6 +55,7 @@ export class UserProfileComponent implements OnInit {
   notFound = false;
   isOwnProfile = false;
   showReport = false;
+  showProfilePhotos = false;
 
   displayName = '';
   age: number | null = null;
@@ -259,5 +262,13 @@ export class UserProfileComponent implements OnInit {
 
   closeReport(): void {
     this.showReport = false;
+  }
+
+  openProfilePhotos(): void {
+    this.showProfilePhotos = true;
+  }
+
+  closeProfilePhotos(): void {
+    this.showProfilePhotos = false;
   }
 }

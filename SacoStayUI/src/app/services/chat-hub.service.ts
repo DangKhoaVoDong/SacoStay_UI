@@ -1,9 +1,27 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { environment } from '../../environments/environment';
-import { AuthService } from './auth.service';
+import { APP_CONSTANTS } from '../utils/constants';
+import type { AppNotification } from '../models/notification.models';
 
 export type ChatIncomingHandler = (senderId: string, message: string) => void;
+export type NotificationIncomingHandler = (notification: AppNotification) => void;
+
+function normalizeHubNotification(raw: unknown): AppNotification | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  const id = String(o['id'] ?? o['Id'] ?? '').trim();
+  if (!id) return null;
+  return {
+    id,
+    title: String(o['title'] ?? o['Title'] ?? 'Thông báo').trim(),
+    message: String(o['message'] ?? o['Message'] ?? '').trim(),
+    type: String(o['type'] ?? o['Type'] ?? 'general').trim(),
+    linkUrl: String(o['linkUrl'] ?? o['LinkUrl'] ?? '').trim() || undefined,
+    isRead: !!(o['isRead'] ?? o['IsRead']),
+    createdAt: String(o['createdAt'] ?? o['CreatedAt'] ?? new Date().toISOString())
+  };
+}
 
 function resolveChatHubUrl(): string {
   const api = environment.apiUrl.replace(/\/+$/, '');
@@ -11,16 +29,25 @@ function resolveChatHubUrl(): string {
   return environment.chatHubUrl?.trim() || `${base}/chatHub`;
 }
 
+function readAuthToken(): string | null {
+  return localStorage.getItem(APP_CONSTANTS.TOKEN_KEY);
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChatHubService {
-  private readonly auth = inject(AuthService);
   private connection: signalR.HubConnection | null = null;
   private startPromise: Promise<signalR.HubConnection> | null = null;
   private readonly incomingHandlers = new Set<ChatIncomingHandler>();
+  private readonly notificationHandlers = new Set<NotificationIncomingHandler>();
 
   onIncomingMessage(handler: ChatIncomingHandler): () => void {
     this.incomingHandlers.add(handler);
     return () => this.incomingHandlers.delete(handler);
+  }
+
+  onReceiveNotification(handler: NotificationIncomingHandler): () => void {
+    this.notificationHandlers.add(handler);
+    return () => this.notificationHandlers.delete(handler);
   }
 
   async ensureConnected(): Promise<signalR.HubConnection> {
@@ -40,8 +67,14 @@ export class ChatHubService {
     this.startPromise = null;
   }
 
+  /** Đăng nhập lại / đổi token — kết nối mới với Bearer hiện tại. */
+  async reconnect(): Promise<signalR.HubConnection> {
+    this.disconnect();
+    return this.ensureConnected();
+  }
+
   private getConnection(): Promise<signalR.HubConnection> {
-    const token = this.auth.token;
+    const token = readAuthToken();
     if (!token) {
       return Promise.reject(new Error('Chưa đăng nhập'));
     }
@@ -56,7 +89,7 @@ export class ChatHubService {
 
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(resolveChatHubUrl(), {
-        accessTokenFactory: () => this.auth.token || '',
+        accessTokenFactory: () => readAuthToken() || '',
         transport:
           signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling,
         withCredentials: true
@@ -70,6 +103,14 @@ export class ChatHubService {
       if (!sid || !text) return;
       for (const handler of this.incomingHandlers) {
         handler(sid, text);
+      }
+    });
+
+    this.connection.on('ReceiveNotification', (payload: unknown) => {
+      const n = normalizeHubNotification(payload);
+      if (!n) return;
+      for (const handler of this.notificationHandlers) {
+        handler(n);
       }
     });
 

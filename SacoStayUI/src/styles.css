@@ -1,6 +1,8 @@
 /* ng-zorro-antd */
 @import 'ng-zorro-antd/ng-zorro-antd.min.css';
 
+@import './styles/legal.css';
+
 /* Tailwind CSS */
 @tailwind base;
 @tailwind components;

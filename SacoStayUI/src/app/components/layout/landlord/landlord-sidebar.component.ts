@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../../services/auth.service';
+import { ChatUnreadService } from '../../../services/chat-unread.service';
+import { NotificationCenterService } from '../../../services/notification-center.service';
+import { NotificationBellComponent } from '../../shared/notification-bell/notification-bell.component';
 import { navProfileLabel, profileAvatarFromRaw } from '../../../utils/user-display';
 import { resolveMediaUrl } from '../../../utils/media-url';
 import type { UserProfile } from '../../../models/auth.models';
@@ -16,7 +19,7 @@ interface LandlordNavItem {
 @Component({
   selector: 'app-landlord-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, NotificationBellComponent],
   templateUrl: './landlord-sidebar.component.html'
 })
 export class LandlordSidebarComponent implements OnInit {
@@ -32,6 +35,9 @@ export class LandlordSidebarComponent implements OnInit {
   ];
 
   private readonly auth = inject(AuthService);
+  private readonly chatUnreadSvc = inject(ChatUnreadService);
+  private readonly notificationCenter = inject(NotificationCenterService);
+  readonly chatUnread = this.chatUnreadSvc.totalUnread;
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -39,8 +45,12 @@ export class LandlordSidebarComponent implements OnInit {
   ngOnInit(): void {
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((u) => {
       this.user = u;
+      this.chatUnreadSvc.bindOwnerFromSession();
+      this.notificationCenter.bindFromSession();
       this.cdr.detectChanges();
     });
+    this.chatUnreadSvc.bindOwnerFromSession();
+    this.notificationCenter.bindFromSession();
   }
 
   get profileLabel(): string {
@@ -58,6 +68,6 @@ export class LandlordSidebarComponent implements OnInit {
   }
 
   logout(): void {
-    this.auth.logout();
+    this.auth.logout({ exitLandlordShell: true });
   }
 }

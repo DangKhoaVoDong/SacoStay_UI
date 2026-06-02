@@ -35,4 +35,5 @@ export interface ChatConversationSummary {
   otherUserId: string;
   lastMessageText: string;
   lastMessageAt?: string;
+  lastSenderId?: string;
 }

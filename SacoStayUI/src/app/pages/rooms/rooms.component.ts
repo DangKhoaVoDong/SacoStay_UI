@@ -9,6 +9,7 @@ import { RoomPostService } from '../../services/room-post.service';
 import type { RoomListFilters, RoomPostSummary } from '../../models/room-post.models';
 import { sortRoomsByVipTier } from '../../utils/vip-tier-styles';
 import { cityMatches, districtMatches, priceInRange } from '../../utils/room-filters';
+import { FILTER_CITY_OPTIONS, districtFilterOptions } from '../../utils/vietnam-districts';
 
 export const AMENITY_OPTIONS = [
   { value: 'Điều hòa', icon: '❄️' },
@@ -27,6 +28,8 @@ export const AMENITY_OPTIONS = [
 
 const DEFAULT_PRICE_MIN = 0;
 const DEFAULT_PRICE_MAX = 50_000_000;
+/** Số chip quận/huyện hiển thị trước khi bấm "+" mở rộng. */
+const DISTRICT_COLLAPSED_COUNT = 9;
 
 @Component({
   selector: 'app-rooms',
@@ -43,6 +46,7 @@ export class RoomsComponent implements OnInit {
   loading = true;
   error = '';
   showFilterPanel = false;
+  districtOptionsExpanded = false;
   selectedAmenities: string[] = [];
 
   filters: RoomListFilters = {
@@ -53,21 +57,33 @@ export class RoomsComponent implements OnInit {
     maxOccupants: 'all'
   };
 
-  readonly cityOptions = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'Hà Nội', label: 'Hà Nội' },
-    { value: 'TP.HCM', label: 'TP.HCM' }
-  ];
+  readonly cityOptions = FILTER_CITY_OPTIONS;
 
-  readonly districtOptions = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'Quận 1', label: 'Quận 1' },
-    { value: 'Quận 3', label: 'Quận 3' },
-    { value: 'Quận 5', label: 'Quận 5' },
-    { value: 'Quận 10', label: 'Quận 10' },
-    { value: 'Bình Thạnh', label: 'Bình Thạnh' },
-    { value: 'Quận 7', label: 'Quận 7' }
-  ];
+  get districtOptions() {
+    return districtFilterOptions(this.filters.city);
+  }
+
+  get visibleDistrictOptions() {
+    const all = this.districtOptions;
+    if (this.districtOptionsExpanded || all.length <= DISTRICT_COLLAPSED_COUNT) {
+      return all;
+    }
+    const head = all.slice(0, DISTRICT_COLLAPSED_COUNT);
+    const selected = this.filters.district;
+    if (selected !== 'all' && !head.some((o) => o.value === selected)) {
+      const extra = all.find((o) => o.value === selected);
+      if (extra) return [...head, extra];
+    }
+    return head;
+  }
+
+  get hasMoreDistrictOptions(): boolean {
+    return this.districtOptions.length > DISTRICT_COLLAPSED_COUNT;
+  }
+
+  get hiddenDistrictCount(): number {
+    return Math.max(0, this.districtOptions.length - DISTRICT_COLLAPSED_COUNT);
+  }
 
   readonly maxOccupantOptions = [
     { value: 'all', label: 'Tất cả' },
@@ -161,10 +177,20 @@ export class RoomsComponent implements OnInit {
       maxOccupants: 'all'
     };
     this.selectedAmenities = [];
+    this.districtOptionsExpanded = false;
   }
 
   setCity(value: string): void {
-    this.filters = { ...this.filters, city: value };
+    this.filters = { ...this.filters, city: value, district: 'all' };
+    this.districtOptionsExpanded = false;
+  }
+
+  expandDistrictOptions(): void {
+    this.districtOptionsExpanded = true;
+  }
+
+  collapseDistrictOptions(): void {
+    this.districtOptionsExpanded = false;
   }
 
   setDistrict(value: string): void {

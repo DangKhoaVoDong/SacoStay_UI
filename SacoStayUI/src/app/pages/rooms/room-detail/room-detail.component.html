@@ -227,6 +227,12 @@
       </div>
     </div>
 
-    <app-report-modal [isOpen]="showReport" [targetName]="room.title" type="room" (closed)="closeReport()" />
+    <app-report-modal
+      [isOpen]="showReport"
+      [targetName]="room.title"
+      [reportedRoomId]="room.id"
+      type="room"
+      (closed)="closeReport()"
+    />
   }
 </ng-template>

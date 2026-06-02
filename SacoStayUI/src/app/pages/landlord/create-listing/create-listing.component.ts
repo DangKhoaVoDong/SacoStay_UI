@@ -10,6 +10,7 @@ import { RoomPostService } from '../../../services/room-post.service';
 import { resolveVipTier } from '../../../utils/user-display';
 import type { CreateRoomPostPayload } from '../../../models/room-post.models';
 import { PaymentService } from '../../../services/payment.service';
+import { DISTRICT_OPTIONS_BY_CITY } from '../../../utils/vietnam-districts';
 
 const AMENITIES_LIST = [
   'Điều hòa',
@@ -38,23 +39,7 @@ export class CreateListingComponent implements OnInit {
     { value: 'TP.HCM', label: 'TP.HCM' }
   ];
 
-  readonly districtOptionsByCity: Record<string, { value: string; label: string }[]> = {
-    'Hà Nội': [
-      { value: 'Cầu Giấy', label: 'Cầu Giấy' },
-      { value: 'Đống Đa', label: 'Đống Đa' },
-      { value: 'Hai Bà Trưng', label: 'Hai Bà Trưng' },
-      { value: 'Ba Đình', label: 'Ba Đình' },
-      { value: 'Hoàn Kiếm', label: 'Hoàn Kiếm' }
-    ],
-    'TP.HCM': [
-      { value: 'Quận 1', label: 'Quận 1' },
-      { value: 'Quận 3', label: 'Quận 3' },
-      { value: 'Quận 5', label: 'Quận 5' },
-      { value: 'Quận 10', label: 'Quận 10' },
-      { value: 'Bình Thạnh', label: 'Bình Thạnh' },
-      { value: 'Quận 7', label: 'Quận 7' }
-    ]
-  };
+  readonly districtOptionsByCity = DISTRICT_OPTIONS_BY_CITY;
 
   get districtOptions(): { value: string; label: string }[] {
     return this.districtOptionsByCity[this.city] ?? this.districtOptionsByCity['Hà Nội'];

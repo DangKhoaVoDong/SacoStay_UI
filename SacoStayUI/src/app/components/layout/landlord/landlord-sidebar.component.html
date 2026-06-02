@@ -1,6 +1,6 @@
-<div class="w-64 h-screen bg-[#1A1A2E] text-white flex flex-col fixed left-0 top-0 z-40">
-  <div class="p-6 border-b border-white/10">
-    <a routerLink="/" class="flex items-center">
+<div class="w-64 h-screen bg-[#1A1A2E] text-white flex flex-col fixed left-0 top-0 z-40 overflow-visible">
+  <div class="p-6 border-b border-white/10 flex items-center justify-between gap-2 overflow-visible relative z-50">
+    <a routerLink="/" class="flex items-center min-w-0">
       <img
         src="https://cdn.magicpatterns.com/uploads/rwG78VB7w9oqMtogK5vpyZ/Screenshot_2026-03-15_223642.png"
         alt="SacoStay"
@@ -8,13 +8,14 @@
       />
       <span class="ml-2 text-xs font-bold bg-white/10 px-2 py-1 rounded text-gray-300">PRO</span>
     </a>
+    <app-notification-bell variant="dark" [isLandlord]="true" panelPlacement="beside-right" />
   </div>
 
   <div class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
     @for (item of navItems; track item.href) {
       <a
         [routerLink]="item.href"
-        class="flex items-center px-4 py-3 rounded-xl transition-all duration-200"
+        class="relative flex items-center px-4 py-3 rounded-xl transition-all duration-200"
         [ngClass]="
           isActive(item.href)
             ? 'bg-[#FF9F43] text-white font-semibold shadow-lg shadow-orange-500/20'
@@ -53,6 +54,13 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           }
+        }
+        @if (item.icon === 'chat' && chatUnread() > 0) {
+          <span
+            class="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none flex items-center justify-center ring-2 ring-[#1A1A2E] z-10"
+          >
+            {{ chatUnread() > 99 ? '99+' : chatUnread() }}
+          </span>
         }
         {{ item.name }}
       </a>

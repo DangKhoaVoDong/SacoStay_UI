@@ -84,6 +84,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/map/map.component').then((m) => m.MapComponent)
   },
   {
+    path: 'terms',
+    loadComponent: () =>
+      import('./pages/legal/terms-of-use/terms-of-use.component').then((m) => m.TermsOfUseComponent)
+  },
+  { path: 'privacy', redirectTo: 'terms', pathMatch: 'full' },
+  {
     path: 'landlord-profile',
     loadComponent: () =>
       import('./pages/landlord/landlord-profile/landlord-profile.component').then((m) => m.LandlordProfileComponent),

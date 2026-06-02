@@ -59,6 +59,8 @@ export class DiscoveryComponent implements OnInit {
   private dragging = false;
   private dragStartX = 0;
   private pointerId: number | null = null;
+  /** Chỉ số ảnh đang xem trên thẻ (theo userId). */
+  private photoIndexByUserId: Record<string, number> = {};
 
   private userId = '';
   private myAnswers: UserLifestyleAnswer[] = [];
@@ -153,6 +155,41 @@ export class DiscoveryComponent implements OnInit {
     const c = this.currentCard;
     if (!c) return '';
     return c.age != null ? `${c.displayName} ${c.age}` : c.displayName;
+  }
+
+  /** Ảnh trên thẻ swipe — ảnh cá nhân (User API); không có thì avatar Auth. */
+  get currentCardImageUrl(): string {
+    return this.resolveCardImageUrl(this.currentCard);
+  }
+
+  /** Sidebar & chat: chỉ avatar từ chỉnh sửa hồ sơ (GET /api/Auth/user). */
+  get sidebarAvatarUrl(): string {
+    return this.currentCard?.fallbackAvatarUrl ?? '';
+  }
+
+  private resolveCardImageUrl(card: DiscoveryCard | null): string {
+    if (!card) return '';
+    if (card.profileImageUrls.length > 1) {
+      const idx = this.photoIndexByUserId[card.userId] ?? 0;
+      return card.profileImageUrls[idx % card.profileImageUrls.length];
+    }
+    if (card.profileImageUrls.length === 1) return card.profileImageUrls[0];
+    return card.fallbackAvatarUrl;
+  }
+
+  get currentCardPhotoCount(): number {
+    return this.currentCard?.profileImageUrls.length ?? 0;
+  }
+
+  photoDotIndices(): number[] {
+    const n = this.currentCardPhotoCount;
+    return Array.from({ length: n }, (_, i) => i);
+  }
+
+  get currentCardPhotoIndex(): number {
+    const c = this.currentCard;
+    if (!c || !c.profileImageUrls.length) return 0;
+    return this.photoIndexByUserId[c.userId] ?? 0;
   }
 
   get cardMetaLine(): string {
@@ -299,9 +336,30 @@ export class DiscoveryComponent implements OnInit {
     } else if (this.dragX < -threshold) {
       this.commitSwipe(false);
     } else {
+      if (Math.abs(this.dragX) < 12) {
+        this.cycleCurrentCardPhoto(event);
+      }
       this.dragX = 0;
       this.cdr.detectChanges();
     }
+  }
+
+  /** Chạm nhẹ trên thẻ: ảnh tiếp theo; chạm trái/phải: prev/next (Tinder). */
+  private cycleCurrentCardPhoto(event: PointerEvent): void {
+    const c = this.currentCard;
+    if (!c?.profileImageUrls?.length || c.profileImageUrls.length < 2) return;
+
+    const el = event.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const ratio = (event.clientX - rect.left) / rect.width;
+    const cur = this.photoIndexByUserId[c.userId] ?? 0;
+    const n = c.profileImageUrls.length;
+    let next = (cur + 1) % n;
+    if (ratio < 0.35) next = (cur - 1 + n) % n;
+    else if (ratio > 0.65) next = (cur + 1) % n;
+
+    this.photoIndexByUserId = { ...this.photoIndexByUserId, [c.userId]: next };
+    this.cdr.detectChanges();
   }
 
   handleLikeButton(): void {
@@ -378,6 +436,7 @@ export class DiscoveryComponent implements OnInit {
 
       this.swipeAnim = null;
       this.currentIndex += 1;
+      this.dragX = 0;
       this.cdr.detectChanges();
     }, 280);
   }

@@ -121,7 +121,9 @@ export class AdminService {
       displayName: display,
       createdAt: str(o['createdAt'] ?? o['CreatedAt']),
       roles,
-      avatar: str(o['avatar'] ?? o['Avatar']) || undefined
+      avatar: str(o['avatar'] ?? o['Avatar']) || undefined,
+      totalSiteSeconds: Number(o['totalSiteSeconds'] ?? o['TotalSiteSeconds'] ?? 0) || 0,
+      lastSeenAt: str(o['lastSeenAt'] ?? o['LastSeenAt']) || undefined
     };
   }
 

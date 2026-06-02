@@ -70,7 +70,7 @@
                 <select
                   class="w-full rounded-lg border border-gray-300 text-sm py-2 px-2"
                   [(ngModel)]="filters.city"
-                  (ngModelChange)="onFiltersChange()"
+                  (ngModelChange)="onCityFilterChange()"
                 >
                   @for (opt of cityOptions; track opt.value) {
                     <option [value]="opt.value">{{ opt.label }}</option>

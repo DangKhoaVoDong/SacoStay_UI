@@ -6,11 +6,12 @@ import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
 import { clearTempRegisterProfile, isAdminUser } from '../../utils/user-display';
+import { AuthLegalNoticeComponent } from '../../components/legal/auth-legal-notice.component';
 
 @Component({
   selector: 'app-auth',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AuthLegalNoticeComponent],
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.css']
 })

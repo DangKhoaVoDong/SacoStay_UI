@@ -21,10 +21,13 @@ import {
   clearTempRegisterProfile,
   applyTempRegisterProfileToUser,
   userIdFromUser,
-  clearLegacyTenantPremiumKey
+  clearLegacyTenantPremiumKey,
+  clearMockLandlordPackage
 } from '../utils/user-display';
 import { clearLegacyLifestyleKeys, clearSwipeDataForUser } from '../utils/lifestyle-storage';
 import { ChatPeerProfileService } from './chat-peer-profile.service';
+import { ChatHubService } from './chat-hub.service';
+import { NotificationCenterService } from './notification-center.service';
 
 const TOKEN_KEY = 'saco_stay_token';
 
@@ -124,12 +127,22 @@ export class AuthService {
     clearLegacyTenantPremiumKey();
     localStorage.removeItem('identity_verification_status');
     localStorage.removeItem('landlord_upgrade_status');
+    clearMockLandlordPackage();
     this.currentUser.next(null);
+    inject(NotificationCenterService).reset();
+    inject(ChatHubService).disconnect();
   }
 
-  /** Đăng xuất chủ động — không reload toàn trang (tránh vòng lặp với interceptor). */
-  logout(): void {
+  /**
+   * Đăng xuất chủ động.
+   * `exitLandlordShell`: thoát kênh chủ trọ — reload về trang chủ (layout người thuê/khách).
+   */
+  logout(options?: { exitLandlordShell?: boolean }): void {
     this.clearSession();
+    if (options?.exitLandlordShell) {
+      window.location.assign('/');
+      return;
+    }
     void this.router.navigateByUrl('/');
   }
 

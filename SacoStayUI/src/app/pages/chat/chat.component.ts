@@ -10,6 +10,7 @@ import { LandlordLayoutComponent } from '../../components/layout/landlord/landlo
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { ChatHubService } from '../../services/chat-hub.service';
+import { ChatUnreadService } from '../../services/chat-unread.service';
 import { ChatPeerProfileService, isGenericChatLabel } from '../../services/chat-peer-profile.service';
 import { loadStoredChatContacts, upsertStoredChatContact } from '../../utils/chat-contacts-storage';
 import type {
@@ -34,6 +35,7 @@ export class ChatComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly chatService = inject(ChatService);
   private readonly chatHub = inject(ChatHubService);
+  private readonly chatUnread = inject(ChatUnreadService);
   private readonly peerProfiles = inject(ChatPeerProfileService);
   private readonly route = inject(ActivatedRoute);
 
@@ -47,6 +49,8 @@ export class ChatComponent implements OnInit {
   listError = '';
   messagesError = '';
   sendError = '';
+  hubReady = false;
+  hubConnecting = false;
 
   currentUserId = '';
   hostShell: ChatHostShell = 'tenant';
@@ -99,14 +103,13 @@ export class ChatComponent implements OnInit {
       this.authService.refreshProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((p) => {
         this.currentUserId = p?.id ?? '';
         if (p) this.peerProfiles.cacheFromAuthUser(p);
-        this.loadContactList();
-        this.cdr.detectChanges();
+        this.chatUnread.bindOwnerFromSession();
+        this.initChatSession();
       });
     } else {
-      this.loadContactList();
+      this.chatUnread.bindOwnerFromSession();
+      this.initChatSession();
     }
-
-    this.chatHub.ensureConnected().catch(() => undefined);
 
     const unsubHub = this.chatHub.onIncomingMessage((senderId, text) =>
       this.handleIncomingMessage(senderId, text)
@@ -143,11 +146,24 @@ export class ChatComponent implements OnInit {
   }
 
   get activeConversation(): ChatConversation | undefined {
-    return this.conversations.find((c) => c.otherUser.id === this.activeOtherUserId);
+    if (!this.activeOtherUserId) return undefined;
+    return this.conversations.find((c) => this.sameUserId(c.otherUser.id, this.activeOtherUserId!));
   }
 
   get activeOtherUser(): ChatParticipant | null {
-    return this.activeConversation?.otherUser ?? null;
+    const conv = this.activeConversation;
+    if (conv) return conv.otherUser;
+    if (!this.activeOtherUserId) return null;
+    const cached = this.peerProfiles.getCached(this.activeOtherUserId);
+    if (cached) return cached;
+    return {
+      id: this.activeOtherUserId,
+      displayName: this.peerProfiles.shortLabel(this.activeOtherUserId)
+    };
+  }
+
+  get canSendMessage(): boolean {
+    return !!this.activeOtherUserId && this.hubReady && !this.hubConnecting;
   }
 
   avatarUrl(user: ChatParticipant | null): string {
@@ -252,6 +268,29 @@ export class ChatComponent implements OnInit {
     });
   }
 
+  private initChatSession(): void {
+    this.loadContactList();
+    this.connectChatHub();
+  }
+
+  private connectChatHub(): void {
+    this.hubConnecting = true;
+    this.hubReady = false;
+    this.cdr.detectChanges();
+    void this.chatHub
+      .reconnect()
+      .then(() => {
+        this.hubReady = true;
+        this.hubConnecting = false;
+        this.cdr.detectChanges();
+      })
+      .catch(() => {
+        this.hubReady = false;
+        this.hubConnecting = false;
+        this.cdr.detectChanges();
+      });
+  }
+
   private handleIncomingMessage(senderId: string, text: string): void {
     if (!this.currentUserId) return;
 
@@ -295,6 +334,7 @@ export class ChatComponent implements OnInit {
   selectConversation(otherUserId: string): void {
     if (!otherUserId || !this.currentUserId) return;
     this.activeOtherUserId = otherUserId.trim();
+    this.chatUnread.setActivePeer(this.activeOtherUserId);
     this.messages = [];
     this.messagesError = '';
 
@@ -349,20 +389,34 @@ export class ChatComponent implements OnInit {
     const text = this.messageText.trim();
     if (!text || !this.activeOtherUserId || this.sendLoading) return;
 
+    if (!this.canSendMessage) {
+      this.sendError = this.hubConnecting
+        ? 'Đang kết nối chat… Vui lòng thử lại sau vài giây.'
+        : 'Chưa kết nối được máy chủ chat. Thử tải lại trang.';
+      this.cdr.detectChanges();
+      if (!this.hubConnecting && !this.hubReady) {
+        this.connectChatHub();
+      }
+      return;
+    }
+
     this.sendLoading = true;
     this.sendError = '';
-    this.chatHub
-      .sendPrivateMessage(this.activeOtherUserId, text)
+    void this.chatHub
+      .ensureConnected()
+      .then(() => this.chatHub.sendPrivateMessage(this.activeOtherUserId!, text))
       .then(() => {
         this.messageText = '';
         this.sendLoading = false;
         this.sendError = '';
+        this.hubReady = true;
         this.loadMessages();
         this.refreshActiveConversationPreview(text);
         this.cdr.detectChanges();
       })
       .catch((err: unknown) => {
         this.sendLoading = false;
+        this.hubReady = false;
         const msg = err instanceof Error ? err.message : '';
         this.sendError =
           msg.includes('Chưa đăng nhập') || msg.includes('đăng nhập lại')

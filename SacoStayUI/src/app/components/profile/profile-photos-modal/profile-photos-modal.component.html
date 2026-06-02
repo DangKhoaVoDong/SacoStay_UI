@@ -1,0 +1,95 @@
+@if (isOpen) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" (click)="onBackdropClick()"></div>
+
+    <div
+      class="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+        <div class="min-w-0">
+          <h3 class="font-bold text-gray-900">Ảnh cá nhân</h3>
+          <p class="text-xs text-gray-500 mt-0.5">
+            Tối đa {{ maxPhotos }} ảnh — hiển thị trên thẻ tìm bạn
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="close()"
+          class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 shrink-0"
+          aria-label="Đóng"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        @if (errorMessage()) {
+          <p class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{{ errorMessage() }}</p>
+        }
+
+        @if (loading()) {
+          <p class="text-center text-gray-500 py-8 text-sm">Đang tải ảnh…</p>
+        } @else {
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            @for (url of urls(); track url) {
+              <div class="relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-100 group">
+                <img [src]="displayUrl(url)" alt="" class="w-full h-full object-cover object-center" />
+                <button
+                  type="button"
+                  class="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/55 text-white flex items-center justify-center hover:bg-red-500 transition-colors disabled:opacity-50"
+                  [disabled]="deletingUrl() === url || uploading()"
+                  title="Xoá ảnh"
+                  (click)="deleteImage(url)"
+                >
+                  @if (deletingUrl() === url) {
+                    <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  } @else {
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  }
+                </button>
+              </div>
+            }
+
+            @if (canAddMore) {
+              <label
+                class="aspect-[3/4] rounded-xl border-2 border-dashed border-orange-200 bg-orange-50/40 flex flex-col items-center justify-center cursor-pointer hover:border-[#FF9F43] hover:bg-orange-50 transition-colors"
+                [class.pointer-events-none]="uploading()"
+                [class.opacity-60]="uploading()"
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  class="sr-only"
+                  [disabled]="uploading()"
+                  (change)="onFileSelected($event)"
+                />
+                @if (uploading()) {
+                  <span class="w-8 h-8 border-2 border-[#FF9F43] border-t-transparent rounded-full animate-spin mb-2"></span>
+                  <span class="text-xs text-gray-600">Đang tải lên…</span>
+                } @else {
+                  <svg class="w-8 h-8 text-[#FF9F43] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span class="text-xs font-medium text-[#FF9F43]">Thêm ảnh</span>
+                  <span class="text-[10px] text-gray-500 mt-1">Còn {{ remainingSlots }} slot</span>
+                }
+              </label>
+            }
+          </div>
+
+          @if (!urls().length) {
+            <p class="text-sm text-gray-500 text-center">
+              Chưa có ảnh cá nhân. Thêm ảnh để hiển thị trên thẻ tìm bạn thay cho avatar mặc định.
+            </p>
+          }
+        }
+      </div>
+    </div>
+  </div>
+}

@@ -17,6 +17,8 @@ export interface AdminUserRow {
   createdAt: string;
   roles: string[];
   avatar?: string;
+  totalSiteSeconds?: number;
+  lastSeenAt?: string;
 }
 
 export interface AdminRoomPostRow {
