@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
-import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
+import { AuthService, loginErrorFromApi, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
 import { clearTempRegisterProfile, isAdminUser } from '../../utils/user-display';
 import { AuthLegalNoticeComponent } from '../../components/legal/auth-legal-notice.component';
 
@@ -27,6 +27,7 @@ export class AuthComponent implements OnInit {
   loginLoading = false;
   registerLoading = false;
   loginError = '';
+  loginBanned = false;
   registerError = '';
 
   selectedRole: 'tenant' | 'landlord' = 'tenant';
@@ -107,6 +108,7 @@ export class AuthComponent implements OnInit {
 
     this.loginLoading = true;
     this.loginError = '';
+    this.loginBanned = false;
 
     const loginData = {
       emailPhoneorUsername: this.loginForm.value.email,
@@ -128,17 +130,15 @@ export class AuthComponent implements OnInit {
           }
         });
       },
-      error: (err: any) => {
+      error: (err: unknown) => {
         this.loginLoading = false;
-        const status = err?.status;
-        if (status === 401) {
-          this.loginError = 'Email/số điện thoại hoặc mật khẩu không đúng.';
-        } else if (status === 0 || err?.message?.includes('Http failure')) {
-          this.loginError = 'Không kết nối được API hoặc sai tên đăng nhập/mật khẩu. Nếu đã bật backend, kiểm tra CORS.';
-        } else {
-          this.loginError = err?.error?.message || 'Đăng nhập thất bại. Thử lại sau.';
+        const { message, isBanned } = loginErrorFromApi(err);
+        this.loginError = message;
+        this.loginBanned = isBanned;
+        this.cdr.markForCheck();
+        if (!isBanned) {
+          alert(message);
         }
-        alert(this.loginError);
       }
     });
   }

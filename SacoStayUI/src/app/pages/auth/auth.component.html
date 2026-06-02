@@ -77,7 +77,22 @@
           </a>
         </div>
 
-        <div *ngIf="loginError" class="text-red-500 text-sm text-center p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div
+          *ngIf="loginBanned"
+          class="text-center p-4 bg-amber-50 border border-amber-300 rounded-lg"
+          role="alert"
+        >
+          <p class="text-amber-900 font-semibold text-sm mb-1">Tài khoản đã bị khóa</p>
+          <p class="text-amber-800 text-sm leading-relaxed">{{ loginError }}</p>
+          <p class="text-amber-700/90 text-xs mt-2">
+            Bạn không thể đăng nhập cho đến khi được hỗ trợ xem xét (nếu có nhầm lẫn).
+          </p>
+        </div>
+
+        <div
+          *ngIf="loginError && !loginBanned"
+          class="text-red-500 text-sm text-center p-3 bg-red-50 border border-red-200 rounded-lg"
+        >
           {{ loginError }}
         </div>
 

@@ -1,13 +1,20 @@
 export interface ReportRow {
   id: string;
   reporterName: string;
+  reportedUserId?: string;
   reportedUserName?: string;
+  reportedRoomId?: string;
   reportedRoomName?: string;
   reason: string;
   description: string;
   status: string;
   createdAt: string;
   images: string[];
+}
+
+export interface ProcessReportPayload {
+  isValid: boolean;
+  adminNote?: string;
 }
 
 export interface SubmitReportPayload {

@@ -58,6 +58,7 @@ export function getApiErrorMessage(err: unknown): string {
 
 type ApiErrorBody = {
   message?: string;
+  Message?: string;
   title?: string;
   detail?: string;
   errorDetail?: string;
@@ -65,10 +66,45 @@ type ApiErrorBody = {
 };
 
 function formatApiErrorBody(o: ApiErrorBody): string {
-  const main = o.detail || o.message || o.title || '';
+  const main = o.detail || o.message || o.Message || o.title || '';
   const extra = [o.errorDetail, o.innerError].filter((x) => x && String(x).trim()).join(' — ');
   if (main && extra) return `${main} (${extra})`;
   return main || extra || '';
+}
+
+const ACCOUNT_BANNED_MESSAGE =
+  'Tài khoản của bạn đã bị khóa vĩnh viễn do vi phạm nội quy SacoStay.';
+
+/** Đăng nhập: map lỗi API + nhận diện tài khoản bị khóa (Auth/login 400). */
+export function loginErrorFromApi(err: unknown): { message: string; isBanned: boolean } {
+  const e = err as { status?: number; message?: string };
+  const status = e?.status;
+  const apiMsg = getApiErrorMessage(err).trim();
+
+  const looksBanned =
+    status === 400 &&
+    (/khóa|khoa|vi phạm|vi pham|bị ban|bi ban|locked|lockout/i.test(apiMsg) ||
+      (!apiMsg && status === 400));
+
+  if (looksBanned) {
+    const message =
+      apiMsg && /khóa|vi phạm/i.test(apiMsg) ? apiMsg : ACCOUNT_BANNED_MESSAGE;
+    return { message, isBanned: true };
+  }
+
+  if (status === 401) {
+    return { message: 'Email/số điện thoại hoặc mật khẩu không đúng.', isBanned: false };
+  }
+  if (status === 0 || e?.message?.includes('Http failure')) {
+    return {
+      message: 'Không kết nối được máy chủ. Kiểm tra backend đang chạy và CORS.',
+      isBanned: false
+    };
+  }
+  if (apiMsg && !/Http failure|Unknown Error/i.test(apiMsg)) {
+    return { message: apiMsg, isBanned: false };
+  }
+  return { message: 'Đăng nhập thất bại. Vui lòng thử lại sau.', isBanned: false };
 }
 
 @Injectable({ providedIn: 'root' })

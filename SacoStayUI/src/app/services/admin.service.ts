@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import type { AdminDashboardStats, AdminRoomPostRow, AdminUserRow } from '../models/admin.models';
+import type { ProcessReportPayload } from '../models/report.models';
 
 function str(v: unknown): string {
   if (v === undefined || v === null) return '';
@@ -89,6 +90,16 @@ export class AdminService {
   rejectRoomPost(id: string): Observable<{ message?: string; status?: string }> {
     return this.http
       .post<unknown>(`${this.apiUrl}/Admin/room-posts/${encodeURIComponent(id)}/reject`, {})
+      .pipe(map((raw) => normalizeActionResult(raw)));
+  }
+
+  /** POST /api/Admin/reports/{id}/process — isValid: true = chấp nhận báo cáo, false = từ chối. */
+  processReport(id: string, body: ProcessReportPayload): Observable<{ message?: string; status?: string }> {
+    return this.http
+      .post<unknown>(`${this.apiUrl}/Admin/reports/${encodeURIComponent(id)}/process`, {
+        isValid: body.isValid,
+        adminNote: body.adminNote ?? null
+      })
       .pipe(map((raw) => normalizeActionResult(raw)));
   }
 

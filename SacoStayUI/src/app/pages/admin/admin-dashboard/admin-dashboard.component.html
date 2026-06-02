@@ -338,7 +338,8 @@
             <table class="w-full text-sm text-left">
               <thead class="bg-gray-50 text-gray-500 font-medium">
                 <tr>
-                  <th class="px-6 py-3">Người dùng</th>
+                  <th class="px-6 py-3">Họ và tên</th>
+                  <th class="px-6 py-3">Vi phạm (báo cáo)</th>
                   <th class="px-6 py-3">Vai trò</th>
                   <th class="px-6 py-3">SĐT</th>
                   <th class="px-6 py-3">Thời gian trên web</th>
@@ -353,10 +354,19 @@
                       <div class="flex items-center">
                         <img [src]="userAvatar(user)" alt="" class="w-8 h-8 rounded-full mr-3 object-cover" />
                         <div>
-                          <div class="font-medium text-gray-900">{{ user.displayName || user.userName }}</div>
+                          <div class="font-medium text-gray-900">{{ userFullName(user) }}</div>
                           <div class="text-gray-500 text-xs">{{ user.email }}</div>
                         </div>
                       </div>
+                    </td>
+                    <td class="px-6 py-4">
+                      @if (violationBadge(user.id); as badge) {
+                        <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="badge.class">
+                          {{ badge.label }}
+                        </span>
+                      } @else {
+                        <span class="text-gray-400 text-xs">—</span>
+                      }
                     </td>
                     <td class="px-6 py-4 capitalize text-gray-700">{{ roleLabel(user.roles) }}</td>
                     <td class="px-6 py-4 text-gray-500">{{ user.phoneNumber || '—' }}</td>
@@ -366,7 +376,7 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">Chưa có người dùng.</td>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">Chưa có người dùng.</td>
                   </tr>
                 }
               </tbody>
@@ -384,9 +394,19 @@
           <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 class="text-lg font-bold text-gray-900">
-                {{ activeTab === 'room-reports' ? 'Báo cáo phòng trọ' : 'Báo cáo người dùng' }}
+                {{ isRoomReportsTab ? 'Báo cáo phòng trọ' : 'Báo cáo người dùng' }}
               </h2>
-              <p class="text-sm text-gray-500">Dữ liệu từ GET /api/Report</p>
+              <p class="text-sm text-gray-500">
+                @if (isRoomReportsTab) {
+                  Tin đăng bị report — có cột <span class="font-medium">Tin phòng</span>.
+                } @else {
+                  Report trực tiếp hồ sơ (không có tin phòng) — không hiển thị cột Tin phòng.
+                }
+              </p>
+              <p class="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2 max-w-2xl">
+                Chấp nhận báo cáo lần 1: ẩn tin + cảnh báo chủ trọ. <strong>Lần 2 trở lên (cùng tài khoản):</strong> khóa vĩnh viễn — đăng nhập trả lỗi
+                (Auth/login: &quot;Tài khoản đã bị khóa vĩnh viễn do vi phạm nội quy&quot;).
+              </p>
             </div>
             <button
               type="button"
@@ -411,24 +431,45 @@
               <table class="w-full text-sm">
                 <thead class="bg-gray-50 text-left text-gray-600">
                   <tr>
-                    <th class="px-6 py-3 font-semibold">Thời gian</th>
-                    <th class="px-6 py-3 font-semibold">Người báo cáo</th>
-                    <th class="px-6 py-3 font-semibold">{{ activeTab === 'room-reports' ? 'Tin / phòng' : 'Người bị báo cáo' }}</th>
-                    <th class="px-6 py-3 font-semibold">Lý do</th>
-                    <th class="px-6 py-3 font-semibold">Chi tiết</th>
-                    <th class="px-6 py-3 font-semibold">Ảnh</th>
-                    <th class="px-6 py-3 font-semibold">Trạng thái</th>
+                    <th class="px-4 py-3 font-semibold whitespace-nowrap">Thời gian</th>
+                    <th class="px-4 py-3 font-semibold">Người báo cáo</th>
+                    @if (isRoomReportsTab) {
+                      <th class="px-4 py-3 font-semibold">Tin phòng</th>
+                    }
+                    <th class="px-4 py-3 font-semibold">Người bị báo cáo</th>
+                    <th class="px-4 py-3 font-semibold">Vi phạm</th>
+                    <th class="px-4 py-3 font-semibold">Lý do</th>
+                    <th class="px-4 py-3 font-semibold">Chi tiết</th>
+                    <th class="px-4 py-3 font-semibold">Ảnh</th>
+                    <th class="px-4 py-3 font-semibold">Trạng thái</th>
+                    <th class="px-4 py-3 font-semibold text-right">Hành động</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                   @for (r of activeReports; track r.id) {
                     <tr class="hover:bg-gray-50/80 align-top">
-                      <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ formatDateTime(r.createdAt) }}</td>
-                      <td class="px-6 py-4 font-medium text-gray-900">{{ r.reporterName }}</td>
-                      <td class="px-6 py-4 font-medium text-gray-900 max-w-[180px]">{{ reportTargetLabel(r) }}</td>
-                      <td class="px-6 py-4 text-gray-700 max-w-[200px]">{{ r.reason || '—' }}</td>
-                      <td class="px-6 py-4 text-gray-600 max-w-[220px]">
-                        <p class="line-clamp-3 whitespace-pre-wrap">{{ r.description || '—' }}</p>
+                      <td class="px-4 py-4 whitespace-nowrap text-gray-600 text-xs">{{ formatDateTime(r.createdAt) }}</td>
+                      <td class="px-4 py-4 font-medium text-gray-900 max-w-[120px]">{{ reporterLabel(r) }}</td>
+                      @if (isRoomReportsTab) {
+                        <td class="px-4 py-4 text-gray-800 max-w-[140px]">{{ reportRoomLabel(r) }}</td>
+                      }
+                      <td class="px-4 py-4 font-medium text-gray-900 max-w-[120px]">{{ reportPersonLabel(r) }}</td>
+                      <td class="px-4 py-4 whitespace-nowrap">
+                        @if (reportViolatorUserId(r); as vid) {
+                          @if (violationBadge(vid); as badge) {
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold" [ngClass]="badge.class">
+                              {{ badge.label }}
+                            </span>
+                          } @else {
+                            <span class="text-gray-400 text-xs">—</span>
+                          }
+                        } @else {
+                          <span class="text-gray-400 text-xs">—</span>
+                        }
+                      </td>
+                      <td class="px-4 py-4 text-gray-700 max-w-[140px]" [title]="r.reason">{{ truncateText(r.reason, 32) }}</td>
+                      <td class="px-4 py-4 text-gray-600 max-w-[160px]" [title]="r.description">
+                        <p class="line-clamp-2">{{ truncateText(r.description, 40) }}</p>
                       </td>
                       <td class="px-6 py-4">
                         @if (r.images.length) {
@@ -452,6 +493,35 @@
                           {{ reportStatusLabel(r.status) }}
                         </span>
                       </td>
+                      <td class="px-4 py-4">
+                        <div class="admin-report-actions">
+                          <button
+                            type="button"
+                            (click)="openReportDetail(r)"
+                            class="admin-report-actions__btn admin-report-actions__btn--outline"
+                          >
+                            Xem chi tiết
+                          </button>
+                          @if (isReportPending(r)) {
+                            <button
+                              type="button"
+                              (click)="acceptReport(r)"
+                              [disabled]="isReportProcessing(r.id)"
+                              class="admin-report-actions__btn admin-report-actions__btn--accept"
+                            >
+                              {{ isReportProcessing(r.id) ? '…' : 'Chấp nhận' }}
+                            </button>
+                            <button
+                              type="button"
+                              (click)="rejectReport(r)"
+                              [disabled]="isReportProcessing(r.id)"
+                              class="admin-report-actions__btn admin-report-actions__btn--reject"
+                            >
+                              Từ chối
+                            </button>
+                          }
+                        </div>
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -463,3 +533,116 @@
     }
   </main>
 </div>
+
+@if (detailReport) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="report-detail-title"
+  >
+    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-100">
+      <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 id="report-detail-title" class="text-lg font-bold text-gray-900">Chi tiết báo cáo</h2>
+          <p class="text-xs text-gray-500 mt-0.5">{{ formatDateTime(detailReport.createdAt) }}</p>
+        </div>
+        <button
+          type="button"
+          (click)="closeReportDetail()"
+          class="text-gray-400 hover:text-gray-600 text-xl leading-none"
+          aria-label="Đóng"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="px-6 py-4 space-y-4 text-sm">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase">Người báo cáo</p>
+          <p class="mt-1 font-medium text-gray-900">{{ reporterLabel(detailReport) }}</p>
+        </div>
+        @if (detailReport.reportedRoomId) {
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase">Tin phòng</p>
+            <p class="mt-1 font-medium text-gray-900">{{ reportRoomLabel(detailReport) }}</p>
+          </div>
+        }
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase">Người bị báo cáo</p>
+          <p class="mt-1 font-medium text-gray-900">{{ reportPersonLabel(detailReport) }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase">Vi phạm</p>
+          @if (reportViolatorUserId(detailReport); as vid) {
+            @if (violationBadge(vid); as badge) {
+              <span class="inline-flex mt-1 px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="badge.class">
+                {{ badge.label }}
+              </span>
+            } @else {
+              <p class="mt-1 text-gray-500">—</p>
+            }
+          } @else {
+            <p class="mt-1 text-gray-500">—</p>
+          }
+        </div>
+        @if (isReportPending(detailReport) && willLockOnAccept(detailReport)) {
+          <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+            Chấp nhận báo cáo này sẽ <strong>khóa vĩnh viễn</strong> tài khoản (lần vi phạm thứ 2). User sẽ không đăng nhập được.
+          </div>
+        }
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase">Lý do</p>
+          <p class="mt-1 text-gray-800 whitespace-pre-wrap">{{ detailReport.reason || '—' }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase">Mô tả chi tiết</p>
+          <p class="mt-1 text-gray-700 whitespace-pre-wrap">{{ detailReport.description || '—' }}</p>
+        </div>
+        @if (detailReport.images.length) {
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Ảnh minh chứng</p>
+            <div class="flex flex-wrap gap-2">
+              @for (img of detailReport.images; track img) {
+                <a [href]="reportImageUrl(img)" target="_blank" rel="noopener noreferrer">
+                  <img
+                    [src]="reportImageUrl(img)"
+                    alt=""
+                    class="w-24 h-24 rounded-lg object-cover border border-gray-200"
+                  />
+                </a>
+              }
+            </div>
+          </div>
+        }
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase">Trạng thái</p>
+          <span class="inline-flex mt-1 px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="reportStatusClass(detailReport.status)">
+            {{ reportStatusLabel(detailReport.status) }}
+          </span>
+        </div>
+      </div>
+
+      @if (isReportPending(detailReport)) {
+        <div class="px-6 py-4 border-t border-gray-100 flex flex-wrap gap-2 justify-end">
+          <button
+            type="button"
+            (click)="rejectReport(detailReport)"
+            [disabled]="isReportProcessing(detailReport.id)"
+            class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Từ chối báo cáo
+          </button>
+          <button
+            type="button"
+            (click)="acceptReport(detailReport)"
+            [disabled]="isReportProcessing(detailReport.id)"
+            class="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+          >
+            {{ isReportProcessing(detailReport.id) ? 'Đang xử lý…' : 'Chấp nhận báo cáo' }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}

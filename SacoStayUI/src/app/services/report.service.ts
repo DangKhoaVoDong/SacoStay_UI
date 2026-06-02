@@ -77,7 +77,9 @@ export class ReportService {
     return {
       id: str(o['reportId'] ?? o['ReportId']) || `report-${index}`,
       reporterName: str(o['reporterName'] ?? o['ReporterName']) || '—',
+      reportedUserId: str(o['reportedUserId'] ?? o['ReportedUserId']) || undefined,
       reportedUserName: str(o['reportedUserName'] ?? o['ReportedUserName']) || undefined,
+      reportedRoomId: str(o['reportedRoomId'] ?? o['ReportedRoomId']) || undefined,
       reportedRoomName: str(o['reportedRoomName'] ?? o['ReportedRoomName']) || undefined,
       reason: str(o['reason'] ?? o['Reason']),
       description: str(o['description'] ?? o['Description']),

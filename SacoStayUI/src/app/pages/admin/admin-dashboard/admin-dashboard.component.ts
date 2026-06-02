@@ -39,6 +39,8 @@ export class AdminDashboardComponent implements OnInit {
   errorMessage = '';
   reportsError = '';
   actionPostId: string | null = null;
+  processingReportId: string | null = null;
+  detailReport: ReportRow | null = null;
 
   stats: AdminDashboardStats = {
     totalUsers: 0,
@@ -68,12 +70,18 @@ export class AdminDashboardComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  /** Báo cáo trực tiếp hồ sơ user (không kèm tin phòng). */
   get userReports(): ReportRow[] {
-    return this.allReports.filter((r) => !!r.reportedUserName && !r.reportedRoomName);
+    return this.allReports.filter((r) => !r.reportedRoomId);
   }
 
+  /** Báo cáo tin phòng (có ReportedRoomId — kể cả khi BE đã điền ReportedUserId chủ trọ). */
   get roomReports(): ReportRow[] {
-    return this.allReports.filter((r) => !!r.reportedRoomName);
+    return this.allReports.filter((r) => !!r.reportedRoomId);
+  }
+
+  get isRoomReportsTab(): boolean {
+    return this.activeTab === 'room-reports';
   }
 
   get activeReports(): ReportRow[] {
@@ -177,12 +185,24 @@ export class AdminDashboardComponent implements OnInit {
     if (this.reportsLoading) return;
     this.reportsLoading = true;
     this.reportsError = '';
-    this.reportsApi
-      .getReports()
+    const users$ =
+      this.users.length > 0 ? of(this.users) : this.admin.getUsers(500).pipe(catchError(() => of<AdminUserRow[]>([])));
+    const posts$ =
+      this.roomPosts.length > 0
+        ? of(this.roomPosts)
+        : this.admin.getRoomPosts().pipe(catchError(() => of<AdminRoomPostRow[]>([])));
+
+    forkJoin({
+      reports: this.reportsApi.getReports().pipe(catchError(() => of<ReportRow[]>([]))),
+      users: users$,
+      posts: posts$
+    })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (rows) => {
-          this.allReports = rows;
+        next: ({ reports, users, posts }) => {
+          if (users.length) this.users = users;
+          if (posts.length) this.roomPosts = posts;
+          this.allReports = reports;
           this.reportsLoading = false;
           this.cdr.detectChanges();
         },
@@ -334,25 +354,158 @@ export class AdminDashboardComponent implements OnInit {
   reportStatusLabel(status: string): string {
     const s = (status || '').toLowerCase();
     if (s === 'pending') return 'Chờ xử lý';
+    if (s === 'approved') return 'Đã chấp nhận';
+    if (s === 'rejected') return 'Báo cáo bị từ chối';
     if (s === 'reviewed') return 'Đang xem xét';
     if (s === 'resolved') return 'Đã xử lý';
-    if (s === 'rejected') return 'Đã từ chối';
     return status || '—';
   }
 
   reportStatusClass(status: string): string {
     const s = (status || '').toLowerCase();
     if (s === 'pending') return 'bg-orange-100 text-orange-800';
-    if (s === 'resolved') return 'bg-green-100 text-green-800';
+    if (s === 'approved') return 'bg-green-100 text-green-800';
     if (s === 'rejected') return 'bg-gray-200 text-gray-700';
+    if (s === 'resolved') return 'bg-green-100 text-green-800';
     return 'bg-blue-100 text-blue-800';
   }
 
-  reportTargetLabel(r: ReportRow): string {
-    if (this.activeTab === 'room-reports') {
-      return r.reportedRoomName || '—';
+  isReportPending(r: ReportRow): boolean {
+    return (r.status || '').toLowerCase() === 'pending';
+  }
+
+  isReportProcessing(id: string): boolean {
+    return this.processingReportId === id;
+  }
+
+  openReportDetail(r: ReportRow): void {
+    this.detailReport = r;
+    this.cdr.detectChanges();
+  }
+
+  closeReportDetail(): void {
+    this.detailReport = null;
+    this.cdr.detectChanges();
+  }
+
+  acceptReport(r: ReportRow): void {
+    if (!this.isReportPending(r)) return;
+    const room = this.reportRoomLabel(r);
+    const person = this.reportPersonLabel(r);
+    const violatorId = this.reportViolatorUserId(r);
+    const prior = violatorId ? this.countApprovedViolations(violatorId) : 0;
+
+    let msg = `Chấp nhận báo cáo?\n\n`;
+    if (room !== '—') msg += `Tin phòng: ${room}\n`;
+    msg += `Người bị báo cáo: ${person}\n\n`;
+    msg += `Tin phòng (nếu có) sẽ bị ẩn. Chủ trọ nhận email + thông báo không tái phạm.\n`;
+    if (prior >= 1) {
+      msg += `\n⚠ Đã có ${prior} báo cáo được chấp nhận trước đó. Lần này tài khoản sẽ bị KHÓA VĨNH VIỄN (không đăng nhập được — theo Auth/login).`;
+    } else if (violatorId) {
+      msg += `\nLần chấp nhận đầu: cảnh báo. Nếu bị chấp nhận lần 2 → khóa vĩnh viễn.`;
     }
-    return r.reportedUserName || '—';
+    if (!confirm(msg)) return;
+    this.processReport(r, true);
+  }
+
+  rejectReport(r: ReportRow): void {
+    if (!this.isReportPending(r)) return;
+    if (!confirm('Từ chối báo cáo này?\n\nKhông ẩn tin, không gửi cảnh báo cho chủ trọ / người bị báo cáo.')) {
+      return;
+    }
+    this.processReport(r, false);
+  }
+
+  private processReport(r: ReportRow, isValid: boolean): void {
+    this.processingReportId = r.id;
+    this.admin
+      .processReport(r.id, { isValid })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.processingReportId = null;
+          this.detailReport = null;
+          alert(res.message || (isValid ? 'Đã chấp nhận báo cáo.' : 'Đã từ chối báo cáo.'));
+          this.loadReports();
+          if (isValid) {
+            this.loadData();
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.processingReportId = null;
+          this.cdr.detectChanges();
+          alert(adminApiErrorMessage(err, 'Xử lý báo cáo thất bại.'));
+        }
+      });
+  }
+
+  /** Họ + tên từ GET /api/Admin/users (không dùng username trên UI). */
+  userFullName(user: AdminUserRow): string {
+    const full = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+    return full || user.displayName?.trim() || user.userName || '—';
+  }
+
+  reportPersonLabel(r: ReportRow): string {
+    const id = this.reportViolatorUserId(r);
+    if (id) {
+      const u = this.users.find((x) => x.id === id);
+      if (u) return this.userFullName(u);
+    }
+    return '—';
+  }
+
+  /** Người báo cáo: map username API → họ tên từ danh sách admin users. */
+  reporterLabel(r: ReportRow): string {
+    const key = (r.reporterName || '').trim().toLowerCase();
+    if (!key) return '—';
+    const u = this.users.find(
+      (x) =>
+        (x.userName || '').trim().toLowerCase() === key ||
+        (x.email || '').trim().toLowerCase() === key
+    );
+    return u ? this.userFullName(u) : r.reporterName;
+  }
+
+  truncateText(text: string, maxLen = 36): string {
+    const t = (text || '').trim().replace(/\s+/g, ' ');
+    if (!t) return '—';
+    if (t.length <= maxLen) return t;
+    return t.slice(0, maxLen).trimEnd() + '…';
+  }
+
+  reportRoomLabel(r: ReportRow): string {
+    return r.reportedRoomName?.trim() || '—';
+  }
+
+  reportViolatorUserId(r: ReportRow): string | undefined {
+    if (r.reportedUserId) return r.reportedUserId;
+    if (r.reportedRoomId) {
+      const post = this.roomPosts.find((p) => p.id === r.reportedRoomId);
+      return post?.userId;
+    }
+    return undefined;
+  }
+
+  /** Số báo cáo đã chấp nhận (Approved) trước đó — khớp logic BE ProcessReport. */
+  countApprovedViolations(userId: string): number {
+    return this.allReports.filter((r) => {
+      if ((r.status || '').toLowerCase() !== 'approved') return false;
+      const target = this.reportViolatorUserId(r);
+      return target === userId;
+    }).length;
+  }
+
+  violationBadge(userId: string): { label: string; class: string } | null {
+    const n = this.countApprovedViolations(userId);
+    if (n >= 2) return { label: 'Đã khóa (≥2 báo cáo)', class: 'bg-red-100 text-red-800' };
+    if (n === 1) return { label: 'Cảnh báo (1 lần)', class: 'bg-orange-100 text-orange-800' };
+    return null;
+  }
+
+  willLockOnAccept(r: ReportRow): boolean {
+    const id = this.reportViolatorUserId(r);
+    return !!id && this.countApprovedViolations(id) >= 1;
   }
 
   reportImageUrl(url: string): string {
