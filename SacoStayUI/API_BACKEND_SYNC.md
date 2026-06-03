@@ -28,7 +28,19 @@
 
 **FE:** `PaymentService.buyLandlordPackage()`, `buyTenantPremium('PREMIUM')`, `goToPayOS(url)`.
 
-**appsettings:** `PayOS:*`, `Frontend:BaseUrl` → `http://localhost:4200`
+**Deploy (production):**
+
+| Thành phần | URL / cấu hình |
+|------------|----------------|
+| FE | `https://sacostay.id.vn` — `src/environments/environment.ts` |
+| API | `https://api.sacostay.id.vn/api` |
+| SignalR | `https://api.sacostay.id.vn/chatHub` |
+| BE CORS | `Frontend:BaseUrl` = `https://sacostay.id.vn` (`appsettings.Production.json`) |
+| DB / JWT / SMTP | **Không** để trống trong `appsettings.json` — dùng `appsettings.Local.json` (dev, gitignore) hoặc biến môi trường trên server: `ConnectionStrings__DefaultConnection`, `Jwt__Key`, … |
+
+**Chạy API local (Visual Studio):** copy `appsettings.Local.json.example` → `appsettings.Local.json`, điền Neon connection (giống bản `publish` trước đây). `ASPNETCORE_ENVIRONMENT=Development`.
+
+**appsettings:** `PayOS:ReturnUrl` → `https://api.sacostay.id.vn/api/Payment/payos-return`
 
 ## Chat
 

@@ -1,7 +1,4 @@
 export const APP_CONSTANTS = {
-  // API
-  API_BASE_URL: 'http://localhost:5219/api',
-  
   // Storage Keys
   TOKEN_KEY: 'saco_stay_token',
   USER_KEY: 'saco_stay_user',
