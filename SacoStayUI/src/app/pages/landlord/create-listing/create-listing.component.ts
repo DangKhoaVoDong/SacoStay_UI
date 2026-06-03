@@ -11,6 +11,7 @@ import { resolveVipTier } from '../../../utils/user-display';
 import type { CreateRoomPostPayload } from '../../../models/room-post.models';
 import { PaymentService } from '../../../services/payment.service';
 import { DISTRICT_OPTIONS_BY_CITY } from '../../../utils/vietnam-districts';
+import { UiToastService } from '../../../services/ui-toast.service';
 
 const AMENITIES_LIST = [
   'Điều hòa',
@@ -76,6 +77,7 @@ export class CreateListingComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly toast = inject(UiToastService);
 
   ngOnInit(): void {
     this.auth.refreshProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.cdr.detectChanges());
@@ -181,7 +183,7 @@ export class CreateListingComponent implements OnInit {
           if (postId) PaymentService.saveRoomPostIdForPayment(postId);
           const vip = resolveVipTier(this.auth.getCurrentUser());
           if (vip !== 'free') {
-            alert('Đăng tin thành công! Tin của bạn đã được tự động duyệt vì bạn là VIP.');
+            this.toast.success('Đăng tin thành công! Tin của bạn đã được tự động duyệt vì bạn là VIP.');
             this.router.navigate(['/my-listings']);
           } else {
             void this.router.navigate(['/landlord-pricing'], {

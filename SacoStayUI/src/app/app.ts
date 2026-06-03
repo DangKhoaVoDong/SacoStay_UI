@@ -3,10 +3,12 @@ import { RouterOutlet } from '@angular/router';
 import { ActivityService } from './services/activity.service';
 import { ChatUnreadService } from './services/chat-unread.service';
 import { NotificationCenterService } from './services/notification-center.service';
+import { UiToastComponent } from './components/shared/ui-toast/ui-toast.component';
+import { UiConfirmDialogComponent } from './components/shared/ui-confirm-dialog/ui-confirm-dialog.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, UiToastComponent, UiConfirmDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

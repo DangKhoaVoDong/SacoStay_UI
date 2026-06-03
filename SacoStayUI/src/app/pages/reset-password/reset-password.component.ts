@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService, getApiErrorMessage } from '../../services/auth.service';
+import { UiToastService } from '../../services/ui-toast.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -16,6 +17,7 @@ export class ResetPasswordComponent {
   loading = false;
   error = '';
   email = '';
+  private readonly toast = inject(UiToastService);
 
   constructor(
     private fb: FormBuilder,
@@ -65,13 +67,13 @@ export class ResetPasswordComponent {
         this.loading = false;
         // Clear the stored email
         localStorage.removeItem('reset_email');
-        alert('Đặt lại mật khẩu thành công!');
+        this.toast.success('Đặt lại mật khẩu thành công!');
         this.router.navigate(['/login']);
       },
       error: (err: unknown) => {
         this.loading = false;
         this.error = getApiErrorMessage(err) || 'Đặt lại mật khẩu thất bại. Thử lại sau.';
-        alert(this.error);
+        this.toast.error(this.error);
       }
     });
   }

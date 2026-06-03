@@ -9,6 +9,8 @@ import { PaymentService } from '../../../services/payment.service';
 import { getApiErrorMessage } from '../../../services/auth.service';
 import type { RoomPostSummary } from '../../../models/room-post.models';
 import { getVipTierInlineBadgeClass, vipTierPackageLabel } from '../../../utils/vip-tier-styles';
+import { UiToastService } from '../../../services/ui-toast.service';
+import { UiConfirmService } from '../../../services/ui-confirm.service';
 
 @Component({
   selector: 'app-my-listings',
@@ -39,6 +41,8 @@ export class MyListingsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly toast = inject(UiToastService);
+  private readonly uiConfirm = inject(UiConfirmService);
 
   ngOnInit(): void {
     const q = this.route.snapshot.queryParamMap;
@@ -167,11 +171,11 @@ export class MyListingsComponent implements OnInit {
       });
   }
 
-  confirmDelete(post: RoomPostSummary, event: Event): void {
+  async confirmDelete(post: RoomPostSummary, event: Event): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
     if (!this.isHidden(post.status)) return;
-    const ok = window.confirm(
+    const ok = await this.uiConfirm.confirm(
       `Xóa vĩnh viễn tin "${post.title}"? Hành động này không thể hoàn tác.`
     );
     if (!ok) return;

@@ -11,6 +11,8 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService, getApiErrorMessage } from '../../services/auth.service';
+import { UiToastService } from '../../services/ui-toast.service';
+import { UiConfirmService } from '../../services/ui-confirm.service';
 import type { UserProfileUpdateDTO, UserProfile } from '../../models/auth.models';
 import { resolveMediaUrl } from '../../utils/media-url';
 import { navProfileLabel } from '../../utils/user-display';
@@ -24,6 +26,8 @@ import { navProfileLabel } from '../../utils/user-display';
 })
 export class ProfileSetupComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly toast = inject(UiToastService);
+  private readonly uiConfirm = inject(UiConfirmService);
 
   profileForm: FormGroup | null = null;
   existingUser: Record<string, unknown> = {};
@@ -55,7 +59,7 @@ export class ProfileSetupComponent implements OnInit {
           this.initFormFromProfile(p);
         } catch (e) {
           console.error('initFormFromProfile', e);
-          alert('Không khởi tạo được form hồ sơ. Thử tải lại trang.');
+          this.toast.error('Không khởi tạo được form hồ sơ. Thử tải lại trang.');
         }
         this.profileLoading = false;
         this.cdr.detectChanges();
@@ -63,7 +67,7 @@ export class ProfileSetupComponent implements OnInit {
       error: () => {
         this.profileLoading = false;
         this.cdr.detectChanges();
-        alert('Không tải được hồ sơ. Kiểm tra đăng nhập hoặc kết nối API.');
+        this.toast.error('Không tải được hồ sơ. Kiểm tra đăng nhập hoặc kết nối API.');
         void this.router.navigateByUrl('/');
       }
     });
@@ -164,11 +168,11 @@ export class ProfileSetupComponent implements OnInit {
     input.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert('Vui lòng chọn file ảnh (JPG, PNG, WebP…).');
+      this.toast.error('Vui lòng chọn file ảnh (JPG, PNG, WebP…).');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert('Ảnh đại diện tối đa 5MB.');
+      this.toast.error('Ảnh đại diện tối đa 5MB.');
       return;
     }
     if (this.avatarObjectUrl) URL.revokeObjectURL(this.avatarObjectUrl);
@@ -193,22 +197,22 @@ export class ProfileSetupComponent implements OnInit {
           error: () => {
             this.avatarUploading = false;
             this.cdr.detectChanges();
-            alert('Đã tải ảnh lên nhưng không làm mới được hồ sơ. Tải lại trang.');
+            this.toast.error('Đã tải ảnh lên nhưng không làm mới được hồ sơ. Tải lại trang.');
           }
         });
       },
       error: (err: unknown) => {
         this.avatarUploading = false;
         this.cdr.detectChanges();
-        alert(getApiErrorMessage(err) || 'Tải ảnh đại diện thất bại.');
+        this.toast.error(getApiErrorMessage(err) || 'Tải ảnh đại diện thất bại.');
       }
     });
   }
 
-  onAvatarDelete(): void {
+  async onAvatarDelete(): Promise<void> {
     const imageUrl = this.avatarDeleteUrl;
     if (!imageUrl) return;
-    if (!confirm('Xóa ảnh đại diện hiện tại?')) return;
+    if (!(await this.uiConfirm.confirm('Xóa ảnh đại diện hiện tại?'))) return;
 
     this.avatarDeleting = true;
     this.authService.deleteProfileImage(imageUrl).subscribe({
@@ -228,14 +232,14 @@ export class ProfileSetupComponent implements OnInit {
           error: () => {
             this.avatarDeleting = false;
             this.cdr.detectChanges();
-            alert('Đã xóa ảnh nhưng không tải lại được hồ sơ. Tải lại trang.');
+            this.toast.error('Đã xóa ảnh nhưng không tải lại được hồ sơ. Tải lại trang.');
           }
         });
       },
       error: (err: unknown) => {
         this.avatarDeleting = false;
         this.cdr.detectChanges();
-        alert(getApiErrorMessage(err) || 'Xóa ảnh đại diện thất bại.');
+        this.toast.error(getApiErrorMessage(err) || 'Xóa ảnh đại diện thất bại.');
       }
     });
   }
@@ -263,7 +267,7 @@ export class ProfileSetupComponent implements OnInit {
           error: () => {
             this.submitLoading = false;
             this.cdr.detectChanges();
-            alert('Đã lưu hồ sơ nhưng không tải lại được dữ liệu mới. Vui lòng mở lại trang hồ sơ.');
+            this.toast.error('Đã lưu hồ sơ nhưng không tải lại được dữ liệu mới. Vui lòng mở lại trang hồ sơ.');
             this.router.navigateByUrl('/');
           }
         });
@@ -271,7 +275,7 @@ export class ProfileSetupComponent implements OnInit {
       error: (err: unknown) => {
         this.submitLoading = false;
         this.cdr.detectChanges();
-        alert(getApiErrorMessage(err) || 'Cập nhật hồ sơ thất bại. Thử lại sau.');
+        this.toast.error(getApiErrorMessage(err) || 'Cập nhật hồ sơ thất bại. Thử lại sau.');
       }
     });
   }

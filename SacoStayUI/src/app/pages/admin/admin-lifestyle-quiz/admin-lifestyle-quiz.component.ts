@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LifestyleService } from '../../../services/lifestyle.service';
 import { getApiErrorMessage } from '../../../services/auth.service';
+import { UiToastService } from '../../../services/ui-toast.service';
 import type { LifestyleQuestion } from '../../../models/lifestyle.models';
 
 interface OptionDraft {
@@ -39,6 +40,7 @@ export class AdminLifestyleQuizComponent implements OnInit {
   newQuestionOptions: string[] = ['', ''];
 
   private readonly lifestyle = inject(LifestyleService);
+  private readonly toast = inject(UiToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -100,7 +102,7 @@ export class AdminLifestyleQuizComponent implements OnInit {
   removeOptionRow(questionId: number, index: number): void {
     const draft = this.getDraft(questionId);
     if (draft.options.length <= 1) {
-      alert('Mỗi câu hỏi cần ít nhất một đáp án.');
+      this.toast.error('Mỗi câu hỏi cần ít nhất một đáp án.');
       return;
     }
     draft.options = draft.options.filter((_, i) => i !== index);
@@ -112,7 +114,7 @@ export class AdminLifestyleQuizComponent implements OnInit {
     const draft = this.getDraft(questionId);
     const content = draft.content.trim();
     if (!content) {
-      alert('Nội dung câu hỏi không được để trống.');
+      this.toast.error('Nội dung câu hỏi không được để trống.');
       return;
     }
 
@@ -125,13 +127,13 @@ export class AdminLifestyleQuizComponent implements OnInit {
           this.savingQuestionId = null;
           const q = this.questions.find((x) => x.id === questionId);
           if (q) q.content = content;
-          alert(msg);
+          this.toast.success(msg);
           this.cdr.detectChanges();
         },
         error: (err) => {
           this.savingQuestionId = null;
           this.cdr.detectChanges();
-          alert(getApiErrorMessage(err) || 'Cập nhật câu hỏi thất bại.');
+          this.toast.error(getApiErrorMessage(err) || 'Cập nhật câu hỏi thất bại.');
         }
       });
   }
@@ -144,7 +146,7 @@ export class AdminLifestyleQuizComponent implements OnInit {
     })).filter((o) => o.content.length > 0);
 
     if (!options.length) {
-      alert('Cần ít nhất một đáp án hợp lệ.');
+      this.toast.error('Cần ít nhất một đáp án hợp lệ.');
       return;
     }
 
@@ -155,13 +157,13 @@ export class AdminLifestyleQuizComponent implements OnInit {
       .subscribe({
         next: (msg) => {
           this.savingOptionsQuestionId = null;
-          alert(msg);
+          this.toast.success(msg);
           this.loadQuestions();
         },
         error: (err) => {
           this.savingOptionsQuestionId = null;
           this.cdr.detectChanges();
-          alert(getApiErrorMessage(err) || 'Cập nhật đáp án thất bại.');
+          this.toast.error(getApiErrorMessage(err) || 'Cập nhật đáp án thất bại.');
         }
       });
   }
@@ -194,7 +196,7 @@ export class AdminLifestyleQuizComponent implements OnInit {
 
   removeNewOptionRow(index: number): void {
     if (this.newQuestionOptions.length <= 1) {
-      alert('Cần ít nhất một đáp án.');
+      this.toast.error('Cần ít nhất một đáp án.');
       return;
     }
     this.newQuestionOptions = this.newQuestionOptions.filter((_, i) => i !== index);
@@ -206,11 +208,11 @@ export class AdminLifestyleQuizComponent implements OnInit {
     const options = this.newQuestionOptions.map((o) => o.trim()).filter(Boolean);
 
     if (!content) {
-      alert('Nội dung câu hỏi không được để trống.');
+      this.toast.error('Nội dung câu hỏi không được để trống.');
       return;
     }
     if (!options.length) {
-      alert('Cần ít nhất một đáp án.');
+      this.toast.error('Cần ít nhất một đáp án.');
       return;
     }
 
@@ -223,13 +225,13 @@ export class AdminLifestyleQuizComponent implements OnInit {
           this.creating = false;
           this.showCreateForm = false;
           this.resetCreateForm();
-          alert(msg);
+          this.toast.success(msg);
           this.loadQuestions();
         },
         error: (err) => {
           this.creating = false;
           this.cdr.detectChanges();
-          alert(getApiErrorMessage(err) || 'Tạo câu hỏi thất bại.');
+          this.toast.error(getApiErrorMessage(err) || 'Tạo câu hỏi thất bại.');
         }
       });
   }

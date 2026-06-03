@@ -5,6 +5,7 @@ import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/rout
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { AuthService, loginErrorFromApi, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
+import { UiToastService } from '../../services/ui-toast.service';
 import { clearTempRegisterProfile, isAdminUser } from '../../utils/user-display';
 import { AuthLegalNoticeComponent } from '../../components/legal/auth-legal-notice.component';
 
@@ -33,6 +34,7 @@ export class AuthComponent implements OnInit {
   selectedRole: 'tenant' | 'landlord' = 'tenant';
 
   private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(UiToastService);
 
   constructor(
     private fb: FormBuilder,
@@ -121,11 +123,11 @@ export class AuthComponent implements OnInit {
         clearTempRegisterProfile();
         this.authService.refreshProfile().subscribe({
           next: () => {
-            alert('Đăng nhập thành công');
+            this.toast.success('Đăng nhập thành công');
             this.navigateAfterAuth();
           },
           error: () => {
-            alert('Đăng nhập thành công nhưng không tải được hồ sơ từ máy chủ.');
+            this.toast.info('Đăng nhập thành công nhưng không tải được hồ sơ từ máy chủ.');
             this.navigateAfterAuth();
           }
         });
@@ -137,7 +139,7 @@ export class AuthComponent implements OnInit {
         this.loginBanned = isBanned;
         this.cdr.markForCheck();
         if (!isBanned) {
-          alert(message);
+          this.toast.error(message);
         }
       }
     });
@@ -161,21 +163,21 @@ export class AuthComponent implements OnInit {
     if (!this.registerForm.value.username?.trim()) {
       this.registerError = 'Tên đăng nhập không được để trống.';
       this.registerLoading = false;
-      alert(this.registerError);
+      this.toast.error(this.registerError);
       return;
     }
 
     if (!this.registerForm.value.email?.trim()) {
       this.registerError = 'Email không được để trống.';
       this.registerLoading = false;
-      alert(this.registerError);
+      this.toast.error(this.registerError);
       return;
     }
 
     if (!this.registerForm.value.password?.trim()) {
       this.registerError = 'Mật khẩu không được để trống.';
       this.registerLoading = false;
-      alert(this.registerError);
+      this.toast.error(this.registerError);
       return;
     }
 
@@ -228,7 +230,7 @@ export class AuthComponent implements OnInit {
           this.registerError = err?.error?.message || err?.error?.title || 'Đăng ký thất bại. Thử lại sau.';
         }
 
-        alert(this.registerError);
+        this.toast.error(this.registerError);
       }
     });
   }

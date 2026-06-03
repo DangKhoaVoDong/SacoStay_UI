@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService, getApiErrorMessage } from '../../services/auth.service';
+import { UiToastService } from '../../services/ui-toast.service';
 
 @Component({
   selector: 'app-verify-reset-otp',
@@ -16,6 +17,7 @@ export class VerifyResetOtpComponent {
   loading = false;
   error = '';
   email = '';
+  private readonly toast = inject(UiToastService);
 
   constructor(
     private fb: FormBuilder,
@@ -58,7 +60,7 @@ export class VerifyResetOtpComponent {
       error: (err: unknown) => {
         this.loading = false;
         this.error = getApiErrorMessage(err) || 'OTP không hợp lệ. Thử lại sau.';
-        alert(this.error);
+        this.toast.error(this.error);
       }
     });
   }
@@ -68,12 +70,12 @@ export class VerifyResetOtpComponent {
     this.authService.forgotPassword({ email: this.email }).subscribe({
       next: () => {
         this.loading = false;
-        alert('OTP mới đã được gửi đến email của bạn!');
+        this.toast.success('OTP mới đã được gửi đến email của bạn!');
       },
       error: (err: unknown) => {
         this.loading = false;
         this.error = getApiErrorMessage(err) || 'Gửi OTP thất bại. Thử lại sau.';
-        alert(this.error);
+        this.toast.error(this.error);
       }
     });
   }

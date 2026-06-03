@@ -137,16 +137,8 @@ export class LifestyleQuizComponent implements OnInit {
       this.rebuildActiveQuestions();
     }
 
+    this.errorMessage = '';
     this.cdr.detectChanges();
-
-    setTimeout(() => {
-      if (this.isLastQuestion) {
-        this.finishQuiz();
-      } else {
-        this.currentIndex += 1;
-        this.cdr.detectChanges();
-      }
-    }, 280);
   }
 
   goBack(): void {

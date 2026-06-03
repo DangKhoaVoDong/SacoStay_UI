@@ -9,6 +9,8 @@ import { ReportService, reportApiErrorMessage } from '../../../services/report.s
 import type { AdminDashboardStats, AdminRoomPostRow, AdminUserRow } from '../../../models/admin.models';
 import type { ReportRow } from '../../../models/report.models';
 import { resolveMediaUrl } from '../../../utils/media-url';
+import { UiToastService } from '../../../services/ui-toast.service';
+import { UiConfirmService } from '../../../services/ui-confirm.service';
 import {
   countByMonth,
   formatTrend,
@@ -32,6 +34,8 @@ export class AdminDashboardComponent implements OnInit {
   private readonly reportsApi = inject(ReportService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly toast = inject(UiToastService);
+  private readonly uiConfirm = inject(UiConfirmService);
 
   activeTab: AdminTab = 'overview';
   loading = true;
@@ -241,8 +245,8 @@ export class AdminDashboardComponent implements OnInit {
       });
   }
 
-  approvePost(post: AdminRoomPostRow): void {
-    if (!confirm(`Duyệt tin "${post.title}"?`)) return;
+  async approvePost(post: AdminRoomPostRow): Promise<void> {
+    if (!(await this.uiConfirm.confirm(`Duyệt tin "${post.title}"?`))) return;
     this.actionPostId = post.id;
     this.admin
       .approveRoomPost(post.id)
@@ -250,19 +254,19 @@ export class AdminDashboardComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.actionPostId = null;
-          alert(res.message || 'Đã duyệt tin.');
+          this.toast.success(res.message || 'Đã duyệt tin.');
           this.loadData();
         },
         error: (err) => {
           this.actionPostId = null;
           this.cdr.detectChanges();
-          alert(adminApiErrorMessage(err, 'Duyệt tin thất bại.'));
+          this.toast.error(adminApiErrorMessage(err, 'Duyệt tin thất bại.'));
         }
       });
   }
 
-  rejectPost(post: AdminRoomPostRow): void {
-    if (!confirm(`Từ chối / ẩn tin "${post.title}"?`)) return;
+  async rejectPost(post: AdminRoomPostRow): Promise<void> {
+    if (!(await this.uiConfirm.confirm(`Từ chối / ẩn tin "${post.title}"?`))) return;
     this.actionPostId = post.id;
     this.admin
       .rejectRoomPost(post.id)
@@ -270,13 +274,13 @@ export class AdminDashboardComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.actionPostId = null;
-          alert(res.message || 'Đã từ chối tin.');
+          this.toast.success(res.message || 'Đã từ chối tin.');
           this.loadData();
         },
         error: (err) => {
           this.actionPostId = null;
           this.cdr.detectChanges();
-          alert(adminApiErrorMessage(err, 'Từ chối tin thất bại.'));
+          this.toast.error(adminApiErrorMessage(err, 'Từ chối tin thất bại.'));
         }
       });
   }
@@ -388,7 +392,7 @@ export class AdminDashboardComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  acceptReport(r: ReportRow): void {
+  async acceptReport(r: ReportRow): Promise<void> {
     if (!this.isReportPending(r)) return;
     const room = this.reportRoomLabel(r);
     const person = this.reportPersonLabel(r);
@@ -404,13 +408,17 @@ export class AdminDashboardComponent implements OnInit {
     } else if (violatorId) {
       msg += `\nLần chấp nhận đầu: cảnh báo. Nếu bị chấp nhận lần 2 → khóa vĩnh viễn.`;
     }
-    if (!confirm(msg)) return;
+    if (!(await this.uiConfirm.confirm(msg))) return;
     this.processReport(r, true);
   }
 
-  rejectReport(r: ReportRow): void {
+  async rejectReport(r: ReportRow): Promise<void> {
     if (!this.isReportPending(r)) return;
-    if (!confirm('Từ chối báo cáo này?\n\nKhông ẩn tin, không gửi cảnh báo cho chủ trọ / người bị báo cáo.')) {
+    if (
+      !(await this.uiConfirm.confirm(
+        'Từ chối báo cáo này?\n\nKhông ẩn tin, không gửi cảnh báo cho chủ trọ / người bị báo cáo.'
+      ))
+    ) {
       return;
     }
     this.processReport(r, false);
@@ -425,7 +433,7 @@ export class AdminDashboardComponent implements OnInit {
         next: (res) => {
           this.processingReportId = null;
           this.detailReport = null;
-          alert(res.message || (isValid ? 'Đã chấp nhận báo cáo.' : 'Đã từ chối báo cáo.'));
+          this.toast.success(res.message || (isValid ? 'Đã chấp nhận báo cáo.' : 'Đã từ chối báo cáo.'));
           this.loadReports();
           if (isValid) {
             this.loadData();
@@ -435,7 +443,7 @@ export class AdminDashboardComponent implements OnInit {
         error: (err) => {
           this.processingReportId = null;
           this.cdr.detectChanges();
-          alert(adminApiErrorMessage(err, 'Xử lý báo cáo thất bại.'));
+          this.toast.error(adminApiErrorMessage(err, 'Xử lý báo cáo thất bại.'));
         }
       });
   }
