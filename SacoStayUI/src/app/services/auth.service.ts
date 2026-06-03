@@ -93,7 +93,10 @@ export function loginErrorFromApi(err: unknown): { message: string; isBanned: bo
   }
 
   if (status === 401) {
-    return { message: 'Email/số điện thoại hoặc mật khẩu không đúng.', isBanned: false };
+    return {
+      message: 'Email, tên đăng nhập, số điện thoại hoặc mật khẩu không đúng.',
+      isBanned: false
+    };
   }
   if (status === 0 || e?.message?.includes('Http failure')) {
     return {

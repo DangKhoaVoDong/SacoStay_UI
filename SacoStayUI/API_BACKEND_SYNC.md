@@ -42,6 +42,16 @@
 
 **appsettings:** `PayOS:ReturnUrl` → `https://api.sacostay.id.vn/api/Payment/payos-return`
 
+## Presence / online (chat)
+
+| API | Ghi chú |
+|-----|---------|
+| `POST /api/Activity/ping` | Bearer; body `{ seconds: 30 }` — cập nhật `LastSeenAt` |
+| `POST /api/Activity/presence` | Bearer; body `{ userIds: ["guid", ...] }` → `{ userId, lastSeenAt, isOnline }` |
+| `GET /api/Auth/user/{userId}` | Thêm `lastSeenAt`, `isOnline` (online nếu seen &lt; 2 phút) |
+
+FE chat: poll presence 30s; chấm xanh = online.
+
 ## Chat
 
 `GET /api/Chat/history/{otherUserId}`, SignalR `/chatHub`. Danh sách hội thoại FE vẫn localStorage (chưa có `GET /api/Chat/conversations`).

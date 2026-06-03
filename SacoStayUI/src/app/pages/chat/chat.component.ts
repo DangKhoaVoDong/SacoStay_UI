@@ -12,6 +12,8 @@ import { ChatService } from '../../services/chat.service';
 import { ChatHubService } from '../../services/chat-hub.service';
 import { ChatUnreadService } from '../../services/chat-unread.service';
 import { ChatPeerProfileService, isGenericChatLabel } from '../../services/chat-peer-profile.service';
+import { PresenceService } from '../../services/presence.service';
+import { presenceLabel } from '../../utils/presence';
 import { loadStoredChatContacts, upsertStoredChatContact } from '../../utils/chat-contacts-storage';
 import type {
   ChatConversation,
@@ -37,6 +39,7 @@ export class ChatComponent implements OnInit {
   private readonly chatHub = inject(ChatHubService);
   private readonly chatUnread = inject(ChatUnreadService);
   private readonly peerProfiles = inject(ChatPeerProfileService);
+  private readonly presence = inject(PresenceService);
   private readonly route = inject(ActivatedRoute);
 
   conversations: ChatConversation[] = [];
@@ -143,6 +146,25 @@ export class ChatComponent implements OnInit {
           }
         }
       });
+
+    interval(30_000)
+      .pipe(startWith(0), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.refreshPeersPresence());
+  }
+
+  peerIsOnline(peer: ChatParticipant | null): boolean {
+    if (!peer) return false;
+    if (peer.isOnline === true) return true;
+    const cached = this.presence.getCached(peer.id);
+    return cached?.isOnline ?? false;
+  }
+
+  peerPresenceText(peer: ChatParticipant | null): string {
+    if (!peer) return '';
+    const cached = this.presence.getCached(peer.id);
+    const isOnline = peer.isOnline ?? cached?.isOnline ?? false;
+    const lastSeen = peer.lastSeenAt ?? cached?.lastSeenAt;
+    return presenceLabel(isOnline, lastSeen);
   }
 
   get activeConversation(): ChatConversation | undefined {
@@ -238,8 +260,34 @@ export class ChatComponent implements OnInit {
       });
   }
 
+  private refreshPeersPresence(): void {
+    const ids = this.conversations.map((c) => c.otherUser.id);
+    if (this.activeOtherUserId && !ids.includes(this.activeOtherUserId)) {
+      ids.push(this.activeOtherUserId);
+    }
+    if (!ids.length) return;
+
+    this.presence
+      .fetchPresence(ids)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => {
+          this.presence.applyToCache(items);
+          for (const p of items) {
+            const conv = this.conversations.find((c) => this.sameUserId(c.otherUser.id, p.userId));
+            if (conv) {
+              conv.otherUser.isOnline = p.isOnline;
+              conv.otherUser.lastSeenAt = p.lastSeenAt;
+            }
+          }
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
   private finishContactListLoad(): void {
     this.listLoading = false;
+    this.refreshPeersPresence();
     if (
       !this.activeOtherUserId &&
       this.conversations.length > 0 &&
@@ -352,6 +400,7 @@ export class ChatComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((peer) => {
         this.applyPeerToConversation(peer);
+        this.refreshPeersPresence();
         this.cdr.detectChanges();
       });
 
@@ -496,6 +545,8 @@ export class ChatComponent implements OnInit {
       conv.otherUser.displayName = peer.displayName;
       conv.otherUser.avatarUrl = peer.avatarUrl;
       if (peer.roles?.length) conv.otherUser.roles = peer.roles;
+      if (peer.lastSeenAt !== undefined) conv.otherUser.lastSeenAt = peer.lastSeenAt;
+      if (peer.isOnline !== undefined) conv.otherUser.isOnline = peer.isOnline;
     }
     if (this.currentUserId) {
       upsertStoredChatContact(this.currentUserId, {

@@ -5,6 +5,7 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { navProfileLabel, normalizeAuthUser, profileAvatarFromRaw } from '../utils/user-display';
 import { resolveMediaUrl } from '../utils/media-url';
+import { isOnlineFromLastSeen } from '../utils/presence';
 import type { ChatParticipant } from '../models/chat.models';
 
 const CACHE_KEY = 'saco_peer_profiles_v1';
@@ -130,14 +131,21 @@ export class ChatPeerProfileService {
   }
 
   private fromApi(raw: unknown, fallbackId: string): ChatParticipant {
+    const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
     const normalized = normalizeAuthUser(raw);
     const id = str(normalized['id'] ?? normalized['Id']) || fallbackId;
     const roles = normalized['roles'] ?? normalized['Roles'];
+    const lastSeenAt = str(o['lastSeenAt'] ?? o['LastSeenAt']) || undefined;
+    const isOnlineRaw = o['isOnline'] ?? o['IsOnline'];
+    const isOnline =
+      typeof isOnlineRaw === 'boolean' ? isOnlineRaw : isOnlineFromLastSeen(lastSeenAt);
     return {
       id,
       displayName: navProfileLabel(normalized),
       avatarUrl: resolveMediaUrl(profileAvatarFromRaw(normalized)) || undefined,
-      roles: Array.isArray(roles) ? roles.map((r) => String(r)) : undefined
+      roles: Array.isArray(roles) ? roles.map((r) => String(r)) : undefined,
+      lastSeenAt,
+      isOnline
     };
   }
 

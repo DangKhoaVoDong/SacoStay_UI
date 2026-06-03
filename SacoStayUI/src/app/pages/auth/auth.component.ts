@@ -72,7 +72,7 @@ export class AuthComponent implements OnInit {
 
   private initForms(): void {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      identifier: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required]]
     });
 
@@ -111,7 +111,7 @@ export class AuthComponent implements OnInit {
     this.loginBanned = false;
 
     const loginData = {
-      emailPhoneorUsername: this.loginForm.value.email,
+      emailPhoneorUsername: String(this.loginForm.value.identifier ?? '').trim(),
       password: this.loginForm.value.password
     };
 

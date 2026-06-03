@@ -4,6 +4,9 @@ export interface ChatParticipant {
   displayName: string;
   avatarUrl?: string;
   roles?: string[];
+  /** Từ GET /api/Auth/user/{id} hoặc POST /api/Activity/presence */
+  lastSeenAt?: string;
+  isOnline?: boolean;
 }
 
 /** Tin nhắn trong hội thoại. */
