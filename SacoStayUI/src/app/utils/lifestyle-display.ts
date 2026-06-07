@@ -53,6 +53,9 @@ export function compatibilityColorClass(score: number): string {
 /** Nhãn ngắn theo id câu (22 = tình trạng phòng, 23 = giá phòng — khớp DB hiện tại). */
 const QUESTION_LABEL_BY_ID: Record<number, string> = {
   2: 'Giờ Giấc',
+  5: 'Mức độ sạch sẽ của người ở ghép',
+  7: 'Mong muốn mối quan hệ với người ở ghép',
+  11: 'Tiêu chí lựa chọn người ở ghép',
   22: 'Tình trạng phòng',
   23: 'Ngân sách thuê phòng'
 };
