@@ -16,11 +16,12 @@
             chung.
           </p>
           <div class="home-hero-actions flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-4">
-            <a routerLink="/discovery" class="home-hero-btn home-hero-btn-primary">
-              Tìm bạn ngay
-            </a>
-            <a routerLink="/rooms" class="home-hero-btn home-hero-btn-secondary">
-              Xem phòng trọ
+            <a
+              [routerLink]="heroDiscoveryLink"
+              [queryParams]="heroDiscoveryQueryParams"
+              class="home-hero-btn home-hero-btn-primary"
+            >
+              Bắt đầu tìm bạn
             </a>
           </div>
         </div>

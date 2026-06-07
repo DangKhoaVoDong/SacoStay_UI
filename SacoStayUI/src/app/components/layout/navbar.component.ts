@@ -12,6 +12,7 @@ import {
     navProfileLabel,
     profileAvatarFromRaw
 } from '../../utils/user-display';
+import { isTenantAuthPath } from '../../utils/auth-navigation';
 import { requiresLifestyleQuiz } from '../../utils/lifestyle-storage';
 import { resolveMediaUrl } from '../../utils/media-url';
 import type { UserProfile } from '../../models/auth.models';
@@ -134,5 +135,19 @@ export class NavbarComponent implements OnInit {
 
     isActive(path: string): boolean {
         return this.router.url === path;
+    }
+
+    navHref(link: NavLink): string {
+        if (!this.isLoggedIn && isTenantAuthPath(link.href)) {
+            return '/login';
+        }
+        return link.href;
+    }
+
+    navQueryParams(link: NavLink): Record<string, string> | null {
+        if (!this.isLoggedIn && isTenantAuthPath(link.href)) {
+            return { returnUrl: link.href };
+        }
+        return null;
     }
 }

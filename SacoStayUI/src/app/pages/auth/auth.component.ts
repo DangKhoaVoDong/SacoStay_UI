@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { AuthService, loginErrorFromApi, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
 import { UiToastService } from '../../services/ui-toast.service';
+import { resolvePostLoginUrl } from '../../utils/auth-navigation';
 import { clearTempRegisterProfile, isAdminUser } from '../../utils/user-display';
 import { AuthLegalNoticeComponent } from '../../components/legal/auth-legal-notice.component';
 
@@ -65,11 +66,7 @@ export class AuthComponent implements OnInit {
       return;
     }
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-    const target =
-      returnUrl && !returnUrl.startsWith('/login') && !returnUrl.startsWith('/register')
-        ? returnUrl
-        : '/';
-    void this.router.navigateByUrl(target);
+    void this.router.navigateByUrl(resolvePostLoginUrl(returnUrl));
   }
 
   private initForms(): void {
