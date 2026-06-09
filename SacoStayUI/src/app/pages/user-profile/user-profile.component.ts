@@ -26,11 +26,13 @@ import {
   hasBasicProfileFilled,
   isAdminUser,
   isLandlordUser,
+  isTenantPremium,
   navProfileLabel,
   normalizeAuthUser,
   profileAvatarFromRaw,
   profileDateOfBirthSeed,
   profileLivingAreaSeed,
+  setTenantPremium,
   userIdFromUser
 } from '../../utils/user-display';
 import { requiresLifestyleQuiz } from '../../utils/lifestyle-storage';
@@ -101,7 +103,36 @@ export class UserProfileComponent implements OnInit {
     }
 
     this.targetUserId = idParam;
-    this.loadOtherProfile(idParam);
+    this.ensurePremiumThenLoadOtherProfile(idParam);
+  }
+
+  /** Gói Free không xem hồ sơ người khác — chuyển sang trang nâng cấp. */
+  private ensurePremiumThenLoadOtherProfile(userId: string): void {
+    const myId = userIdFromUser(this.auth.getCurrentUser());
+
+    const load = () => this.loadOtherProfile(userId);
+
+    if (isTenantPremium(myId)) {
+      load();
+      return;
+    }
+
+    this.lifestyle
+      .getSwipeQuota()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (quota) => {
+          if (myId) setTenantPremium(quota.isPremium, myId);
+          if (!quota.isPremium) {
+            void this.router.navigate(['/tenant-pricing']);
+            return;
+          }
+          load();
+        },
+        error: () => {
+          void this.router.navigate(['/tenant-pricing']);
+        }
+      });
   }
 
   private loadOwnProfile(): void {

@@ -20,6 +20,7 @@ import {
   profileLivingAreaSeed
 } from '../utils/user-display';
 import { resolveMediaUrl } from '../utils/media-url';
+import { computeLifestyleMatchPercent } from '../utils/guest-match';
 import { profileGenderFromRaw, type ProfileGender } from '../utils/discovery-filters';
 import type { SwipeDeckCard, UserLifestyleAnswer } from '../models/lifestyle.models';
 
@@ -48,12 +49,20 @@ export class DiscoveryProfileService {
   private readonly lifestyle = inject(LifestyleService);
   private readonly apiUrl = environment.apiUrl;
 
-  enrichDeck(cards: SwipeDeckCard[], myAnswers: UserLifestyleAnswer[]): Observable<DiscoveryCard[]> {
+  enrichDeck(
+    cards: SwipeDeckCard[],
+    myAnswers: UserLifestyleAnswer[],
+    guestMatch = false
+  ): Observable<DiscoveryCard[]> {
     if (!cards.length) return of([]);
-    return forkJoin(cards.map((c) => this.enrichCard(c, myAnswers)));
+    return forkJoin(cards.map((c) => this.enrichCard(c, myAnswers, guestMatch)));
   }
 
-  enrichCard(card: SwipeDeckCard, myAnswers: UserLifestyleAnswer[]): Observable<DiscoveryCard> {
+  enrichCard(
+    card: SwipeDeckCard,
+    myAnswers: UserLifestyleAnswer[],
+    guestMatch = false
+  ): Observable<DiscoveryCard> {
     return forkJoin({
       profileRaw: this.http.get<unknown>(`${this.apiUrl}/Auth/user/${encodeURIComponent(card.userId)}`).pipe(
         catchError(() => of(null))
@@ -74,8 +83,12 @@ export class DiscoveryProfileService {
         const avatarUrl = profileImageUrls.length ? profileImageUrls[0] : fallbackAvatarUrl;
 
         const room = roomStatusFromAnswers(answers);
+        const matchingScore = guestMatch
+          ? computeLifestyleMatchPercent(myAnswers, answers)
+          : card.matchingScore;
         return {
           ...card,
+          matchingScore,
           displayName,
           avatarUrl,
           profileImageUrls,

@@ -1,5 +1,5 @@
 /** Đường dẫn tenant cần đăng nhập — sau login quay lại đúng trang. */
-export const TENANT_AUTH_PATHS = ['/discovery', '/chat', '/tenant-pricing'] as const;
+export const TENANT_AUTH_PATHS = ['/chat', '/tenant-pricing'] as const;
 
 export function isTenantAuthPath(path: string): boolean {
   const base = path.split('?')[0];

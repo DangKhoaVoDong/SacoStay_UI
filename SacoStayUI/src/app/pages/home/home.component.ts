@@ -16,7 +16,6 @@ import { FooterComponent } from '../../components/layout/footer.component';
 export class HomeComponent implements OnInit {
   isLoggedIn = false;
   heroDiscoveryLink = '/discovery';
-  heroDiscoveryQueryParams: Record<string, string> | null = null;
 
   constructor(
     private authService: AuthService,
@@ -25,10 +24,6 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoggedIn = this.authService.isLoggedIn;
-    if (!this.isLoggedIn) {
-      this.heroDiscoveryLink = '/login';
-      this.heroDiscoveryQueryParams = { returnUrl: '/discovery' };
-    }
     if (!this.isLoggedIn) return;
     if (isAdminUser(this.authService.getCurrentUser())) {
       void this.router.navigateByUrl('/admin');

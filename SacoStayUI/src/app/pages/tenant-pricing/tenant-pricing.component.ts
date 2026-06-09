@@ -44,8 +44,8 @@ export class TenantPricingComponent implements OnInit {
     { name: 'Bộ lọc cơ bản', freemium: true, premium: true },
     { name: 'Xem điểm tương thích tổng quát', freemium: true, premium: true },
     { name: 'Xem điểm tương thích chi tiết', freemium: false, premium: true },
-    { name: 'Ưu tiên hiển thị hồ sơ', freemium: false, premium: true },
-    { name: 'Ưu tiên hiển thị phòng phù hợp', freemium: false, premium: true }
+    { name: 'Hiển thị chi tiết hồ sơ', freemium: false, premium: true },
+    { name: 'Nhắn tin trực tiếp với người thuê trọ khác', freemium: false, premium: true }
   ];
 
   readonly benefits = [

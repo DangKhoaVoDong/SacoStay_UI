@@ -5,8 +5,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { LifestyleService } from '../../services/lifestyle.service';
 import { AuthService, getApiErrorMessage } from '../../services/auth.service';
+import { saveGuestQuizResult } from '../../utils/guest-discovery.storage';
 import { setLifestyleQuizCompleted } from '../../utils/lifestyle-storage';
 import { userIdFromUser } from '../../utils/user-display';
+import { resolvePostLoginUrl } from '../../utils/auth-navigation';
 import {
   isHasRoomYesOption,
   resolveRoomQuestionPair
@@ -37,11 +39,14 @@ export class LifestyleQuizComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   retakeMode = false;
+  guestMode = false;
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
     this.retakeMode = this.route.snapshot.queryParamMap.get('retake') === '1';
+    this.guestMode =
+      this.route.snapshot.queryParamMap.get('guest') === '1' || !this.auth.isLoggedIn;
     this.lifestyle
       .getQuestions()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -179,6 +184,14 @@ export class LifestyleQuizComponent implements OnInit {
       return;
     }
 
+    if (this.guestMode) {
+      saveGuestQuizResult(this.questions, this.answers, ids);
+      this.submitting = false;
+      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+      void this.router.navigateByUrl(resolvePostLoginUrl(returnUrl, '/discovery'));
+      return;
+    }
+
     this.submitting = true;
     this.errorMessage = '';
     this.lifestyle
@@ -191,11 +204,7 @@ export class LifestyleQuizComponent implements OnInit {
           this.auth.refreshProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.submitting = false;
             const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-            const target =
-              returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//')
-                ? returnUrl
-                : '/profile/me';
-            void this.router.navigateByUrl(target);
+            void this.router.navigateByUrl(resolvePostLoginUrl(returnUrl, '/profile/me'));
           });
         },
         error: (err) => {

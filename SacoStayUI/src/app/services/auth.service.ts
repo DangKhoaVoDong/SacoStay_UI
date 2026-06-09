@@ -176,13 +176,9 @@ export class AuthService {
    * Đăng xuất chủ động.
    * `exitLandlordShell`: thoát kênh chủ trọ — reload về trang chủ (layout người thuê/khách).
    */
-  logout(options?: { exitLandlordShell?: boolean }): void {
+  logout(_options?: { exitLandlordShell?: boolean }): void {
     this.clearSession();
-    if (options?.exitLandlordShell) {
-      window.location.assign('/');
-      return;
-    }
-    void this.router.navigateByUrl('/');
+    window.location.assign('/');
   }
 
   register(body: RegisterRequest): Observable<RegisterResponse> {

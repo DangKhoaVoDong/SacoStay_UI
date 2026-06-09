@@ -79,13 +79,37 @@ export class LifestyleService {
       params = params.set('includeSwiped', 'true');
     }
     return this.http.get<unknown>(`${this.apiUrl}/Lifestyle/swipe-deck`, { params }).pipe(
-      map((raw) =>
-        unwrapList(raw)
-          .map((item) => this.normalizeSwipeCard(item))
-          .filter((c): c is SwipeDeckCard => !!c)
-      ),
+      map((raw) => this.normalizeSwipeDeck(raw)),
       catchError(() => of([]))
     );
+  }
+
+  /**
+   * Deck cho khách (chưa đăng nhập) — cần BE: GET /api/Lifestyle/guest-swipe-deck
+   * Query: selectedOptionIds (csv), limit, includeSwiped.
+   */
+  getGuestSwipeDeck(
+    selectedOptionIds: number[],
+    limit = 50,
+    includeSwiped = false
+  ): Observable<SwipeDeckCard[]> {
+    if (!selectedOptionIds.length) return of([]);
+    let params = new HttpParams()
+      .set('limit', String(limit))
+      .set('selectedOptionIds', selectedOptionIds.join(','));
+    if (includeSwiped) {
+      params = params.set('includeSwiped', 'true');
+    }
+    return this.http.get<unknown>(`${this.apiUrl}/Lifestyle/guest-swipe-deck`, { params }).pipe(
+      map((raw) => this.normalizeSwipeDeck(raw)),
+      catchError(() => of([]))
+    );
+  }
+
+  private normalizeSwipeDeck(raw: unknown): SwipeDeckCard[] {
+    return unwrapList(raw)
+      .map((item) => this.normalizeSwipeCard(item))
+      .filter((c): c is SwipeDeckCard => !!c);
   }
 
   swipeUser(targetUserId: string, isLike: boolean): Observable<void> {

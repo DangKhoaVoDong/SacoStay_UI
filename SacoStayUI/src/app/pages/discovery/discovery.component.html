@@ -3,16 +3,25 @@
 
   @if (needsQuiz) {
     <div class="flex-1 flex items-center justify-center p-4">
-      <div class="text-center max-w-md">
+      <div class="text-center max-w-lg">
         <div class="w-20 h-20 bg-white rounded-full shadow-md flex items-center justify-center mx-auto mb-6">
           <svg class="w-10 h-10 text-[#FF9F43]" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
           </svg>
         </div>
         <h2 class="text-2xl font-bold text-[#1A1A2E] mb-3">Trắc nghiệm lối sống</h2>
-        <p class="text-[#6B7280] mb-8">
+        <p class="text-[#6B7280] mb-4">
           Để tìm bạn ở ghép phù hợp, bạn cần hoàn thành trắc nghiệm lối sống trước nhé!
         </p>
+        <div class="text-left text-sm text-[#6B7280] bg-white rounded-xl border border-orange-100 p-4 mb-8 space-y-2">
+          <p class="font-semibold text-[#1A1A2E]">Quy trình matching trên SacoStay</p>
+          <ol class="list-decimal list-inside space-y-1.5 leading-relaxed">
+            <li>Trả lời trắc nghiệm về thói quen sinh hoạt và lối sống</li>
+            <li>Hệ thống tính % hòa hợp với từng người thuê trọ khác</li>
+            <li>Lướt thẻ — thích người bạn cảm thấy phù hợp, bỏ qua nếu chưa hợp</li>
+            <li>Đăng ký tài khoản để lưu kết quả, kết nối và tiếp tục tìm bạn</li>
+          </ol>
+        </div>
         <button
           type="button"
           class="px-12 py-3 rounded-lg bg-[#FF9F43] text-white font-medium shadow-lg shadow-orange-200 hover:bg-[#FF8C2A]"
@@ -27,9 +36,16 @@
   } @else if (deckEmpty) {
     <div class="flex-1 flex items-center justify-center p-6 text-center max-w-md mx-auto">
       <h2 class="text-xl font-bold text-[#1A1A2E] mb-2">Chưa có người để gợi ý</h2>
-      <p class="text-[#6B7280] text-sm mb-6">
-        Chưa có người thuê trọ khác hoàn thành trắc nghiệm, hoặc bộ lọc đang quá hẹp. Thử đặt lại bộ lọc hoặc tải lại nhé!
-      </p>
+      @if (isGuest && guestDeckNeedsBackend) {
+        <p class="text-[#6B7280] text-sm mb-6">
+          Bạn đã hoàn thành trắc nghiệm thử. Để hiển thị danh sách gợi ý, backend cần bật API
+          <span class="font-medium">GET /api/Lifestyle/guest-swipe-deck</span> (xem ghi chú cho team BE).
+        </p>
+      } @else {
+        <p class="text-[#6B7280] text-sm mb-6">
+          Chưa có người thuê trọ khác hoàn thành trắc nghiệm, hoặc bộ lọc đang quá hẹp. Thử đặt lại bộ lọc hoặc tải lại nhé!
+        </p>
+      }
       <button type="button" class="px-6 py-2 rounded-lg bg-[#FF9F43] text-white font-medium" (click)="reloadDeck()">
         Tải lại
       </button>
@@ -87,6 +103,9 @@
             <span class="text-[#FF9F43]">⚡</span>
             <span class="font-bold text-gray-900">Còn {{ remainingSwipesLabel }} lượt</span>
             <span class="text-gray-500 text-xs">• Reset sau {{ daysUntilReset }} ngày</span>
+            @if (isGuest) {
+              <span class="text-gray-400 text-xs hidden sm:inline">• Dùng thử</span>
+            }
           </div>
         }
 
@@ -292,26 +311,60 @@
               </p>
             </div>
 
-            <a
-              [routerLink]="['/profile', currentCard.userId]"
-              class="block text-center text-sm text-[#FF9F43] font-medium hover:underline"
-            >
-              Xem hồ sơ đầy đủ
-            </a>
-
-            @if (isPremium) {
-              <a
-                [routerLink]="['/chat']"
-                [queryParams]="{
-                  with: currentCard.userId,
-                  name: currentCard.displayName,
-                  avatar: sidebarAvatarUrl,
-                  role: 'tenant'
-                }"
+            @if (isGuest) {
+              <p class="text-sm text-gray-500 leading-relaxed">
+                Đăng ký để xem hồ sơ đầy đủ, lưu kết quả trắc nghiệm và tiếp tục tìm bạn ở ghép.
+              </p>
+              <button
+                type="button"
                 class="block w-full py-3 text-center rounded-xl bg-[#FF9F43] text-white font-medium hover:bg-[#FF8C2A]"
+                (click)="goRegisterToExplore()"
               >
-                Nhắn tin
-              </a>
+                Đăng ký để tìm hiểu
+              </button>
+            } @else {
+              @if (isPremium) {
+                <a
+                  [routerLink]="['/profile', currentCard.userId]"
+                  class="block text-center text-sm text-[#FF9F43] font-medium hover:underline"
+                >
+                  Xem hồ sơ đầy đủ
+                </a>
+                <a
+                  [routerLink]="['/chat']"
+                  [queryParams]="{
+                    with: currentCard.userId,
+                    name: currentCard.displayName,
+                    avatar: sidebarAvatarUrl,
+                    role: 'tenant'
+                  }"
+                  class="block w-full py-3 text-center rounded-xl bg-[#FF9F43] text-white font-medium hover:bg-[#FF8C2A]"
+                >
+                  Nhắn tin
+                </a>
+              } @else {
+                <button
+                  type="button"
+                  disabled
+                  class="block w-full py-2.5 text-center rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-400 font-medium cursor-not-allowed"
+                  title="Nâng cấp Premium để xem hồ sơ đầy đủ"
+                >
+                  🔒 Xem hồ sơ đầy đủ — Premium
+                </button>
+                <div class="rounded-xl border border-orange-100 bg-[#FFFBF7] p-4 text-sm text-gray-600 leading-relaxed space-y-2">
+                  <p class="font-semibold text-gray-900">Gói Free</p>
+                  <p>
+                    Xem hồ sơ chi tiết và điểm tương thích đầy đủ chỉ dành cho Premium.
+                    Tin nhắn chỉ mở khi <span class="font-medium text-gray-800">cả hai đã thích nhau</span> (matching hai chiều).
+                  </p>
+                </div>
+                <a
+                  routerLink="/tenant-pricing"
+                  class="block w-full py-3 text-center rounded-xl bg-[#ffbd59] hover:bg-[#f5a832] text-white font-medium"
+                >
+                  Nâng cấp Premium
+                </a>
+              }
             }
           </div>
         </aside>
@@ -323,13 +376,28 @@
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center relative shadow-xl">
         <button type="button" class="absolute top-4 right-4 text-gray-400" (click)="showUpgradePrompt = false">✕</button>
-        <h2 class="text-xl font-bold mb-3">Nâng cấp Premium</h2>
-        <p class="text-gray-600 text-sm mb-6">
-          Bạn đã dùng hết {{ freeSwipeLimit }} lượt swipe miễn phí trong tuần. Nâng cấp để lướt không giới hạn!
-        </p>
-        <a routerLink="/tenant-pricing" class="block w-full py-3 rounded-lg bg-[#ffbd59] hover:bg-[#f5a832] text-white font-medium">
-          Nâng cấp Premium
-        </a>
+        @if (isGuest) {
+          <h2 class="text-xl font-bold mb-3">Hết lượt dùng thử</h2>
+          <p class="text-gray-600 text-sm mb-6">
+            Bạn đã dùng hết {{ freeSwipeLimit }} lượt swipe trong tuần. Đăng ký để lưu kết quả và tiếp tục tìm bạn!
+          </p>
+          <a
+            routerLink="/register"
+            [queryParams]="{ returnUrl: '/discovery', intent: 'guest-discovery' }"
+            (click)="markGuestRegisterFromPrompt()"
+            class="block w-full py-3 rounded-lg bg-[#ffbd59] hover:bg-[#f5a832] text-white font-medium"
+          >
+            Đăng ký để tìm hiểu
+          </a>
+        } @else {
+          <h2 class="text-xl font-bold mb-3">Nâng cấp Premium</h2>
+          <p class="text-gray-600 text-sm mb-6">
+            Bạn đã dùng hết {{ freeSwipeLimit }} lượt swipe miễn phí trong tuần. Nâng cấp để lướt không giới hạn!
+          </p>
+          <a routerLink="/tenant-pricing" class="block w-full py-3 rounded-lg bg-[#ffbd59] hover:bg-[#f5a832] text-white font-medium">
+            Nâng cấp Premium
+          </a>
+        }
       </div>
     </div>
   }

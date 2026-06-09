@@ -62,13 +62,12 @@ export const routes: Routes = [
   {
     path: 'lifestyle-quiz',
     loadComponent: () =>
-      import('./pages/lifestyle-quiz/lifestyle-quiz.component').then((m) => m.LifestyleQuizComponent),
-    canActivate: [authGuard]
+      import('./pages/lifestyle-quiz/lifestyle-quiz.component').then((m) => m.LifestyleQuizComponent)
   },
   {
     path: 'discovery',
     loadComponent: () => import('./pages/discovery/discovery.component').then((m) => m.DiscoveryComponent),
-    canActivate: [authGuard, tenantGuard]
+    canActivate: [tenantGuard]
   },
   {
     path: 'rooms',

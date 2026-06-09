@@ -4,9 +4,10 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
-import { AuthService, loginErrorFromApi, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
+import { AuthService, getApiErrorMessage, loginErrorFromApi, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
 import { UiToastService } from '../../services/ui-toast.service';
 import { resolvePostLoginUrl } from '../../utils/auth-navigation';
+import { clearGuestDiscoverySession, markGuestRegisterSync } from '../../utils/guest-discovery.storage';
 import { clearTempRegisterProfile, isAdminUser } from '../../utils/user-display';
 import { AuthLegalNoticeComponent } from '../../components/legal/auth-legal-notice.component';
 
@@ -117,6 +118,7 @@ export class AuthComponent implements OnInit {
     this.authService.login(loginData).subscribe({
       next: () => {
         this.loginLoading = false;
+        clearGuestDiscoverySession();
         clearTempRegisterProfile();
         this.authService.refreshProfile().subscribe({
           next: () => {
@@ -205,29 +207,31 @@ export class AuthComponent implements OnInit {
         localStorage.setItem('temp_name', `${registerData.firstName} ${registerData.lastName}`.trim());
         sessionStorage.setItem(SESSION_PENDING_ROLE_KEY, registerData.role);
 
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        const intent = this.route.snapshot.queryParamMap.get('intent');
+        if (intent === 'guest-discovery' && returnUrl) {
+          markGuestRegisterSync(returnUrl);
+        }
+
         // Navigate to OTP verification
         this.router.navigate(['/otp-verification']);
       },
-      error: (err: any) => {
+      error: (err: unknown) => {
         this.registerLoading = false;
-        console.log('Registration error:', err);
-        console.log('Error status:', err?.status);
-        console.log('Error body:', err?.error);
-        console.log('Error body JSON:', JSON.stringify(err?.error, null, 2));
-
-        // Handle array of validation errors
-        if (Array.isArray(err?.error)) {
-          const errorMessages = err.error.map((e: any) => e.description || e.message || JSON.stringify(e)).join(', ');
-          this.registerError = errorMessages || 'Đăng ký thất bại. Thử lại sau.';
-        } else if (typeof err?.error === 'object') {
-          // Handle object error responses
-          const errorMessages = Object.values(err?.error || {}).flat().join(', ');
-          this.registerError = errorMessages || err?.error?.message || err?.error?.title || 'Đăng ký thất bại. Thử lại sau.';
-        } else {
-          this.registerError = err?.error?.message || err?.error?.title || 'Đăng ký thất bại. Thử lại sau.';
+        let message = getApiErrorMessage(err);
+        const body = (err as { error?: unknown })?.error;
+        if (Array.isArray(body)) {
+          message = body
+            .map((e: { description?: string; message?: string }) => e.description || e.message || '')
+            .filter(Boolean)
+            .join(', ');
         }
-
-        this.toast.error(this.registerError);
+        if (!message) {
+          message = 'Đăng ký thất bại. Thử lại sau.';
+        }
+        this.registerError = message;
+        this.cdr.markForCheck();
+        this.toast.error(message);
       }
     });
   }

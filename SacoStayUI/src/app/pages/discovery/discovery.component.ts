@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angul
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { filter, switchMap, take, skip } from 'rxjs/operators';
+import { filter, map, switchMap, take, skip } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { DiscoveryFilterPanelComponent } from '../../components/discovery/discovery-filter-panel.component';
@@ -10,7 +10,19 @@ import { AuthService } from '../../services/auth.service';
 import { LifestyleService } from '../../services/lifestyle.service';
 import { DiscoveryProfileService, type DiscoveryCard } from '../../services/discovery-profile.service';
 import { setTenantPremium, userIdFromUser } from '../../utils/user-display';
-import { hasCompletedLifestyleQuiz, setLifestyleQuizCompleted } from '../../utils/lifestyle-storage';
+import {
+  addGuestWishlistItem,
+  getGuestAnswers,
+  getGuestSelectedOptionIds,
+  getGuestSwipeQuotaView,
+  getGuestSwipedUserIds,
+  getGuestWishlist,
+  hasGuestQuizCompleted,
+  markGuestRegisterSync,
+  recordGuestSwipe,
+  removeGuestWishlistItem
+} from '../../utils/guest-discovery.storage';
+import { hasCompletedLifestyleQuiz } from '../../utils/lifestyle-storage';
 import type { WishlistItem as ApiWishlistItem, SwipeQuota } from '../../models/lifestyle.models';
 import {
   DEFAULT_DISCOVERY_FILTERS,
@@ -35,8 +47,10 @@ export type DiscoveryWishlistItem = ApiWishlistItem;
   templateUrl: './discovery.component.html'
 })
 export class DiscoveryComponent implements OnInit {
+  isGuest = false;
   needsQuiz = false;
   deckEmpty = false;
+  guestDeckNeedsBackend = false;
   loading = true;
   allCards: DiscoveryCard[] = [];
   deck: DiscoveryCard[] = [];
@@ -98,6 +112,11 @@ export class DiscoveryComponent implements OnInit {
 
   /** Mỗi lần vào /discovery: tải lại deck (gồm người đã swipe) + wishlist + quota. */
   private enterDiscovery(): void {
+    if (!this.auth.isLoggedIn) {
+      this.bootstrapForGuest();
+      return;
+    }
+    this.isGuest = false;
     const id = userIdFromUser(this.auth.getCurrentUser());
     if (id) {
       this.bootstrapForUser(id);
@@ -110,6 +129,25 @@ export class DiscoveryComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((u) => this.bootstrapForUser(userIdFromUser(u)));
+  }
+
+  private bootstrapForGuest(): void {
+    this.isGuest = true;
+    this.userId = '';
+    this.currentIndex = 0;
+    this.swipeAnim = null;
+    this.dragX = 0;
+    this.guestDeckNeedsBackend = false;
+
+    if (!hasGuestQuizCompleted()) {
+      this.needsQuiz = true;
+      this.loading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.needsQuiz = false;
+    this.loadGuestDeck(true);
   }
 
   private bootstrapForUser(userId: string): void {
@@ -224,7 +262,22 @@ export class DiscoveryComponent implements OnInit {
   }
 
   startQuiz(): void {
-    void this.router.navigate(['/lifestyle-quiz'], { queryParams: { returnUrl: '/discovery' } });
+    const params: Record<string, string> = { returnUrl: '/discovery' };
+    if (this.isGuest || !this.auth.isLoggedIn) {
+      params['guest'] = '1';
+    }
+    void this.router.navigate(['/lifestyle-quiz'], { queryParams: params });
+  }
+
+  goRegisterToExplore(): void {
+    markGuestRegisterSync('/discovery');
+    void this.router.navigate(['/register'], {
+      queryParams: { returnUrl: '/discovery', intent: 'guest-discovery' }
+    });
+  }
+
+  markGuestRegisterFromPrompt(): void {
+    markGuestRegisterSync('/discovery');
   }
 
   toggleFilterPanel(): void {
@@ -249,6 +302,49 @@ export class DiscoveryComponent implements OnInit {
       this.currentIndex = Math.max(0, this.deck.length - 1);
     }
     this.deckEmpty = this.allCards.length === 0;
+  }
+
+  loadGuestDeck(includeSwiped: boolean): void {
+    this.loading = true;
+    this.guestDeckNeedsBackend = false;
+    const optionIds = getGuestSelectedOptionIds();
+    const myAnswers = getGuestAnswers();
+    const excluded = getGuestSwipedUserIds(includeSwiped);
+
+    this.lifestyle
+      .getGuestSwipeDeck(optionIds, 50, includeSwiped)
+      .pipe(
+        switchMap((deck) => {
+          const filtered = deck.filter((c) => !excluded.has(c.userId));
+          if (!filtered.length) {
+            this.guestDeckNeedsBackend = true;
+            return of([] as DiscoveryCard[]);
+          }
+          return this.discoveryProfiles.enrichDeck(filtered, myAnswers, true).pipe(
+            map((cards) =>
+              [...cards].sort((a, b) => b.matchingScore - a.matchingScore)
+            )
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (cards) => {
+          this.myAnswers = myAnswers;
+          this.likedUsers = getGuestWishlist();
+          this.swipeQuota = getGuestSwipeQuotaView();
+          this.allCards = cards;
+          this.applyFiltersToDeck(true);
+          this.loading = false;
+          this.needsQuiz = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.loading = false;
+          this.guestDeckNeedsBackend = true;
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   loadDeck(includeSwiped: boolean): void {
@@ -287,10 +383,19 @@ export class DiscoveryComponent implements OnInit {
   }
 
   reloadDeck(): void {
+    if (this.isGuest) {
+      this.loadGuestDeck(true);
+      return;
+    }
     this.loadDeck(true);
   }
 
   private refreshQuota(): void {
+    if (this.isGuest) {
+      this.swipeQuota = getGuestSwipeQuotaView();
+      this.cdr.detectChanges();
+      return;
+    }
     this.lifestyle
       .getSwipeQuota()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -302,6 +407,11 @@ export class DiscoveryComponent implements OnInit {
   }
 
   private refreshWishlist(): void {
+    if (this.isGuest) {
+      this.likedUsers = getGuestWishlist();
+      this.cdr.detectChanges();
+      return;
+    }
     this.lifestyle
       .getMyLikes()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -417,22 +527,37 @@ export class DiscoveryComponent implements OnInit {
     }
 
     setTimeout(() => {
-      this.lifestyle
-        .swipeUser(card.userId, isLike)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: () => {
-            if (isLike) {
-              this.refreshWishlist();
+      if (this.isGuest) {
+        recordGuestSwipe(card.userId, isLike);
+        if (isLike) {
+          addGuestWishlistItem({
+            userId: card.userId,
+            displayName: card.displayName,
+            avatarUrl: card.avatarUrl,
+            matchingScore: card.matchingScore,
+            likedAt: new Date().toISOString()
+          });
+        }
+        this.refreshWishlist();
+        this.refreshQuota();
+      } else {
+        this.lifestyle
+          .swipeUser(card.userId, isLike)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: () => {
+              if (isLike) {
+                this.refreshWishlist();
+              }
+              this.refreshQuota();
+            },
+            error: () => {
+              if (isLike) {
+                this.removeFromWishlistOptimistic(card.userId);
+              }
             }
-            this.refreshQuota();
-          },
-          error: () => {
-            if (isLike) {
-              this.removeFromWishlistOptimistic(card.userId);
-            }
-          }
-        });
+          });
+      }
 
       this.swipeAnim = null;
       this.currentIndex += 1;
@@ -443,6 +568,12 @@ export class DiscoveryComponent implements OnInit {
 
   removeFromWishlist(userId: string, event?: Event): void {
     event?.stopPropagation();
+    if (this.isGuest) {
+      removeGuestWishlistItem(userId);
+      this.likedUsers = getGuestWishlist();
+      this.cdr.detectChanges();
+      return;
+    }
     this.lifestyle
       .removeLike(userId)
       .pipe(takeUntilDestroyed(this.destroyRef))

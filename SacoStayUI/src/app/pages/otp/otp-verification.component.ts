@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
+import { GuestDiscoverySyncService } from '../../services/guest-discovery-sync.service';
+import { shouldSyncGuestAfterRegister } from '../../utils/guest-discovery.storage';
 import { clearTempRegisterProfile } from '../../utils/user-display';
 import { UiToastService } from '../../services/ui-toast.service';
 
@@ -20,6 +22,7 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
   email = '';
   private countdownTimer: any;
   private readonly toast = inject(UiToastService);
+  private readonly guestSync = inject(GuestDiscoverySyncService);
 
   constructor(private router: Router, private authService: AuthService) {
     this.email = localStorage.getItem('temp_email') || 'your-email@example.com';
@@ -70,13 +73,21 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
               this.authService.finalizeNewUserSession().subscribe({
                 next: () => {
                   this.isLoading = false;
-                  this.router.navigate(['/']);
+                  if (shouldSyncGuestAfterRegister()) {
+                    this.guestSync.syncAfterRegisterAndNavigate('/discovery');
+                  } else {
+                    this.router.navigate(['/']);
+                  }
                 },
                 error: (e) => {
                   this.isLoading = false;
                   console.error('Finalize session after OTP failed', e);
                   this.toast.info('Đã đăng nhập nhưng đồng bộ hồ sơ thất bại. Bạn có thể cập nhật hồ sơ sau trong phần cài đặt.');
-                  this.router.navigate(['/']);
+                  if (shouldSyncGuestAfterRegister()) {
+                    this.guestSync.syncAfterRegisterAndNavigate('/discovery');
+                  } else {
+                    this.router.navigate(['/']);
+                  }
                 }
               });
             },
