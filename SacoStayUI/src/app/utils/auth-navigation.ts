@@ -1,3 +1,6 @@
+/** Trang đăng tin phòng — chỉ chủ trọ được truy cập. */
+export const CREATE_LISTING_PATH = '/create-listing';
+
 /** Đường dẫn tenant cần đăng nhập — sau login quay lại đúng trang. */
 export const TENANT_AUTH_PATHS = ['/chat', '/tenant-pricing'] as const;
 
@@ -25,4 +28,15 @@ export function sanitizeReturnUrl(raw: string | null | undefined): string | null
 
 export function resolvePostLoginUrl(returnUrl: string | null | undefined, fallback = '/'): string {
   return sanitizeReturnUrl(returnUrl) ?? fallback;
+}
+
+export function isCreateListingReturnUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const path = url.split('?')[0];
+  return path === CREATE_LISTING_PATH;
+}
+
+/** Query params khi cần đăng nhập/đăng ký với vai trò chủ trọ để đăng tin. */
+export function landlordPostListingQueryParams(): Record<string, string> {
+  return { returnUrl: CREATE_LISTING_PATH, role: 'landlord' };
 }

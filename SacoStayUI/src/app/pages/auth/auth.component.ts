@@ -4,11 +4,21 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
-import { AuthService, getApiErrorMessage, loginErrorFromApi, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
+import {
+  AuthService,
+  getApiErrorMessage,
+  loginErrorFromApi,
+  SESSION_AUTH_RETURN_URL_KEY,
+  SESSION_PENDING_ROLE_KEY
+} from '../../services/auth.service';
 import { UiToastService } from '../../services/ui-toast.service';
-import { resolvePostLoginUrl } from '../../utils/auth-navigation';
+import {
+  isCreateListingReturnUrl,
+  resolvePostLoginUrl,
+  sanitizeReturnUrl
+} from '../../utils/auth-navigation';
 import { clearGuestDiscoverySession, markGuestRegisterSync } from '../../utils/guest-discovery.storage';
-import { clearTempRegisterProfile, isAdminUser } from '../../utils/user-display';
+import { clearTempRegisterProfile, isAdminUser, isLandlordUser } from '../../utils/user-display';
 import { AuthLegalNoticeComponent } from '../../components/legal/auth-legal-notice.component';
 import { SACOSTAY_LOGO_CLASS, SACOSTAY_LOGO_URL } from '../../utils/brand-assets';
 
@@ -50,12 +60,16 @@ export class AuthComponent implements OnInit {
   ngOnInit(): void {
     this.initForms();
     this.syncModeFromRoute();
+    this.syncRoleFromRoute();
     this.router.events
       .pipe(
         filter((e): e is NavigationEnd => e instanceof NavigationEnd),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(() => this.syncModeFromRoute());
+      .subscribe(() => {
+        this.syncModeFromRoute();
+        this.syncRoleFromRoute();
+      });
   }
 
   private syncModeFromRoute(): void {
@@ -64,13 +78,43 @@ export class AuthComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  get requiresLandlordAuth(): boolean {
+    return this.route.snapshot.queryParamMap.get('role') === 'landlord';
+  }
+
+  get authQueryParams(): Record<string, string> {
+    const params: Record<string, string> = {};
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    const role = this.route.snapshot.queryParamMap.get('role');
+    const intent = this.route.snapshot.queryParamMap.get('intent');
+    if (returnUrl) params['returnUrl'] = returnUrl;
+    if (role) params['role'] = role;
+    if (intent) params['intent'] = intent;
+    return params;
+  }
+
+  private syncRoleFromRoute(): void {
+    const role = this.route.snapshot.queryParamMap.get('role');
+    if (role === 'landlord') {
+      this.selectedRole = 'landlord';
+      this.cdr.detectChanges();
+    }
+  }
+
   private navigateAfterAuth(): void {
     if (isAdminUser(this.authService.getCurrentUser())) {
       void this.router.navigateByUrl('/admin');
       return;
     }
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-    void this.router.navigateByUrl(resolvePostLoginUrl(returnUrl));
+    const target = resolvePostLoginUrl(returnUrl);
+    if (isCreateListingReturnUrl(target) && !isLandlordUser(this.authService.getCurrentUser())) {
+      this.toast.error('Chỉ có thể đăng tin với vai trò chủ trọ.');
+      void this.router.navigateByUrl('/');
+      return;
+    }
+    sessionStorage.removeItem(SESSION_AUTH_RETURN_URL_KEY);
+    void this.router.navigateByUrl(target);
   }
 
   private initForms(): void {
@@ -214,6 +258,10 @@ export class AuthComponent implements OnInit {
         const intent = this.route.snapshot.queryParamMap.get('intent');
         if (intent === 'guest-discovery' && returnUrl) {
           markGuestRegisterSync(returnUrl);
+        }
+        const safeReturnUrl = sanitizeReturnUrl(returnUrl);
+        if (safeReturnUrl) {
+          sessionStorage.setItem(SESSION_AUTH_RETURN_URL_KEY, safeReturnUrl);
         }
 
         // Navigate to OTP verification

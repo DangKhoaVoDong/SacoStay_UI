@@ -1,9 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { resolveAppHomeUrl } from '../../environments/apply-production-host';
 import type {
   LoginRequest,
   LoginResponse,
@@ -25,6 +26,10 @@ import {
   clearMockLandlordPackage
 } from '../utils/user-display';
 import { clearLegacyLifestyleKeys, clearSwipeDataForUser } from '../utils/lifestyle-storage';
+import { clearGuestDiscoverySession } from '../utils/guest-discovery.storage';
+import { clearDiscoveryWishlist } from '../utils/discovery-wishlist-storage';
+import { lastSeenStorageKey, unreadStorageKey } from '../utils/chat-unread-storage';
+import { Helpers } from '../utils/helpers';
 import { ChatPeerProfileService } from './chat-peer-profile.service';
 import { ChatHubService } from './chat-hub.service';
 import { NotificationCenterService } from './notification-center.service';
@@ -33,6 +38,9 @@ const TOKEN_KEY = 'saco_stay_token';
 
 /** Session: vai trò đăng ký chờ OTP (không lưu profile vào localStorage). */
 export const SESSION_PENDING_ROLE_KEY = 'saco_pending_user_role';
+
+/** Session: returnUrl sau đăng ký/OTP (ví dụ đăng tin). */
+export const SESSION_AUTH_RETURN_URL_KEY = 'saco_auth_return_url';
 
 /** Backend often returns plain text or empty body on 2xx; default JSON parse would fail and surface as false errors. */
 export function getApiErrorMessage(err: unknown): string {
@@ -116,6 +124,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly apiUrl = environment.apiUrl;
   private readonly chatPeerProfiles = inject(ChatPeerProfileService);
+  private readonly injector = inject(Injector);
 
   private readonly currentUser = new BehaviorSubject<UserProfile | null>(null);
   readonly currentUser$ = this.currentUser.asObservable();
@@ -155,30 +164,80 @@ export class AuthService {
 
   /** Xóa token và state — không reload trang (dùng từ interceptor khi 401). */
   clearSession(): void {
-    const userId = userIdFromUser(this.getCurrentUser());
-    if (userId) {
-      clearSwipeDataForUser(userId);
-    }
-    clearLegacyLifestyleKeys();
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem('user');
-    sessionStorage.removeItem(SESSION_PENDING_ROLE_KEY);
-    clearLegacyTenantPremiumKey();
-    localStorage.removeItem('identity_verification_status');
-    localStorage.removeItem('landlord_upgrade_status');
-    clearMockLandlordPackage();
+    this.purgeBrowserAppState();
     this.currentUser.next(null);
-    inject(NotificationCenterService).reset();
-    inject(ChatHubService).disconnect();
+    // Lazy resolve — tránh vòng phụ thuộc AuthService ↔ NotificationCenterService (màn hình trắng).
+    try {
+      this.injector.get(NotificationCenterService).reset();
+      this.injector.get(ChatHubService).disconnect();
+    } catch {
+      /* optional during bootstrap */
+    }
   }
 
   /**
-   * Đăng xuất chủ động.
-   * `exitLandlordShell`: thoát kênh chủ trọ — reload về trang chủ (layout người thuê/khách).
+   * Đăng xuất chủ động: xóa toàn bộ dữ liệu, reload cứng và về trang chủ (local + production).
    */
-  logout(_options?: { exitLandlordShell?: boolean }): void {
-    this.clearSession();
-    window.location.assign('/');
+  logout(): void {
+    try {
+      this.clearSession();
+    } catch (err) {
+      console.error('[AuthService] logout cleanup failed', err);
+      this.purgeBrowserAppState();
+      this.currentUser.next(null);
+    }
+    this.redirectToHomeAfterLogout();
+  }
+
+  private redirectToHomeAfterLogout(): void {
+    const home = resolveAppHomeUrl();
+    const url = new URL(home, typeof window !== 'undefined' ? window.location.origin : undefined);
+    url.searchParams.set('logout', String(Date.now()));
+    window.location.replace(url.toString());
+  }
+
+  /** Dọn localStorage/sessionStorage liên quan user & app (logout / 401). */
+  private purgeBrowserAppState(): void {
+    const userId = userIdFromUser(this.getCurrentUser());
+    if (userId) {
+      clearSwipeDataForUser(userId);
+      clearDiscoveryWishlist(userId);
+      localStorage.removeItem(unreadStorageKey(userId));
+      localStorage.removeItem(lastSeenStorageKey(userId));
+      localStorage.removeItem(`saco_chat_contacts_${userId}`);
+      localStorage.removeItem(`saco_lifestyle_completed_${userId}`);
+      localStorage.removeItem(`saco_tenant_premium_${userId}`);
+    }
+
+    clearTempRegisterProfile();
+    clearGuestDiscoverySession();
+    clearLegacyLifestyleKeys();
+    clearLegacyTenantPremiumKey();
+    clearMockLandlordPackage();
+
+    this.removeStorageKeys(localStorage, (key) =>
+      key.startsWith('saco_') ||
+      key.startsWith('temp_') ||
+      key === 'user' ||
+      key === 'identity_verification_status' ||
+      key === 'landlord_upgrade_status' ||
+      key === 'reset_email'
+    );
+    this.removeStorageKeys(sessionStorage, (key) => key.startsWith('saco_'));
+
+    localStorage.removeItem(TOKEN_KEY);
+    Helpers.removeToken();
+    Helpers.removeUser();
+    sessionStorage.clear();
+  }
+
+  private removeStorageKeys(storage: Storage, predicate: (key: string) => boolean): void {
+    const keys: string[] = [];
+    for (let i = 0; i < storage.length; i++) {
+      const key = storage.key(i);
+      if (key && predicate(key)) keys.push(key);
+    }
+    keys.forEach((key) => storage.removeItem(key));
   }
 
   register(body: RegisterRequest): Observable<RegisterResponse> {

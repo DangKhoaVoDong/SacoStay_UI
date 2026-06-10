@@ -4,12 +4,13 @@
 }
 
 .home-hero {
-  background: linear-gradient(160deg, #fff9f2 0%, #fff8f0 45%, #ffffff 100%);
-}
-
-.home-hero-title,
-.home-hero-sub {
-  font-family: inherit;
+  background-image: url('/image/Background_Image_2.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  min-height: clamp(220px, 38vw, 480px);
 }
 
 .home-hero-btn {

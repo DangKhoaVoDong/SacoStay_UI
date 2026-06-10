@@ -12,8 +12,7 @@ import {
     navProfileLabel,
     profileAvatarFromRaw
 } from '../../utils/user-display';
-import { isTenantAuthPath } from '../../utils/auth-navigation';
-import { requiresLifestyleQuiz } from '../../utils/lifestyle-storage';
+import { landlordPostListingQueryParams, isTenantAuthPath } from '../../utils/auth-navigation';
 import { resolveMediaUrl } from '../../utils/media-url';
 import { SACOSTAY_LOGO_CLASS, SACOSTAY_LOGO_URL } from '../../utils/brand-assets';
 import type { UserProfile } from '../../models/auth.models';
@@ -110,21 +109,15 @@ export class NavbarComponent implements OnInit {
         return raw ? resolveMediaUrl(raw) : this.avatarFallbackUrl;
     }
 
-    /** Admin: profile-setup → profile. Tenant/landlord: + quiz. Quiz xong về profile (returnUrl). */
+    /** Admin: profile-setup → profile. Quiz chỉ khi user tự chọn "Thay đổi lối sống" trong profile. */
     get profileLink(): string[] {
         if (!hasBasicProfileFilled(this.user)) {
             return ['/profile-setup'];
-        }
-        if (requiresLifestyleQuiz(this.user)) {
-            return ['/lifestyle-quiz'];
         }
         return ['/profile', 'me'];
     }
 
     get profileLinkQueryParams(): Record<string, string> {
-        if (requiresLifestyleQuiz(this.user)) {
-            return { returnUrl: '/profile/me' };
-        }
         return {};
     }
 
@@ -152,5 +145,29 @@ export class NavbarComponent implements OnInit {
             return { returnUrl: link.href };
         }
         return null;
+    }
+
+    readonly postListingAuthParams = landlordPostListingQueryParams();
+
+    /** Guest: chỉ trang chủ. Chủ trọ: giao diện ngoài (navbar). Ẩn với người thuê trọ. */
+    get showPostListingBtn(): boolean {
+        if (this.isAdmin) return false;
+        if (this.isLoggedIn && this.userRole === 'tenant') return false;
+        if (!this.isLoggedIn) {
+            const path = this.router.url.split('?')[0];
+            return path === '/';
+        }
+        return this.userRole === 'landlord';
+    }
+
+    onPostListingClick(): void {
+        if (!this.showPostListingBtn) return;
+
+        if (!this.isLoggedIn) {
+            void this.router.navigate(['/login'], { queryParams: this.postListingAuthParams });
+            return;
+        }
+
+        void this.router.navigateByUrl('/landlord-profile');
     }
 }

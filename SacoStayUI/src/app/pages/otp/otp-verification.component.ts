@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
+import { AuthService, SESSION_AUTH_RETURN_URL_KEY, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
+import { sanitizeReturnUrl } from '../../utils/auth-navigation';
 import { shouldSyncGuestAfterRegister } from '../../utils/guest-discovery.storage';
 import { clearTempRegisterProfile } from '../../utils/user-display';
 import { UiToastService } from '../../services/ui-toast.service';
@@ -121,11 +122,14 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
 
   /** Sau OTP: bắt buộc eKYC trước khi vào bước tiếp theo. */
   private navigateAfterRegistration(userRole: string): void {
-    let returnUrl = '/profile-setup';
-    if (shouldSyncGuestAfterRegister()) {
-      returnUrl = '/discovery';
-    } else if (userRole === 'landlord') {
-      returnUrl = '/landlord-profile';
+    const storedReturnUrl = sanitizeReturnUrl(sessionStorage.getItem(SESSION_AUTH_RETURN_URL_KEY));
+    let returnUrl = storedReturnUrl || '/profile-setup';
+    if (!storedReturnUrl) {
+      if (shouldSyncGuestAfterRegister()) {
+        returnUrl = '/discovery';
+      } else if (userRole === 'landlord') {
+        returnUrl = '/landlord-profile';
+      }
     }
     void this.router.navigate(['/identity-verification'], { queryParams: { returnUrl } });
   }

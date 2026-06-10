@@ -3,33 +3,7 @@
 
   <div class="flex-1">
     <!-- Hero: cùng layout cho khách và đã đăng nhập -->
-    <section class="home-hero relative py-20 lg:py-32 overflow-hidden">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div class="text-center max-w-3xl mx-auto">
-          <h1 class="home-hero-title text-4xl md:text-6xl font-bold text-[#1A1A2E] mb-6 leading-tight tracking-tight">
-            Tìm bạn ở ghép <span class="text-[#FF9F43]">hợp gu</span><br />
-            Sống vui mỗi ngày
-          </h1>
-          <p class="home-hero-sub text-lg md:text-xl text-[#6B7280] mb-10 leading-relaxed max-w-2xl mx-auto">
-            SacoStay giúp bạn tìm người ở ghép phù hợp dựa trên thói quen sinh
-            hoạt và tính cách. Không còn lo lắng về việc "lệch pha" khi sống
-            chung.
-          </p>
-          <div class="home-hero-actions flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-4">
-            <a [routerLink]="heroCtaLink" class="home-hero-btn home-hero-btn-primary">
-              {{ heroCtaLabel }}
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div
-        class="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#FF9F43]/10 rounded-full blur-3xl">
-      </div>
-      <div
-        class="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-[#4A9FD9]/10 rounded-full blur-3xl">
-      </div>
-    </section>
+    <section class="home-hero relative overflow-hidden" aria-label="SacoStay"></section>
 
     <section class="py-20 bg-white rounded-t-[3rem]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -111,20 +85,6 @@
             <img
               src="https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
               alt="Roommates hanging out" class="rounded-3xl shadow-2xl" />
-            <div class="absolute -bottom-6 -left-6 bg-white p-6 rounded-2xl shadow-xl max-w-xs border border-orange-50">
-              <div class="flex items-center mb-3">
-                <div class="flex -space-x-2">
-                  <img class="w-8 h-8 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?img=1"
-                    alt="User" />
-                  <img class="w-8 h-8 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?img=2"
-                    alt="User" />
-                  <img class="w-8 h-8 rounded-full border-2 border-white" src="https://i.pravatar.cc/100?img=3"
-                    alt="User" />
-                </div>
-                <span class="ml-3 text-sm font-bold text-[#1A1A2E]">+1.2k thành viên</span>
-              </div>
-              <p class="text-sm text-[#6B7280]">Đã tìm được bạn ở ghép ưng ý trong tháng này</p>
-            </div>
           </div>
         </div>
       </div>

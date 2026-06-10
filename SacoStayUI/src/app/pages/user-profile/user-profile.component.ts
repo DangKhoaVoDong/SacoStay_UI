@@ -35,7 +35,7 @@ import {
   setTenantPremium,
   userIdFromUser
 } from '../../utils/user-display';
-import { requiresLifestyleQuiz } from '../../utils/lifestyle-storage';
+import { setLifestyleQuizCompleted } from '../../utils/lifestyle-storage';
 import { resolveMediaUrl } from '../../utils/media-url';
 import type { UserLifestyleAnswer } from '../../models/lifestyle.models';
 
@@ -148,12 +148,14 @@ export class UserProfileComponent implements OnInit {
             void this.router.navigate(['/profile-setup']);
             return of({ user: null, answers: [] });
           }
-          if (requiresLifestyleQuiz(user)) {
-            void this.router.navigate(['/lifestyle-quiz'], { queryParams: { returnUrl: '/profile/me' } });
-            return of({ user: null, answers: [] });
-          }
 
-          return this.lifestyle.getMyAnswers().pipe(map((answers) => ({ user, answers })));
+          return this.lifestyle.getMyAnswers().pipe(
+            map((answers) => {
+              const uid = userIdFromUser(user);
+              if (uid && answers.length > 0) setLifestyleQuizCompleted(uid);
+              return { user, answers };
+            })
+          );
         }),
         takeUntilDestroyed(this.destroyRef)
       )

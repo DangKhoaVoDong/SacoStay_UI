@@ -22,6 +22,15 @@
         </p>
       </div>
 
+      <p
+        *ngIf="currentMode === 'login' && requiresLandlordAuth"
+        class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 leading-relaxed"
+      >
+        Để đăng tin phòng, vui lòng đăng nhập bằng tài khoản chủ trọ hoặc
+        <a routerLink="/register" [queryParams]="authQueryParams" class="font-semibold text-[#FF9F43] hover:underline">đăng ký mới</a>
+        với vai trò chủ trọ.
+      </p>
+
       <!-- Login Form -->
       <form *ngIf="currentMode === 'login'" [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="space-y-4">
         <div>
@@ -111,7 +120,7 @@
 
         <p class="auth-switch-footer">
           Chưa có tài khoản?
-          <a routerLink="/register" class="auth-switch-link">Đăng ký ngay</a>
+          <a routerLink="/register" [queryParams]="authQueryParams" class="auth-switch-link">Đăng ký ngay</a>
         </p>
       </form>
 
@@ -332,7 +341,7 @@
 
         <p class="auth-switch-footer">
           Đã có tài khoản?
-          <a routerLink="/login" class="auth-switch-link">Đăng nhập ngay</a>
+          <a routerLink="/login" [queryParams]="authQueryParams" class="auth-switch-link">Đăng nhập ngay</a>
         </p>
       </form>
 

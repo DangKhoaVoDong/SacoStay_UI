@@ -48,10 +48,16 @@
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:space-x-4">
-                <a *ngIf="isLoggedIn && userRole === 'landlord'" routerLink="/landlord-profile"
-                    class="bg-[#FF9F43] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#FF8C2A] transition-colors">
-                    Kênh Chủ trọ
-                </a>
+                <button
+                    *ngIf="showPostListingBtn"
+                    type="button"
+                    (click)="onPostListingClick()"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    [ngClass]="isLoggedIn && userRole === 'landlord'
+                        ? 'bg-[#FF9F43] text-white hover:bg-[#FF8C2A]'
+                        : 'border border-[#FF9F43] text-[#FF9F43] hover:bg-[#FFF8F0]'">
+                    Đăng tin
+                </button>
 
                 <ng-container *ngIf="isLoggedIn; else guestLinks">
                     <div class="flex items-center space-x-4">
@@ -147,10 +153,14 @@
                 </span>
             </a>
 
-            <a *ngIf="isLoggedIn && userRole === 'landlord'" routerLink="/landlord-profile" (click)="toggleMenu()"
-                class="block rounded-xl px-3 py-3 text-base font-medium text-[#FF9F43] hover:bg-[#FFF8F0]">
-                Kênh Chủ trọ
-            </a>
+            <button
+                *ngIf="showPostListingBtn"
+                type="button"
+                (click)="onPostListingClick(); toggleMenu()"
+                class="block w-full rounded-xl px-3 py-3 text-base font-medium hover:bg-[#FFF8F0] text-left"
+                [ngClass]="isLoggedIn && userRole === 'landlord' ? 'text-white bg-[#FF9F43]' : 'text-[#FF9F43]'">
+                Đăng tin
+            </button>
         </div>
 
         <div class="pt-4 pb-4 border-t border-orange-100 px-4">
@@ -178,8 +188,15 @@
                     </button>
                 </div>
             </ng-container>
+
             <ng-template #mobileGuestLinks>
                 <div class="space-y-3">
+                    <button
+                        type="button"
+                        (click)="onPostListingClick(); toggleMenu()"
+                        class="block w-full rounded-xl border border-[#FF9F43] bg-[#FFF8F0] px-4 py-3 text-center text-sm font-medium text-[#FF9F43] hover:bg-[#FF9F43]/10">
+                        Đăng tin
+                    </button>
                     <a routerLink="/login" (click)="toggleMenu()"
                         class="block w-full rounded-xl border border-orange-100 bg-white px-4 py-3 text-center text-sm font-medium text-[#1A1A2E] hover:bg-[#FFF8F0] hover:text-[#FF9F43]">
                         Đăng nhập

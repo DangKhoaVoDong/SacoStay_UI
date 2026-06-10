@@ -71,6 +71,6 @@ export class LandlordSidebarComponent implements OnInit {
   }
 
   logout(): void {
-    this.auth.logout({ exitLandlordShell: true });
+    this.auth.logout();
   }
 }

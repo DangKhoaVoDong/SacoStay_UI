@@ -185,7 +185,7 @@
               <p class="text-sm text-gray-500">
                 @if (isOwnProfile) {
                   Chưa có dữ liệu trắc nghiệm.
-                  <a routerLink="/lifestyle-quiz" class="text-[#FF9F43] font-medium hover:underline">Làm trắc nghiệm</a>
+                  <a routerLink="/lifestyle-quiz" [queryParams]="{ retake: '1', returnUrl: '/profile/me' }" class="text-[#FF9F43] font-medium hover:underline">Làm trắc nghiệm</a>
                 } @else {
                   Người dùng chưa hoàn thành trắc nghiệm lối sống.
                 }

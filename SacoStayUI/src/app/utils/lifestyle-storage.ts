@@ -35,7 +35,7 @@ export function setLifestyleQuizCompleted(userId: string): void {
   localStorage.setItem(doneKey(userId), '1');
 }
 
-/** Tenant / chủ trọ: bắt buộc quiz trước profile. Admin: không. */
+/** Kiểm tra cờ local hoàn thành quiz (không dùng để chặn vào profile). Admin: luôn false. */
 export function requiresLifestyleQuiz(user: unknown): boolean {
   if (isAdminUser(user)) return false;
   const uid = userIdFromUser(user);

@@ -1,7 +1,11 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { resolvePostLoginUrl } from '../../utils/auth-navigation';
+import {
+  CREATE_LISTING_PATH,
+  isCreateListingReturnUrl,
+  resolvePostLoginUrl
+} from '../../utils/auth-navigation';
 
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
@@ -10,7 +14,12 @@ export const authGuard: CanActivateFn = () => {
     return true;
   }
   const returnUrl = resolvePostLoginUrl(router.url, '/');
-  return router.createUrlTree(['/login'], {
-    queryParams: returnUrl === '/' ? {} : { returnUrl }
-  });
+  if (returnUrl === '/') {
+    return router.createUrlTree(['/login']);
+  }
+  const queryParams: Record<string, string> = { returnUrl };
+  if (isCreateListingReturnUrl(returnUrl) || router.url.split('?')[0] === CREATE_LISTING_PATH) {
+    queryParams['role'] = 'landlord';
+  }
+  return router.createUrlTree(['/login'], { queryParams });
 };
