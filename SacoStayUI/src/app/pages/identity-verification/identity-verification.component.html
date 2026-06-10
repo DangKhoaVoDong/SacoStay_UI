@@ -1,0 +1,360 @@
+<div class="min-h-screen bg-gray-50 flex flex-col">
+  <app-navbar />
+
+  @if (statusLoading) {
+    <div class="flex-1 flex items-center justify-center text-gray-500">Đang kiểm tra trạng thái xác thực…</div>
+  } @else {
+    <div class="flex-1 container mx-auto px-4 py-12 max-w-2xl">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Xác thực danh tính eKYC</h1>
+        <p class="text-gray-600">
+          Để đảm bảo an toàn cho cộng đồng, vui lòng xác thực danh tính của bạn qua 2 bước đơn giản.
+        </p>
+      </div>
+
+      <div class="flex justify-center mb-8">
+        <div class="flex items-center space-x-3">
+          <div class="flex items-center gap-2">
+            <div
+              class="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold"
+              [class.bg-blue-600]="step === 1"
+              [class.text-white]="step === 1"
+              [class.ring-4]="step === 1"
+              [class.ring-blue-100]="step === 1"
+              [class.bg-green-500]="step > 1"
+              [class.text-white]="step > 1"
+            >
+              @if (step > 1) {
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              } @else {
+                1
+              }
+            </div>
+            <span class="text-sm font-medium hidden sm:inline" [class.text-blue-600]="step === 1" [class.text-green-600]="step > 1">
+              Ảnh CCCD
+            </span>
+          </div>
+          <div class="h-0.5 w-12" [class.bg-green-500]="step === 2" [class.bg-gray-200]="step === 1"></div>
+          <div class="flex items-center gap-2">
+            <div
+              class="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold"
+              [class.bg-blue-600]="step === 2"
+              [class.text-white]="step === 2"
+              [class.ring-4]="step === 2"
+              [class.ring-blue-100]="step === 2"
+              [class.bg-gray-200]="step === 1"
+              [class.text-gray-500]="step === 1"
+            >
+              2
+            </div>
+            <span class="text-sm font-medium hidden sm:inline" [class.text-blue-600]="step === 2" [class.text-gray-400]="step === 1">
+              Quét khuôn mặt
+            </span>
+          </div>
+        </div>
+      </div>
+
+      @if (previousKycNote) {
+        <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
+          <p class="font-semibold mb-1">Lần xác thực trước chưa đạt</p>
+          <p class="text-amber-800">{{ previousKycNote }}</p>
+        </div>
+      }
+
+      <div class="p-8 bg-white rounded-lg shadow-sm border border-gray-200">
+        @if (step === 1) {
+          <form class="space-y-6" (submit)="$event.preventDefault(); goToStep2()">
+            <div class="flex items-center space-x-3 mb-2">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <h2 class="text-xl font-semibold text-gray-900">Bước 1: Tải ảnh CCCD / CMND</h2>
+            </div>
+
+            <p class="text-sm text-gray-600 bg-blue-50 rounded-lg p-4 border border-blue-100">
+              Vui lòng tải ảnh mặt trước và mặt sau CCCD/CMND — rõ nét, không lóa/cắt góc. Ảnh mặt trước cần thấy rõ <span class="font-medium">ảnh chân dung trên thẻ</span> (FPT.AI dùng để so khớp với video).
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                class="border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200"
+                [class.border-green-400]="frontFile"
+                [class.bg-green-50]="frontFile"
+                [class.border-gray-300]="!frontFile"
+                [class.bg-gray-50]="!frontFile"
+                [class.hover:border-blue-400]="!frontFile"
+                [class.hover:bg-blue-50]="!frontFile"
+                [class.cursor-pointer]="!frontFile"
+              >
+                @if (frontFile) {
+                  <div class="flex flex-col items-center space-y-3">
+                    <img [src]="frontPreviewUrl" alt="Mặt trước CCCD" class="w-full h-28 object-cover rounded-lg border border-green-100" />
+                    <div class="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg border border-green-100 shadow-sm">
+                      <span class="text-sm font-medium text-gray-700 truncate max-w-[180px]">{{ frontFile.name }}</span>
+                      <button type="button" (click)="clearFront()" class="ml-2 text-gray-400 hover:text-red-500 transition-colors">✕</button>
+                    </div>
+                    <p class="text-xs text-green-600 font-medium">Tải lên thành công</p>
+                  </div>
+                } @else {
+                  <label class="flex flex-col items-center space-y-3 cursor-pointer">
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="text-sm font-medium text-gray-800">Mặt trước CCCD</div>
+                      <p class="text-xs text-gray-500 mt-1">JPG, PNG – tối đa 5MB</p>
+                    </div>
+                    <span class="mt-1 px-4 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 bg-white">Chọn tệp</span>
+                    <input type="file" accept="image/*" class="hidden" (change)="onFrontSelected($event)" />
+                  </label>
+                }
+              </div>
+
+              <div
+                class="border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200"
+                [class.border-green-400]="backFile"
+                [class.bg-green-50]="backFile"
+                [class.border-gray-300]="!backFile"
+                [class.bg-gray-50]="!backFile"
+                [class.hover:border-blue-400]="!backFile"
+                [class.hover:bg-blue-50]="!backFile"
+                [class.cursor-pointer]="!backFile"
+              >
+                @if (backFile) {
+                  <div class="flex flex-col items-center space-y-3">
+                    <img [src]="backPreviewUrl" alt="Mặt sau CCCD" class="w-full h-28 object-cover rounded-lg border border-green-100" />
+                    <div class="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg border border-green-100 shadow-sm">
+                      <span class="text-sm font-medium text-gray-700 truncate max-w-[180px]">{{ backFile.name }}</span>
+                      <button type="button" (click)="clearBack()" class="ml-2 text-gray-400 hover:text-red-500 transition-colors">✕</button>
+                    </div>
+                    <p class="text-xs text-green-600 font-medium">Tải lên thành công</p>
+                  </div>
+                } @else {
+                  <label class="flex flex-col items-center space-y-3 cursor-pointer">
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="text-sm font-medium text-gray-800">Mặt sau CCCD</div>
+                      <p class="text-xs text-gray-500 mt-1">JPG, PNG – tối đa 5MB</p>
+                    </div>
+                    <span class="mt-1 px-4 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-600 bg-white">Chọn tệp</span>
+                    <input type="file" accept="image/*" class="hidden" (change)="onBackSelected($event)" />
+                  </label>
+                }
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              class="w-full mt-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium transition-colors"
+              [disabled]="!frontFile || !backFile"
+            >
+              Tiếp tục bước 2
+            </button>
+          </form>
+        } @else {
+          <div class="space-y-6">
+            <div class="flex items-center space-x-3 mb-2">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <h2 class="text-xl font-semibold text-gray-900">Bước 2: Xác thực khuôn mặt (eKYC)</h2>
+            </div>
+
+            <p class="text-sm text-gray-600 bg-blue-50 rounded-lg p-4 border border-blue-100">
+              Hệ thống sẽ quay video khuôn mặt <span class="font-semibold text-gray-800">{{ videoRecordSeconds }} giây</span> qua camera và so khớp với ảnh trên CCCD (FPT.AI Liveness V3). Giữ mặt trong khung suốt thời gian quay, đủ ánh sáng và nhìn thẳng camera.
+            </p>
+
+            <div class="relative mx-auto max-w-sm">
+              <div class="aspect-[3/4] bg-gray-900 rounded-2xl overflow-hidden relative">
+                @if (cameraState === 'idle') {
+                  <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+                    <div class="w-20 h-20 rounded-full border-4 border-dashed border-gray-500 flex items-center justify-center mb-4">
+                      <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </div>
+                    <p class="text-gray-400 text-sm font-medium">Nhấn nút bên dưới để mở camera</p>
+                    <p class="text-gray-500 text-xs mt-2">Sau đó quay video {{ videoRecordSeconds }} giây — giữ khuôn mặt trong khung hình</p>
+                  </div>
+                }
+
+                @if (cameraState === 'preview' || cameraState === 'recording' || cameraState === 'submitting') {
+                  <video #videoEl class="absolute inset-0 w-full h-full object-cover" playsinline muted></video>
+                  <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="w-48 h-60 relative">
+                      <div class="absolute top-0 left-0 w-8 h-8 border-blue-400 rounded-tl-lg" style="border-width: 3px 0 0 3px"></div>
+                      <div class="absolute top-0 right-0 w-8 h-8 border-blue-400 rounded-tr-lg" style="border-width: 3px 3px 0 0"></div>
+                      <div class="absolute bottom-0 left-0 w-8 h-8 border-blue-400 rounded-bl-lg" style="border-width: 0 0 3px 3px"></div>
+                      <div class="absolute bottom-0 right-0 w-8 h-8 border-blue-400 rounded-br-lg" style="border-width: 0 3px 3px 0"></div>
+                      @if (cameraState === 'recording') {
+                        <div class="absolute inset-0 flex items-center justify-center">
+                          <span class="text-5xl font-black text-white drop-shadow-lg">{{ recordingCountdown }}</span>
+                        </div>
+                      }
+                      @if (cameraState === 'submitting') {
+                        <div
+                          class="absolute left-2 right-2 h-0.5 bg-blue-400 shadow-lg shadow-blue-400/50"
+                          [style.top.%]="scanProgress"
+                        ></div>
+                      }
+                    </div>
+                  </div>
+                  @if (cameraState === 'recording') {
+                    <div class="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-red-500 text-white text-xs font-bold flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                      Đang quay video
+                    </div>
+                  }
+                  @if (cameraState === 'submitting') {
+                    <div class="absolute bottom-6 left-6 right-6">
+                      <div class="bg-black/60 backdrop-blur-sm rounded-xl px-4 py-3">
+                        <div class="flex items-center justify-between mb-2">
+                          <span class="text-white text-xs font-medium">Đang xác thực với hệ thống AI…</span>
+                          <span class="text-blue-400 text-xs font-bold">{{ scanProgress }}%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-gray-600 rounded-full overflow-hidden">
+                          <div class="h-full bg-blue-400 rounded-full transition-all duration-100" [style.width.%]="scanProgress"></div>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                }
+
+                @if (cameraState === 'success') {
+                  <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/80">
+                    @if (capturedVideoUrl) {
+                      <video [src]="capturedVideoUrl" class="absolute inset-0 w-full h-full object-cover opacity-40" muted playsinline></video>
+                    }
+                    <div class="relative z-10 w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-4">
+                      <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <p class="relative z-10 text-white text-lg font-bold">Xác thực thành công!</p>
+                    <p class="relative z-10 text-green-400 text-sm mt-1 max-w-xs">
+                      {{ successMessage || 'Khuôn mặt khớp với ảnh CCCD' }}
+                    </p>
+                  </div>
+                }
+
+                @if (cameraState === 'error') {
+                  <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/80 p-6 text-center">
+                    @if (capturedVideoUrl) {
+                      <video [src]="capturedVideoUrl" class="absolute inset-0 w-full h-full object-cover opacity-30" muted playsinline></video>
+                    }
+                    <div class="relative z-10 w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mb-4">
+                      <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p class="relative z-10 text-white text-lg font-bold">Không nhận diện được</p>
+                    <p class="relative z-10 text-red-300 text-sm mt-2 max-w-xs">{{ errorMessage || 'Vui lòng thử lại' }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 max-w-sm mx-auto">
+              <div class="text-center p-3 bg-gray-50 rounded-xl">
+                <div class="text-lg mb-1">💡</div>
+                <p class="text-[10px] text-gray-600 font-medium">Đủ ánh sáng</p>
+              </div>
+              <div class="text-center p-3 bg-gray-50 rounded-xl">
+                <div class="text-lg mb-1">👤</div>
+                <p class="text-[10px] text-gray-600 font-medium">Nhìn thẳng</p>
+              </div>
+              <div class="text-center p-3 bg-gray-50 rounded-xl">
+                <div class="text-lg mb-1">🚫</div>
+                <p class="text-[10px] text-gray-600 font-medium">Không đeo kính</p>
+              </div>
+            </div>
+
+            <div class="flex space-x-4 mt-6">
+              <button
+                type="button"
+                class="w-1/3 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
+                [disabled]="submitLoading"
+                (click)="backToStep1()"
+              >
+                Quay lại
+              </button>
+
+              @if (cameraState === 'idle' || cameraState === 'error') {
+                <button
+                  type="button"
+                  class="w-2/3 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium inline-flex items-center justify-center gap-2"
+                  (click)="startCamera()"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  </svg>
+                  Bắt đầu quét khuôn mặt
+                </button>
+              }
+
+              @if (cameraState === 'preview') {
+                <button
+                  type="button"
+                  class="w-2/3 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                  (click)="recordAndSubmit()"
+                >
+                  Quay video {{ videoRecordSeconds }} giây
+                </button>
+              }
+
+              @if (cameraState === 'recording') {
+                <button type="button" class="w-2/3 py-3 rounded-lg bg-gray-400 text-white font-medium cursor-not-allowed" disabled>
+                  Đang quay {{ recordingCountdown }}s...
+                </button>
+              }
+
+              @if (cameraState === 'submitting') {
+                <button type="button" class="w-2/3 py-3 rounded-lg bg-gray-400 text-white font-medium cursor-not-allowed" disabled>
+                  Đang xác thực...
+                </button>
+              }
+
+              @if (cameraState === 'success') {
+                <button
+                  type="button"
+                  class="w-2/3 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                  [disabled]="submitLoading"
+                  (click)="completeVerification()"
+                >
+                  Hoàn tất xác thực
+                </button>
+              }
+
+              @if (cameraState === 'error') {
+                <button
+                  type="button"
+                  class="w-2/3 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                  (click)="retryScan()"
+                >
+                  Thử lại
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

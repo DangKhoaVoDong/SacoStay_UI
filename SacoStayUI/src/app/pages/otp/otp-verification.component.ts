@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
-import { GuestDiscoverySyncService } from '../../services/guest-discovery-sync.service';
 import { shouldSyncGuestAfterRegister } from '../../utils/guest-discovery.storage';
 import { clearTempRegisterProfile } from '../../utils/user-display';
 import { UiToastService } from '../../services/ui-toast.service';
@@ -22,8 +21,6 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
   email = '';
   private countdownTimer: any;
   private readonly toast = inject(UiToastService);
-  private readonly guestSync = inject(GuestDiscoverySyncService);
-
   constructor(private router: Router, private authService: AuthService) {
     this.email = localStorage.getItem('temp_email') || 'your-email@example.com';
   }
@@ -73,21 +70,13 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
               this.authService.finalizeNewUserSession().subscribe({
                 next: () => {
                   this.isLoading = false;
-                  if (shouldSyncGuestAfterRegister()) {
-                    this.guestSync.syncAfterRegisterAndNavigate('/discovery');
-                  } else {
-                    this.router.navigate(['/']);
-                  }
+                  this.navigateAfterRegistration(userRole);
                 },
                 error: (e) => {
                   this.isLoading = false;
                   console.error('Finalize session after OTP failed', e);
                   this.toast.info('Đã đăng nhập nhưng đồng bộ hồ sơ thất bại. Bạn có thể cập nhật hồ sơ sau trong phần cài đặt.');
-                  if (shouldSyncGuestAfterRegister()) {
-                    this.guestSync.syncAfterRegisterAndNavigate('/discovery');
-                  } else {
-                    this.router.navigate(['/']);
-                  }
+                  this.navigateAfterRegistration(userRole);
                 }
               });
             },
@@ -128,5 +117,16 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
 
   get canResend(): boolean {
     return this.countdown === 0;
+  }
+
+  /** Sau OTP: bắt buộc eKYC trước khi vào bước tiếp theo. */
+  private navigateAfterRegistration(userRole: string): void {
+    let returnUrl = '/profile-setup';
+    if (shouldSyncGuestAfterRegister()) {
+      returnUrl = '/discovery';
+    } else if (userRole === 'landlord') {
+      returnUrl = '/landlord-profile';
+    }
+    void this.router.navigate(['/identity-verification'], { queryParams: { returnUrl } });
   }
 }

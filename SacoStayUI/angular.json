@@ -19,6 +19,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/image",
+                "output": "/image"
               }
             ],
             "styles": [
@@ -64,15 +69,28 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4200,
+            "host": "localhost",
+            "open": false
+          },
           "configurations": {
             "production": {
               "buildTarget": "SacoStayUI:build:production"
             },
             "development": {
-              "buildTarget": "SacoStayUI:build:development"
+              "buildTarget": "SacoStayUI:build:development",
+              "port": 4200,
+              "host": "localhost"
+            },
+            "local": {
+              "buildTarget": "SacoStayUI:build:development",
+              "port": 4200,
+              "host": "localhost",
+              "open": true
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "local"
         },
         "extract-i18n": {
           "builder": "@angular/build:extract-i18n"
@@ -85,6 +103,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/image",
+                "output": "/image"
               }
             ],
             "styles": [

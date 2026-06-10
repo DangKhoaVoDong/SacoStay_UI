@@ -570,6 +570,76 @@
         }
       }
     },
+    "/api/Kyc/submit": {
+      "post": {
+        "tags": [
+          "Kyc"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "BackIdImage",
+                  "FrontIdImage",
+                  "SelfieVideo"
+                ],
+                "type": "object",
+                "properties": {
+                  "FrontIdImage": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "BackIdImage": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "SelfieVideo": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "VneidScreenshot": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "FrontIdImage": {
+                  "style": "form"
+                },
+                "BackIdImage": {
+                  "style": "form"
+                },
+                "SelfieVideo": {
+                  "style": "form"
+                },
+                "VneidScreenshot": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Kyc/my-status": {
+      "get": {
+        "tags": [
+          "Kyc"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Lifestyle/question": {
       "post": {
         "tags": [
@@ -719,6 +789,44 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Lifestyle/guest-swipe-deck": {
+      "get": {
+        "tags": [
+          "Lifestyle"
+        ],
+        "parameters": [
+          {
+            "name": "selectedOptionIds",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "includeSwiped",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],

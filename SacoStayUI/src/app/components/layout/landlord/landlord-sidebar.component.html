@@ -1,11 +1,7 @@
 <div class="w-64 h-screen bg-[#1A1A2E] text-white flex flex-col fixed left-0 top-0 z-40 overflow-visible">
   <div class="p-6 border-b border-white/10 flex items-center justify-between gap-2 overflow-visible relative z-50">
     <a routerLink="/" class="flex items-center min-w-0">
-      <img
-        src="https://cdn.magicpatterns.com/uploads/rwG78VB7w9oqMtogK5vpyZ/Screenshot_2026-03-15_223642.png"
-        alt="SacoStay"
-        class="h-12 w-auto drop-shadow-[0_2px_6px_rgba(255,140,0,0.3)]"
-      />
+      <img [src]="logoUrl" alt="SacoStay" [class]="logoClass" />
       <span class="ml-2 text-xs font-bold bg-white/10 px-2 py-1 rounded text-gray-300">PRO</span>
     </a>
     <app-notification-bell variant="dark" [isLandlord]="true" panelPlacement="beside-right" />

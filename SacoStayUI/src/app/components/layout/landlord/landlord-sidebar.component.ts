@@ -8,6 +8,7 @@ import { NotificationCenterService } from '../../../services/notification-center
 import { NotificationBellComponent } from '../../shared/notification-bell/notification-bell.component';
 import { navProfileLabel, profileAvatarFromRaw } from '../../../utils/user-display';
 import { resolveMediaUrl } from '../../../utils/media-url';
+import { SACOSTAY_LANDLORD_LOGO_URL, SACOSTAY_LOGO_CLASS } from '../../../utils/brand-assets';
 import type { UserProfile } from '../../../models/auth.models';
 
 interface LandlordNavItem {
@@ -23,6 +24,8 @@ interface LandlordNavItem {
   templateUrl: './landlord-sidebar.component.html'
 })
 export class LandlordSidebarComponent implements OnInit {
+  readonly logoUrl = SACOSTAY_LANDLORD_LOGO_URL;
+  readonly logoClass = SACOSTAY_LOGO_CLASS;
   user: UserProfile | null = null;
 
   readonly navItems: LandlordNavItem[] = [

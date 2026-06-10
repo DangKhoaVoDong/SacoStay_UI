@@ -10,6 +10,7 @@ import { resolvePostLoginUrl } from '../../utils/auth-navigation';
 import { clearGuestDiscoverySession, markGuestRegisterSync } from '../../utils/guest-discovery.storage';
 import { clearTempRegisterProfile, isAdminUser } from '../../utils/user-display';
 import { AuthLegalNoticeComponent } from '../../components/legal/auth-legal-notice.component';
+import { SACOSTAY_LOGO_CLASS, SACOSTAY_LOGO_URL } from '../../utils/brand-assets';
 
 @Component({
   selector: 'app-auth',
@@ -19,6 +20,8 @@ import { AuthLegalNoticeComponent } from '../../components/legal/auth-legal-noti
   styleUrls: ['./auth.component.css']
 })
 export class AuthComponent implements OnInit {
+  readonly logoUrl = SACOSTAY_LOGO_URL;
+  readonly logoClass = SACOSTAY_LOGO_CLASS;
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 

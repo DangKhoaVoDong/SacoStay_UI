@@ -257,6 +257,7 @@ export function roomStatusBadge(hasRoom: boolean): string {
 
 export function isVerifiedUser(user: Record<string, unknown> | null | undefined): boolean {
   if (!user) return false;
+  if (user['isVerified'] === true || user['IsVerified'] === true) return true;
   const s = String(user['verificationStatus'] ?? user['VerificationStatus'] ?? '').toLowerCase();
   return s === 'verified' || s === 'approved' || s === 'completed';
 }

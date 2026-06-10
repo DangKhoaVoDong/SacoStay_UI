@@ -22,6 +22,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/otp/otp-verification.component').then((m) => m.OtpVerificationComponent)
   },
   {
+    path: 'identity-verification',
+    loadComponent: () =>
+      import('./pages/identity-verification/identity-verification.component').then(
+        (m) => m.IdentityVerificationComponent
+      ),
+    canActivate: [authGuard]
+  },
+  {
     path: 'forgot-password',
     loadComponent: () =>
       import('./pages/forgot-password/forgot-password.component').then((m) => m.ForgotPasswordComponent)

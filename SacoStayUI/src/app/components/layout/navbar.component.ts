@@ -15,6 +15,7 @@ import {
 import { isTenantAuthPath } from '../../utils/auth-navigation';
 import { requiresLifestyleQuiz } from '../../utils/lifestyle-storage';
 import { resolveMediaUrl } from '../../utils/media-url';
+import { SACOSTAY_LOGO_CLASS, SACOSTAY_LOGO_URL } from '../../utils/brand-assets';
 import type { UserProfile } from '../../models/auth.models';
 
 interface NavLink {
@@ -31,6 +32,8 @@ interface NavLink {
     templateUrl: './navbar.component.html'
 })
 export class NavbarComponent implements OnInit {
+    readonly logoUrl = SACOSTAY_LOGO_URL;
+    readonly logoClass = SACOSTAY_LOGO_CLASS;
     isOpen = false;
     isLoggedIn = false;
     user: UserProfile | null = null;

@@ -24,6 +24,12 @@
   }
 }
 
+/* Logo thương hiệu — kích thước qua Tailwind class trong brand-assets */
+.brand-logo {
+  object-fit: contain;
+  display: block;
+}
+
 /* Custom components */
 @layer components {
   .btn-primary-saco {

@@ -11,7 +11,10 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService, getApiErrorMessage } from '../../services/auth.service';
+import { KycService } from '../../services/kyc.service';
 import { UiToastService } from '../../services/ui-toast.service';
+import { kycUiStatusFromApi } from '../../utils/kyc-display';
+import type { KycUiStatus } from '../../models/kyc.models';
 import { UiConfirmService } from '../../services/ui-confirm.service';
 import type { UserProfileUpdateDTO, UserProfile } from '../../models/auth.models';
 import { resolveMediaUrl } from '../../utils/media-url';
@@ -31,7 +34,9 @@ export class ProfileSetupComponent implements OnInit {
 
   profileForm: FormGroup | null = null;
   existingUser: Record<string, unknown> = {};
-  verificationStatus = 'not_started';
+  verificationStatus: KycUiStatus = 'not_started';
+  kycAdminNote = '';
+  kycStatusLoading = true;
   maxBioLength = 300;
   submitLoading = false;
   profileLoading = true;
@@ -42,11 +47,12 @@ export class ProfileSetupComponent implements OnInit {
   constructor(
     private router: Router,
     private fb: FormBuilder,
-    private authService: AuthService
+    private authService: AuthService,
+    private kycService: KycService
   ) {}
 
   ngOnInit(): void {
-    this.verificationStatus = localStorage.getItem('identity_verification_status') || 'not_started';
+    this.loadKycStatus();
     if (!this.authService.isLoggedIn) {
       this.profileLoading = false;
       this.cdr.detectChanges();
@@ -281,7 +287,25 @@ export class ProfileSetupComponent implements OnInit {
   }
 
   navigateToIdentityVerification(): void {
-    this.router.navigate(['/identity-verification']);
+    void this.router.navigate(['/identity-verification'], {
+      queryParams: { returnUrl: '/profile-setup' }
+    });
+  }
+
+  private loadKycStatus(): void {
+    this.kycStatusLoading = true;
+    this.kycService.getMyStatus().subscribe({
+      next: (status) => {
+        this.verificationStatus = kycUiStatusFromApi(status.status);
+        this.kycAdminNote = status.adminNote?.trim() || '';
+        this.kycStatusLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.kycStatusLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   navigateBack(): void {
