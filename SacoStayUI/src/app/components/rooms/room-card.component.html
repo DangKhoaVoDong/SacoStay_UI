@@ -1,4 +1,4 @@
-<a [routerLink]="['/rooms', room.id]" class="block group h-full">
+<a [routerLink]="['/rooms', room.id]" [queryParams]="detailQueryParams" class="block group h-full">
   <article [class]="articleClass + ' h-full flex flex-col'">
     <div class="relative aspect-[4/3] bg-gray-100 shrink-0 overflow-hidden">
       @if (room.imageUrl) {

@@ -39,7 +39,7 @@
             [class.ring-orange-200]="highlightPostId === post.id"
             [class.border-gray-100]="highlightPostId !== post.id"
           >
-            <a [routerLink]="['/rooms', post.id]" class="flex gap-4 flex-1 min-w-0">
+            <a [routerLink]="['/rooms', post.id]" [queryParams]="{ from: 'my-listings' }" class="flex gap-4 flex-1 min-w-0">
               @if (post.imageUrl) {
                 <img [src]="post.imageUrl" [alt]="post.title" class="w-24 h-24 rounded-xl object-cover shrink-0" />
               } @else {

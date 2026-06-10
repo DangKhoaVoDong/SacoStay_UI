@@ -48,6 +48,10 @@ export class AuthComponent implements OnInit {
 
   selectedRole: 'tenant' | 'landlord' = 'tenant';
 
+  showLoginPassword = false;
+  showRegisterPassword = false;
+  showRegisterConfirmPassword = false;
+
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(UiToastService);
 

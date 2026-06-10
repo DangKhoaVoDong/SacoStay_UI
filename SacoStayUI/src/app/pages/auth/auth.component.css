@@ -1,6 +1,6 @@
 .auth-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ffffff;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -140,6 +140,26 @@
   background: #fff7ed;
   box-shadow: 0 4px 12px rgba(255, 159, 67, 0.08);
 }
+
+.password-toggle-btn {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 0.75rem;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #ff9f43;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .auth-page {

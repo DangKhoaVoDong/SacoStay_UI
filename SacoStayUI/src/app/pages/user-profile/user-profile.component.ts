@@ -77,6 +77,8 @@ export class UserProfileComponent implements OnInit {
 
   targetUserId = '';
   chatQueryParams: Record<string, string> = {};
+  /** Hồ sơ đang xem thuộc chủ trọ — chỉ hiển thị thông tin cơ bản. */
+  isLandlordProfileView = false;
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -149,6 +151,10 @@ export class UserProfileComponent implements OnInit {
             return of({ user: null, answers: [] });
           }
 
+          if (isLandlordUser(user)) {
+            return of({ user, answers: [] as UserLifestyleAnswer[] });
+          }
+
           return this.lifestyle.getMyAnswers().pipe(
             map((answers) => {
               const uid = userIdFromUser(user);
@@ -180,31 +186,40 @@ export class UserProfileComponent implements OnInit {
   }
 
   private loadOtherProfile(userId: string): void {
-    forkJoin({
-      userRaw: this.http
-        .get<unknown>(`${this.apiUrl}/Auth/user/${encodeURIComponent(userId)}`)
-        .pipe(catchError(() => of(null))),
-      answers: this.lifestyle.getUserAnswers(userId),
-      match: this.lifestyle.getMatchingScore(userId)
-    })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    this.http
+      .get<unknown>(`${this.apiUrl}/Auth/user/${encodeURIComponent(userId)}`)
+      .pipe(
+        catchError(() => of(null)),
+        switchMap((userRaw) => {
+          if (!userRaw) return of(null);
+          const user = normalizeAuthUser(userRaw);
+          if (isLandlordUser(user)) {
+            return of({ user, answers: [] as UserLifestyleAnswer[], match: { matchingScore: 0 } });
+          }
+          return forkJoin({
+            answers: this.lifestyle.getUserAnswers(userId),
+            match: this.lifestyle.getMatchingScore(userId)
+          }).pipe(map(({ answers, match }) => ({ user, answers, match })));
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
-        next: ({ userRaw, answers, match }) => {
-          if (!userRaw) {
+        next: (result) => {
+          if (!result) {
             this.notFound = true;
             this.loading = false;
             this.cdr.detectChanges();
             return;
           }
 
-          const user = normalizeAuthUser(userRaw);
+          const { user, answers, match } = result;
           this.applyUserView(user);
           this.lifestyleAnswers = answers;
           this.compatibilityScore = match.matchingScore;
           this.applyRoomStatus(answers);
 
           const myId = userIdFromUser(this.auth.getCurrentUser());
-          if (myId) {
+          if (myId && !this.isLandlordProfileView) {
             this.lifestyle
               .getMyAnswers()
               .pipe(takeUntilDestroyed(this.destroyRef))
@@ -240,6 +255,7 @@ export class UserProfileComponent implements OnInit {
   }
 
   private applyUserView(user: Record<string, unknown>): void {
+    this.isLandlordProfileView = isLandlordUser(user);
     this.displayName = navProfileLabel(user);
     this.age = ageFromDateOfBirth(profileDateOfBirthSeed(user));
     this.genderLabel = genderLabelVi(user['gender']);

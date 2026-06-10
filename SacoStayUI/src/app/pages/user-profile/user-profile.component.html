@@ -35,8 +35,8 @@
         <button type="button" (click)="goBack()" class="text-[#FF9F43] font-medium hover:underline">Quay lại</button>
       </div>
     } @else {
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-1 space-y-6">
+      <div [class]="isLandlordProfileView ? 'max-w-xl mx-auto space-y-6' : 'grid grid-cols-1 lg:grid-cols-3 gap-8'">
+        <div [class]="isLandlordProfileView ? 'space-y-6' : 'lg:col-span-1 space-y-6'">
           <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm text-center">
             <div class="relative inline-block">
               <img
@@ -90,27 +90,31 @@
                     Thay đổi hồ sơ
                   </button>
                 </a>
-                <a routerLink="/lifestyle-quiz" [queryParams]="{ retake: '1', returnUrl: '/profile/me' }" class="block">
+                @if (!isLandlordProfileView) {
+                  <a routerLink="/lifestyle-quiz" [queryParams]="{ retake: '1', returnUrl: '/profile/me' }" class="block">
+                    <button
+                      type="button"
+                      class="w-full py-2.5 rounded-lg border border-[#FF9F43] text-[#FF9F43] font-medium hover:bg-orange-50 inline-flex items-center justify-center gap-2"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Thay đổi lối sống
+                    </button>
+                  </a>
+                }
+                @if (!isLandlordProfileView) {
                   <button
                     type="button"
-                    class="w-full py-2.5 rounded-lg border border-[#FF9F43] text-[#FF9F43] font-medium hover:bg-orange-50 inline-flex items-center justify-center gap-2"
+                    class="w-full py-2.5 rounded-lg border border-gray-300 text-gray-800 font-medium hover:bg-gray-50 inline-flex items-center justify-center gap-2"
+                    (click)="openProfilePhotos()"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    Thay đổi lối sống
+                    Đăng ảnh cá nhân
                   </button>
-                </a>
-                <button
-                  type="button"
-                  class="w-full py-2.5 rounded-lg border border-gray-300 text-gray-800 font-medium hover:bg-gray-50 inline-flex items-center justify-center gap-2"
-                  (click)="openProfilePhotos()"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Đăng ảnh cá nhân
-                </button>
+                }
               </div>
             } @else {
               <div class="mt-6 flex gap-3">
@@ -138,25 +142,27 @@
             }
           </div>
 
-          <div class="p-6 bg-orange-50/50 rounded-2xl border border-orange-100">
-            <h3 class="font-bold text-gray-900 mb-4 flex items-center">
-              <svg class="w-5 h-5 mr-2 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              Tình trạng phòng
-            </h3>
-            @if (roomHasRoom) {
-              <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 mb-2">Đã có phòng trọ</span>
-              @if (roomPriceLabel) {
-                <p class="text-sm text-gray-600">
-                  <span class="font-medium text-gray-900">Giá phòng:</span> {{ roomPriceLabel }}
-                </p>
+          @if (!isLandlordProfileView) {
+            <div class="p-6 bg-orange-50/50 rounded-2xl border border-orange-100">
+              <h3 class="font-bold text-gray-900 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Tình trạng phòng
+              </h3>
+              @if (roomHasRoom) {
+                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 mb-2">Đã có phòng trọ</span>
+                @if (roomPriceLabel) {
+                  <p class="text-sm text-gray-600">
+                    <span class="font-medium text-gray-900">Giá phòng:</span> {{ roomPriceLabel }}
+                  </p>
+                }
+              } @else {
+                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 mb-2">Chưa có phòng trọ</span>
+                <p class="text-sm text-gray-600 mt-2">Đang tìm kiếm phòng trọ và bạn cùng phòng phù hợp.</p>
               }
-            } @else {
-              <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 mb-2">Chưa có phòng trọ</span>
-              <p class="text-sm text-gray-600 mt-2">Đang tìm kiếm phòng trọ và bạn cùng phòng phù hợp.</p>
-            }
-          </div>
+            </div>
+          }
 
           <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
             <h3 class="font-bold text-gray-900 mb-4">Giới thiệu</h3>
@@ -166,58 +172,60 @@
           </div>
         </div>
 
-        <div class="lg:col-span-2 space-y-6">
-          @if (!isOwnProfile) {
-            <div class="p-6 bg-gradient-to-r from-[#FFF5F5] to-white rounded-2xl border border-[#FF6B6B]/20">
-              <div class="flex items-center justify-between gap-4 flex-wrap">
-                <div>
-                  <h2 class="text-xl font-bold text-gray-900">Độ hòa hợp lối sống</h2>
-                  <p class="text-gray-600 text-sm mt-1">Dựa trên trắc nghiệm lối sống của cả hai</p>
-                </div>
-                <app-compatibility-badge [score]="compatibilityScore" size="lg" />
-              </div>
-            </div>
-          }
-
-          <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <h3 class="font-bold text-gray-900 mb-6">Chi tiết lối sống</h3>
-            @if (!displayAnswers.length) {
-              <p class="text-sm text-gray-500">
-                @if (isOwnProfile) {
-                  Chưa có dữ liệu trắc nghiệm.
-                  <a routerLink="/lifestyle-quiz" [queryParams]="{ retake: '1', returnUrl: '/profile/me' }" class="text-[#FF9F43] font-medium hover:underline">Làm trắc nghiệm</a>
-                } @else {
-                  Người dùng chưa hoàn thành trắc nghiệm lối sống.
-                }
-              </p>
-            } @else {
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                @for (answer of displayAnswers; track answer.questionId) {
-                  <div
-                    class="rounded-xl border p-3"
-                    [class.border-green-200]="isAnswerMatch(answer)"
-                    [class.bg-green-50/40]="isAnswerMatch(answer)"
-                    [class.border-orange-100]="!isAnswerMatch(answer)"
-                    [class.bg-[#FFFBF7]]="!isAnswerMatch(answer)"
-                  >
-                    <div class="flex items-center gap-2 mb-1.5">
-                      <span
-                        class="w-2 h-2 rounded-full shrink-0"
-                        [class.bg-green-500]="isAnswerMatch(answer)"
-                        [class.bg-gray-300]="!isAnswerMatch(answer)"
-                      ></span>
-                      <p class="text-xs font-semibold text-[#FF9F43]">{{ categoryLabel(answer) }}</p>
-                      @if (isAnswerMatch(answer)) {
-                        <span class="text-[10px] font-medium text-green-700 ml-auto">Trùng khớp</span>
-                      }
-                    </div>
-                    <p class="text-sm text-gray-800 leading-snug pl-4">{{ answer.optionContent }}</p>
+        @if (!isLandlordProfileView) {
+          <div class="lg:col-span-2 space-y-6">
+            @if (!isOwnProfile) {
+              <div class="p-6 bg-gradient-to-r from-[#FFF5F5] to-white rounded-2xl border border-[#FF6B6B]/20">
+                <div class="flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <h2 class="text-xl font-bold text-gray-900">Độ hòa hợp lối sống</h2>
+                    <p class="text-gray-600 text-sm mt-1">Dựa trên trắc nghiệm lối sống của cả hai</p>
                   </div>
-                }
+                  <app-compatibility-badge [score]="compatibilityScore" size="lg" />
+                </div>
               </div>
             }
+
+            <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <h3 class="font-bold text-gray-900 mb-6">Chi tiết lối sống</h3>
+              @if (!displayAnswers.length) {
+                <p class="text-sm text-gray-500">
+                  @if (isOwnProfile) {
+                    Chưa có dữ liệu trắc nghiệm.
+                    <a routerLink="/lifestyle-quiz" [queryParams]="{ retake: '1', returnUrl: '/profile/me' }" class="text-[#FF9F43] font-medium hover:underline">Làm trắc nghiệm</a>
+                  } @else {
+                    Người dùng chưa hoàn thành trắc nghiệm lối sống.
+                  }
+                </p>
+              } @else {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  @for (answer of displayAnswers; track answer.questionId) {
+                    <div
+                      class="rounded-xl border p-3"
+                      [class.border-green-200]="isAnswerMatch(answer)"
+                      [class.bg-green-50/40]="isAnswerMatch(answer)"
+                      [class.border-orange-100]="!isAnswerMatch(answer)"
+                      [class.bg-[#FFFBF7]]="!isAnswerMatch(answer)"
+                    >
+                      <div class="flex items-center gap-2 mb-1.5">
+                        <span
+                          class="w-2 h-2 rounded-full shrink-0"
+                          [class.bg-green-500]="isAnswerMatch(answer)"
+                          [class.bg-gray-300]="!isAnswerMatch(answer)"
+                        ></span>
+                        <p class="text-xs font-semibold text-[#FF9F43]">{{ categoryLabel(answer) }}</p>
+                        @if (isAnswerMatch(answer)) {
+                          <span class="text-[10px] font-medium text-green-700 ml-auto">Trùng khớp</span>
+                        }
+                      </div>
+                      <p class="text-sm text-gray-800 leading-snug pl-4">{{ answer.optionContent }}</p>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
           </div>
-        </div>
+        }
       </div>
     }
   </main>

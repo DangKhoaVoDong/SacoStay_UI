@@ -19,6 +19,8 @@ import { UiToastService } from '../../services/ui-toast.service';
 import { shouldSyncGuestAfterRegister } from '../../utils/guest-discovery.storage';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MIN_VIDEO_BYTES = 10 * 1024;
+const ALLOWED_ID_IMAGE_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png']);
 /** FPT.AI Liveness V3 yêu cầu video 5–6 giây, ≥720p, ≥25fps. */
 const VIDEO_RECORD_SECONDS = 6;
 const VIDEO_RECORD_MS = VIDEO_RECORD_SECONDS * 1000;
@@ -252,6 +254,17 @@ export class IdentityVerificationComponent implements OnInit, OnDestroy {
 
   private submitKyc(video: File): void {
     if (!this.frontFile || !this.backFile) return;
+    if (!this.auth.token) {
+      this.toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+      void this.router.navigate(['/login'], { queryParams: { returnUrl: '/identity-verification' } });
+      return;
+    }
+    if (video.size < MIN_VIDEO_BYTES) {
+      this.cameraState = 'error';
+      this.errorMessage = 'Video quá ngắn hoặc lỗi. Vui lòng quay lại trên Chrome/Edge.';
+      this.cdr.detectChanges();
+      return;
+    }
 
     this.cameraState = 'submitting';
     this.scanProgress = 0;
@@ -356,8 +369,9 @@ export class IdentityVerificationComponent implements OnInit, OnDestroy {
     input.value = '';
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      this.toast.error('Vui lòng chọn file ảnh (JPG, PNG).');
+    const mime = (file.type.split(';')[0] || '').trim().toLowerCase();
+    if (!ALLOWED_ID_IMAGE_TYPES.has(mime)) {
+      this.toast.error('Chỉ chấp nhận ảnh JPG hoặc PNG. Ảnh HEIC/WebP từ điện thoại có thể khiến FPT.AI không đọc được CCCD.');
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {

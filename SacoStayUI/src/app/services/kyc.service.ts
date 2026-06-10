@@ -44,8 +44,10 @@ export class KycService {
 
   /** Bỏ `;codecs=...` — BE/.NET MediaTypeHeaderValue không parse được khi forward sang FPT.AI. */
   private normalizeUploadImage(file: File): File {
-    const baseType = (file.type.split(';')[0] || 'image/jpeg').trim();
-    if (!baseType.startsWith('image/')) return file;
+    const baseType = (file.type.split(';')[0] || 'image/jpeg').trim().toLowerCase();
+    if (baseType !== 'image/jpeg' && baseType !== 'image/jpg' && baseType !== 'image/png') {
+      return file;
+    }
     const ext = baseType === 'image/png' ? 'png' : 'jpg';
     const safeName = file.name.replace(/\.[^.]+$/, '') + `.${ext}`;
     if (file.type === baseType) return file;

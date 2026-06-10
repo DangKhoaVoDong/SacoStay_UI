@@ -149,12 +149,19 @@ export class RoomDetailComponent implements OnInit {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   }
 
+  get backLabel(): string {
+    if (!this.isLandlord) return 'Quay lại danh sách phòng';
+    const from = this.route.snapshot.queryParamMap.get('from');
+    return from === 'rooms' ? 'Quay lại danh sách phòng' : 'Quay lại tin đã đăng';
+  }
+
   goBack(): void {
-    if (this.isLandlord) {
-      this.router.navigate(['/my-listings']);
-    } else {
-      this.router.navigate(['/rooms']);
+    if (!this.isLandlord) {
+      void this.router.navigate(['/rooms']);
+      return;
     }
+    const from = this.route.snapshot.queryParamMap.get('from');
+    void this.router.navigate([from === 'rooms' ? '/rooms' : '/my-listings']);
   }
 
   openReport(): void {

@@ -16,6 +16,13 @@ import {
 })
 export class RoomCardComponent {
   @Input({ required: true }) room!: RoomPostSummary;
+  /** Nguồn điều hướng — dùng cho nút quay lại ở chi tiết phòng. */
+  @Input() fromPage: 'rooms' | 'my-listings' | null = 'rooms';
+
+  get detailQueryParams(): Record<string, string> | null {
+    if (!this.fromPage) return null;
+    return { from: this.fromPage };
+  }
 
   get articleClass(): string {
     return getVipTierCardArticleClass(this.room.vipTier);
