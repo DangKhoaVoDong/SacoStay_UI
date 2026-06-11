@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { FooterComponent } from '../../components/layout/footer.component';
@@ -28,11 +28,13 @@ type FeatureRow = {
 })
 export class TenantPricingComponent implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly lifestyle = inject(LifestyleService);
   private readonly payment = inject(PaymentService);
   private readonly destroyRef = inject(DestroyRef);
 
+  isLoggedIn = false;
   isPremium = false;
   loadingPremium = true;
   paying = false;
@@ -56,9 +58,13 @@ export class TenantPricingComponent implements OnInit {
 
   ngOnInit(): void {
     clearLegacyTenantPremiumKey();
+    this.isLoggedIn = this.auth.isLoggedIn;
     this.auth.currentUser$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.loadPremiumStatus());
+      .subscribe(() => {
+        this.isLoggedIn = this.auth.isLoggedIn;
+        this.loadPremiumStatus();
+      });
 
     if (this.auth.isLoggedIn) {
       this.auth
@@ -101,6 +107,11 @@ export class TenantPricingComponent implements OnInit {
   }
 
   handleUpgrade(): void {
+    if (!this.auth.isLoggedIn) {
+      void this.router.navigate(['/login'], { queryParams: { returnUrl: '/tenant-pricing' } });
+      return;
+    }
+
     this.payError = '';
     this.paying = true;
     this.payment

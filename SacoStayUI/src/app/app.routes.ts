@@ -131,8 +131,7 @@ export const routes: Routes = [
   {
     path: 'tenant-pricing',
     loadComponent: () =>
-      import('./pages/tenant-pricing/tenant-pricing.component').then((m) => m.TenantPricingComponent),
-    canActivate: [authGuard]
+      import('./pages/tenant-pricing/tenant-pricing.component').then((m) => m.TenantPricingComponent)
   },
   {
     path: 'payment/result',
