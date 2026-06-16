@@ -19,8 +19,36 @@
 
 /* Base styles */
 @layer base {
+  html {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     font-family: var(--auth-font);
+    overflow-x: hidden;
+    min-height: 100dvh;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+  }
+}
+
+@layer utilities {
+  .safe-px {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .touch-scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-drawer-panel {
+    @apply fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto rounded-t-2xl bg-white shadow-2xl border-t border-gray-100;
   }
 }
 

@@ -3,7 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { filter } from 'rxjs/operators';
+import { filter, switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import {
   AuthService,
   getApiErrorMessage,
@@ -18,7 +19,8 @@ import {
   sanitizeReturnUrl
 } from '../../utils/auth-navigation';
 import { clearGuestDiscoverySession, markGuestRegisterSync } from '../../utils/guest-discovery.storage';
-import { clearTempRegisterProfile, isAdminUser, isLandlordUser } from '../../utils/user-display';
+import { clearTempRegisterProfile, isAdminUser, isLandlordUser, userIdFromUser } from '../../utils/user-display';
+import { LifestyleService } from '../../services/lifestyle.service';
 import { AuthLegalNoticeComponent } from '../../components/legal/auth-legal-notice.component';
 import { SACOSTAY_LOGO_CLASS, SACOSTAY_LOGO_URL } from '../../utils/brand-assets';
 
@@ -54,6 +56,7 @@ export class AuthComponent implements OnInit {
 
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(UiToastService);
+  private readonly lifestyle = inject(LifestyleService);
 
   constructor(
     private fb: FormBuilder,
@@ -171,7 +174,12 @@ export class AuthComponent implements OnInit {
         this.loginLoading = false;
         clearGuestDiscoverySession();
         clearTempRegisterProfile();
-        this.authService.refreshProfile().subscribe({
+        this.authService.refreshProfile().pipe(
+          switchMap(() => {
+            const uid = userIdFromUser(this.authService.getCurrentUser());
+            return uid ? this.lifestyle.ensureQuizCompletedFlag(uid) : of(false);
+          })
+        ).subscribe({
           next: () => {
             this.toast.success('Đăng nhập thành công');
             this.navigateAfterAuth();

@@ -37,10 +37,11 @@
       [class.top-full]="panelPlacement === 'below'"
       [class.mt-2]="panelPlacement === 'below'"
       [class.w-[min(360px,calc(100vw-2rem))]]="panelPlacement === 'below'"
-      [class.left-full]="panelPlacement === 'beside-right'"
-      [class.top-0]="panelPlacement === 'beside-right'"
-      [class.ml-2]="panelPlacement === 'beside-right'"
-      [class.w-80]="panelPlacement === 'beside-right'"
+      [class.left-auto]="panelPlacement === 'beside-right'"
+      [class.right-0]="panelPlacement === 'beside-right'"
+      [class.top-full]="panelPlacement === 'beside-right'"
+      [class.mt-2]="panelPlacement === 'beside-right'"
+      [class.w-[min(360px,calc(100vw-2rem))]]="panelPlacement === 'beside-right'"
     >
       <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
         <h3 class="font-bold text-gray-900 text-sm">Thông báo</h3>

@@ -5,7 +5,6 @@
   justify-content: center;
   align-items: center;
   padding: 20px;
-  padding-top: 5rem;
   position: relative;
   overflow: hidden;
 }
@@ -160,9 +159,42 @@
   color: #ff9f43;
 }
 
-/* Responsive */
+/* Responsive — mobile only */
 @media (max-width: 640px) {
   .auth-page {
-    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 1rem 1rem 1.5rem;
+    padding-top: max(1rem, env(safe-area-inset-top));
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .auth-home-logo {
+    position: static;
+    transform: none;
+    align-self: center;
+    margin-bottom: 0.75rem;
+    z-index: 1;
+  }
+
+  .auth-home-logo:hover {
+    transform: translateY(-2px);
+  }
+
+  .auth-home-logo__img {
+    height: 2.75rem;
+  }
+
+  .auth-container {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 641px) {
+  .auth-page {
+    padding-top: 5rem;
   }
 }

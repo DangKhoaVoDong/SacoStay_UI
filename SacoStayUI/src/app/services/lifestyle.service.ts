@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { resolveMediaUrl } from '../utils/media-url';
+import { hasCompletedLifestyleQuiz, setLifestyleQuizCompleted } from '../utils/lifestyle-storage';
 import type {
   CreateQuestionPayload,
   LifestyleQuestion,
@@ -177,6 +178,23 @@ export class LifestyleService {
     return this.http.get<unknown>(`${this.apiUrl}/Lifestyle/my-answers`).pipe(
       map((raw) => this.normalizeAnswers(raw)),
       catchError(() => of([]))
+    );
+  }
+
+  /**
+   * Cờ local có thể mất sau đăng xuất/reload — đồng bộ từ GET my-answers trước khi chặn discovery.
+   */
+  ensureQuizCompletedFlag(userId: string): Observable<boolean> {
+    if (!userId) return of(false);
+    if (hasCompletedLifestyleQuiz(userId)) return of(true);
+    return this.getMyAnswers().pipe(
+      map((answers) => {
+        if (answers.length > 0) {
+          setLifestyleQuizCompleted(userId);
+          return true;
+        }
+        return false;
+      })
     );
   }
 

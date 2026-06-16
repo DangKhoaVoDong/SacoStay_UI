@@ -13,6 +13,23 @@
   min-height: clamp(220px, 38vw, 480px);
 }
 
+@media (max-width: 639px) {
+  .home-hero {
+    aspect-ratio: 16 / 11;
+    min-height: clamp(168px, 46vw, 260px);
+    background-size: cover;
+    background-position: 22% center;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .home-hero {
+    aspect-ratio: 20 / 9;
+    min-height: clamp(200px, 34vw, 360px);
+    background-position: 18% center;
+  }
+}
+
 .home-hero-btn {
   display: inline-flex;
   align-items: center;

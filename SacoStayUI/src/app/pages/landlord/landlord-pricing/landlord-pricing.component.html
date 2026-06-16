@@ -1,8 +1,8 @@
 <app-landlord-layout>
   <div class="max-w-6xl mx-auto">
     <div class="mb-8 text-center">
-      <h1 class="text-3xl font-bold text-[#1A1A2E] mb-2">Bảng giá đăng tin</h1>
-      <p class="text-[#6B7280]">Thanh toán mở tab mới — sau khi xong bấm «Quay lại» trên trang kết quả</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-[#1A1A2E] mb-2">Bảng giá đăng tin</h1>
+      <p class="text-sm sm:text-base text-[#6B7280]">Thanh toán mở tab mới — sau khi xong bấm «Quay lại» trên trang kết quả</p>
       @if (loadingPosts) {
         <p class="text-sm text-orange-600 mt-2">Đang tìm tin đăng…</p>
       } @else if (!roomPostId) {
@@ -14,8 +14,9 @@
       <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{{ errorMessage }}</div>
     }
 
-    <div class="overflow-x-auto shadow-xl border-0 rounded-2xl bg-white">
-      <table class="w-full min-w-[900px] border-collapse">
+    <p class="md:hidden text-xs text-gray-500 text-center mb-3">Vuốt ngang bảng để xem đủ các gói</p>
+    <div class="overflow-x-auto touch-scroll-x shadow-xl border-0 rounded-2xl bg-white">
+      <table class="w-full min-w-[720px] sm:min-w-[900px] border-collapse text-xs sm:text-sm">
         <thead>
           <tr>
             <th class="p-4 border border-gray-200 bg-white w-44"></th>

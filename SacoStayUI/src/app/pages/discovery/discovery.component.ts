@@ -22,15 +22,13 @@ import {
   recordGuestSwipe,
   removeGuestWishlistItem
 } from '../../utils/guest-discovery.storage';
-import { hasCompletedLifestyleQuiz } from '../../utils/lifestyle-storage';
-import type { WishlistItem as ApiWishlistItem, SwipeQuota } from '../../models/lifestyle.models';
 import {
   DEFAULT_DISCOVERY_FILTERS,
   FREE_WEEKLY_SWIPE_LIMIT,
   matchesDiscoveryFilters,
   type DiscoveryFilters
 } from '../../utils/discovery-filters';
-import type { UserLifestyleAnswer } from '../../models/lifestyle.models';
+import type { UserLifestyleAnswer, WishlistItem as ApiWishlistItem, SwipeQuota } from '../../models/lifestyle.models';
 
 /** Sidebar wishlist — đồng bộ từ GET /api/Lifestyle/my-likes */
 export type DiscoveryWishlistItem = ApiWishlistItem;
@@ -65,6 +63,8 @@ export class DiscoveryComponent implements OnInit {
   };
   showUpgradePrompt = false;
   showFilterPanel = false;
+  showMobileWishlist = false;
+  showMobileProfile = false;
   activeFilters: DiscoveryFilters = { ...DEFAULT_DISCOVERY_FILTERS };
   draftFilters: DiscoveryFilters = { ...DEFAULT_DISCOVERY_FILTERS };
 
@@ -155,14 +155,28 @@ export class DiscoveryComponent implements OnInit {
     this.currentIndex = 0;
     this.swipeAnim = null;
     this.dragX = 0;
-    if (!hasCompletedLifestyleQuiz(userId)) {
-      this.needsQuiz = true;
-      this.loading = false;
-      this.cdr.detectChanges();
-      return;
-    }
-    this.needsQuiz = false;
-    this.loadDeck(true);
+    this.loading = true;
+
+    this.lifestyle
+      .ensureQuizCompletedFlag(userId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (completed) => {
+          if (completed) {
+            this.needsQuiz = false;
+            this.loadDeck(true);
+            return;
+          }
+          this.needsQuiz = true;
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.needsQuiz = true;
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   get currentCard(): DiscoveryCard | null {
@@ -281,10 +295,34 @@ export class DiscoveryComponent implements OnInit {
   }
 
   toggleFilterPanel(): void {
+    this.closeMobilePanels();
     this.showFilterPanel = !this.showFilterPanel;
     if (this.showFilterPanel) {
       this.draftFilters = { ...this.activeFilters };
     }
+  }
+
+  closeMobilePanels(): void {
+    this.showMobileWishlist = false;
+    this.showMobileProfile = false;
+    this.cdr.detectChanges();
+  }
+
+  toggleMobileWishlist(): void {
+    this.showMobileWishlist = !this.showMobileWishlist;
+    if (this.showMobileWishlist) {
+      this.showMobileProfile = false;
+    }
+    this.cdr.detectChanges();
+  }
+
+  toggleMobileProfile(): void {
+    if (!this.currentCard) return;
+    this.showMobileProfile = !this.showMobileProfile;
+    if (this.showMobileProfile) {
+      this.showMobileWishlist = false;
+    }
+    this.cdr.detectChanges();
   }
 
   onApplyFilters(filters: DiscoveryFilters): void {

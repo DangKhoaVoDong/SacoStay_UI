@@ -47,6 +47,29 @@ export class LifestyleQuizComponent implements OnInit {
     this.retakeMode = this.route.snapshot.queryParamMap.get('retake') === '1';
     this.guestMode =
       this.route.snapshot.queryParamMap.get('guest') === '1' || !this.auth.isLoggedIn;
+
+    if (!this.guestMode && !this.retakeMode && this.auth.isLoggedIn) {
+      const uid = userIdFromUser(this.auth.getCurrentUser());
+      if (uid) {
+        this.lifestyle
+          .ensureQuizCompletedFlag(uid)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((completed) => {
+            if (completed) {
+              const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+              void this.router.navigateByUrl(resolvePostLoginUrl(returnUrl, '/discovery'));
+              return;
+            }
+            this.loadQuestions();
+          });
+        return;
+      }
+    }
+
+    this.loadQuestions();
+  }
+
+  private loadQuestions(): void {
     this.lifestyle
       .getQuestions()
       .pipe(takeUntilDestroyed(this.destroyRef))

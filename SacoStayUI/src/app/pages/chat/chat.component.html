@@ -7,7 +7,7 @@
 } @else {
   <div class="min-h-screen flex flex-col bg-gray-50">
     <app-navbar></app-navbar>
-    <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+    <main class="flex-1 max-w-7xl mx-auto w-full px-2 sm:px-6 lg:px-8 py-3 sm:py-6">
       <ng-container *ngTemplateOutlet="chatMain"></ng-container>
     </main>
     <app-footer></app-footer>
@@ -16,13 +16,21 @@
 
 <ng-template #chatMain>
   <div
-    class="bg-white rounded-3xl shadow-xl border border-orange-50 overflow-hidden flex"
-    [class.h-[calc(100vh-10rem)]]="hostShell === 'tenant'"
-    [class.min-h-[32rem]]="hostShell === 'tenant'"
-    [class.h-[calc(100vh-8rem)]]="hostShell === 'landlord'"
-    [class.min-h-[28rem]]="hostShell === 'landlord'"
+    class="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-orange-50 overflow-hidden flex relative"
+    [class.h-[calc(100dvh-5.5rem)]]="hostShell === 'tenant'"
+    [class.min-h-[24rem]]="hostShell === 'tenant'"
+    [class.h-[calc(100dvh-4rem)]]="hostShell === 'landlord'"
+    [class.min-h-[20rem]]="hostShell === 'landlord'"
+    [class.sm:h-[calc(100vh-10rem)]]="hostShell === 'tenant'"
+    [class.sm:min-h-[32rem]]="hostShell === 'tenant'"
+    [class.sm:h-[calc(100vh-8rem)]]="hostShell === 'landlord'"
+    [class.sm:min-h-[28rem]]="hostShell === 'landlord'"
   >
-    <aside class="w-80 border-r border-gray-100 flex flex-col bg-white shrink-0">
+    <aside
+      class="w-full md:w-80 border-r border-gray-100 flex flex-col bg-white shrink-0 absolute inset-0 md:relative z-10 md:z-auto"
+      [class.hidden]="mobileThreadOpen"
+      [class.md:flex]="true"
+    >
       <div class="p-4 border-b border-gray-100">
         <h2 class="font-bold text-gray-900">Tin nhắn</h2>
       </div>
@@ -75,11 +83,25 @@
       </div>
     </aside>
 
-    <section class="flex-1 flex flex-col bg-white min-w-0">
+    <section
+      class="flex-1 flex flex-col bg-white min-w-0 absolute inset-0 md:relative z-20 md:z-auto"
+      [class.hidden]="!mobileThreadOpen"
+      [class.md:flex]="true"
+    >
       <ng-container *ngIf="activeOtherUserId; else noChatSelected">
         <ng-container *ngIf="activeOtherUser as peer">
-        <header class="p-4 border-b border-gray-100 flex justify-between items-center">
-          <div class="flex items-center min-w-0">
+        <header class="p-3 sm:p-4 border-b border-gray-100 flex justify-between items-center gap-2">
+          <div class="flex items-center min-w-0 flex-1">
+            <button
+              type="button"
+              class="md:hidden mr-2 shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-lg text-gray-600 hover:bg-gray-100"
+              (click)="backToConversationList()"
+              aria-label="Quay lại danh sách"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
             <img
               [src]="avatarUrl(peer)"
               [alt]="peer.displayName"
@@ -108,7 +130,7 @@
           </div>
         </header>
 
-        <div id="chat-messages-scroll" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+        <div id="chat-messages-scroll" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 bg-gray-50/50">
           <div *ngIf="messagesLoading" class="text-center text-sm text-gray-500 py-8">Đang tải tin nhắn…</div>
           <div *ngIf="messagesError" class="text-center text-sm text-red-600 py-4">{{ messagesError }}</div>
           <div *ngIf="!messagesLoading && !messagesError && messages.length === 0" class="text-center text-sm text-gray-500 py-8">
@@ -122,7 +144,7 @@
             [class.justify-start]="!msg.isMine"
           >
             <div
-              class="rounded-2xl py-2 px-4 max-w-[70%] shadow-sm"
+              class="rounded-2xl py-2 px-4 max-w-[85%] sm:max-w-[70%] shadow-sm"
               [class.bg-saco-orange]="msg.isMine"
               [class.text-white]="msg.isMine"
               [class.rounded-tr-none]="msg.isMine"
@@ -144,13 +166,13 @@
           </div>
         </div>
 
-        <footer class="p-4 border-t border-gray-100 bg-white">
+        <footer class="p-3 sm:p-4 border-t border-gray-100 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <p *ngIf="hubConnecting" class="text-xs text-gray-500 mb-2">Đang kết nối máy chủ chat…</p>
           <p *ngIf="sendError" class="text-sm text-red-600 mb-2">{{ sendError }}</p>
           <form (ngSubmit)="handleSend($event)" class="flex gap-2">
             <input
               type="text"
-              class="input-saco flex-1"
+              class="input-saco flex-1 min-w-0"
               [placeholder]="hubReady ? 'Nhập tin nhắn...' : 'Đang kết nối chat...'"
               [(ngModel)]="messageText"
               name="messageText"
@@ -158,7 +180,7 @@
             />
             <button
               type="submit"
-              class="btn-primary-saco px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="btn-primary-saco px-3 sm:px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
               [disabled]="!messageText.trim() || sendLoading || hubConnecting"
             >
               <svg *ngIf="!sendLoading" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,7 +194,7 @@
       </ng-container>
 
       <ng-template #noChatSelected>
-        <div class="flex-1 flex items-center justify-center text-gray-500 text-sm p-8 text-center">
+        <div class="flex-1 hidden md:flex items-center justify-center text-gray-500 text-sm p-8 text-center">
           {{ emptySelectHint }}
         </div>
       </ng-template>

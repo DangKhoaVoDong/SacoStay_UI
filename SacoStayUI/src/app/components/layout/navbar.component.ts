@@ -22,6 +22,7 @@ interface NavLink {
     href: string;
     roles: string[];
     icon: string;
+    iconSrc?: string;
 }
 
 @Component({
@@ -46,11 +47,11 @@ export class NavbarComponent implements OnInit {
     readonly chatUnread = this.chatUnreadSvc.totalUnread;
 
     navLinks: NavLink[] = [
-        { name: 'Tìm bạn', href: '/discovery', icon: 'search', roles: ['tenant'] },
-        { name: 'Phòng trọ', href: '/rooms', icon: 'home', roles: ['tenant', 'landlord'] },
-        { name: 'Bản đồ', href: '/map', icon: 'map', roles: ['tenant', 'landlord'] },
-        { name: 'Tin nhắn', href: '/chat', icon: 'message', roles: ['tenant'] },
-        { name: 'Bảng giá', href: '/tenant-pricing', icon: 'shield', roles: ['tenant'] },
+        { name: 'Tìm bạn', href: '/discovery', icon: 'discovery', iconSrc: '/image/Icon/Discovery.png', roles: ['tenant'] },
+        { name: 'Phòng trọ', href: '/rooms', icon: 'rooms', iconSrc: '/image/Icon/Rooms.png', roles: ['tenant', 'landlord'] },
+        { name: 'Bản đồ', href: '/map', icon: 'map', iconSrc: '/image/Icon/maps.png', roles: ['tenant', 'landlord'] },
+        { name: 'Tin nhắn', href: '/chat', icon: 'message', iconSrc: '/image/Icon/Chat.png', roles: ['tenant'] },
+        { name: 'Bảng giá', href: '/tenant-pricing', icon: 'pricing', iconSrc: '/image/Icon/Tenant-pricing.png', roles: ['tenant'] },
         { name: 'Quản trị', href: '/admin', icon: 'shield', roles: ['admin'] },
     ];
 

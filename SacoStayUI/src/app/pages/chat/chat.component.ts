@@ -54,6 +54,8 @@ export class ChatComponent implements OnInit {
   sendError = '';
   hubReady = false;
   hubConnecting = false;
+  /** Mobile: hiển thị khung chat thay vì danh sách hội thoại. */
+  mobileThreadOpen = false;
 
   currentUserId = '';
   hostShell: ChatHostShell = 'tenant';
@@ -382,6 +384,7 @@ export class ChatComponent implements OnInit {
   selectConversation(otherUserId: string): void {
     if (!otherUserId || !this.currentUserId) return;
     this.activeOtherUserId = otherUserId.trim();
+    this.mobileThreadOpen = true;
     this.chatUnread.setActivePeer(this.activeOtherUserId);
     this.messages = [];
     this.messagesError = '';
@@ -405,6 +408,11 @@ export class ChatComponent implements OnInit {
       });
 
     this.loadMessages();
+  }
+
+  backToConversationList(): void {
+    this.mobileThreadOpen = false;
+    this.cdr.detectChanges();
   }
 
   loadMessages(): void {

@@ -50,7 +50,7 @@
       </button>
     </div>
   } @else {
-    <main class="flex-1 flex w-full max-w-[1600px] mx-auto h-[calc(100vh-64px)] overflow-hidden">
+    <main class="flex-1 flex w-full max-w-[1600px] mx-auto h-[calc(100dvh-3.5rem)] sm:h-[calc(100vh-64px)] overflow-hidden pb-16 lg:pb-0">
       <!-- Left: wishlist -->
       <aside class="hidden lg:flex w-72 flex-col bg-white border-r border-orange-100 shrink-0">
         <div class="p-4 border-b border-orange-100">
@@ -96,19 +96,29 @@
       </aside>
 
       <!-- Center: swipe -->
-      <section class="flex-1 relative flex flex-col items-center min-h-0 p-4 pt-2 overflow-hidden min-w-0">
+      <section class="flex-1 relative flex flex-col items-center min-h-0 px-2 pt-1.5 pb-0.5 sm:p-4 sm:pt-2 sm:pb-0 overflow-hidden min-w-0 gap-2 lg:gap-0">
         @if (!isPremium) {
-          <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-2 bg-white border-2 border-orange-200 rounded-xl shadow-lg text-sm flex items-center gap-2">
+          <div class="lg:hidden w-full max-w-[400px] shrink-0 z-10">
+            <div class="px-3 py-1.5 bg-white border-2 border-orange-200 rounded-xl shadow-md text-xs flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
+              <span class="text-[#FF9F43]">⚡</span>
+              <span class="font-bold text-gray-900">Còn {{ remainingSwipesLabel }} lượt</span>
+              <span class="text-gray-500 text-[11px]">• Reset sau {{ daysUntilReset }} ngày</span>
+              @if (isGuest) {
+                <span class="text-gray-400 text-[11px]">• Dùng thử</span>
+              }
+            </div>
+          </div>
+          <div class="hidden lg:flex absolute top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-2 bg-white border-2 border-orange-200 rounded-xl shadow-lg text-sm items-center gap-2">
             <span class="text-[#FF9F43]">⚡</span>
             <span class="font-bold text-gray-900">Còn {{ remainingSwipesLabel }} lượt</span>
             <span class="text-gray-500 text-xs">• Reset sau {{ daysUntilReset }} ngày</span>
             @if (isGuest) {
-              <span class="text-gray-400 text-xs hidden sm:inline">• Dùng thử</span>
+              <span class="text-gray-400 text-xs">• Dùng thử</span>
             }
           </div>
         }
 
-        <div class="absolute top-4 right-4 z-20">
+        <div class="absolute top-4 right-4 z-20 hidden lg:block">
           <button
             type="button"
             class="px-3 py-2 rounded-xl bg-white border border-gray-200 text-sm text-gray-600 shadow-sm hover:border-[#FF9F43] hover:text-[#FF9F43]"
@@ -132,9 +142,12 @@
           </div>
         }
 
-        <div class="flex-1 flex flex-col items-center justify-center min-h-0 w-full max-w-[400px] mx-auto">
+        <div class="flex-1 flex flex-col items-center justify-end min-h-0 w-full max-w-[min(400px,92vw)] sm:max-w-[400px] mx-auto gap-2 pb-0.5 lg:justify-center lg:gap-0 lg:pb-0">
           <div
-            class="relative w-full flex-1 min-h-[520px] max-h-[min(840px,calc(100vh-11.5rem))] touch-none select-none"
+            class="relative shrink-0 mx-auto touch-none select-none
+              h-[calc((100dvh-15.5rem)*1.045)] w-[min(92vw,calc((100dvh-15.5rem)*1.045*0.75))]
+              max-h-[543px] max-w-[376px]
+              lg:flex-1 lg:min-h-[520px] lg:max-h-[min(840px,calc(100dvh-12rem))] lg:h-auto lg:w-full lg:max-w-none"
           >
           @if (hasMoreCards && currentCard) {
             <article
@@ -205,7 +218,7 @@
               </div>
             </article>
           } @else {
-            <div class="flex flex-col items-center justify-center h-full min-h-[520px] text-center px-4">
+            <div class="flex flex-col items-center justify-center h-full min-h-[380px] sm:min-h-[520px] text-center px-4">
               <div class="w-20 h-20 bg-white rounded-full shadow-md flex items-center justify-center mb-4">
                 <svg class="w-10 h-10 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -226,31 +239,31 @@
             </div>
           }
           </div>
-        </div>
 
         @if (hasMoreCards && currentCard) {
-          <div class="flex items-center justify-center gap-8 mt-3 shrink-0">
-            <button type="button" class="flex flex-col items-center gap-1" (click)="handlePassButton()">
-              <span class="w-14 h-14 rounded-full bg-white shadow-lg border border-[#ffbd59]/30 flex items-center justify-center text-[#ffbd59] hover:scale-110 transition-transform">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center justify-center gap-6 sm:gap-8 shrink-0 w-full lg:mt-3">
+            <button type="button" class="flex flex-col items-center gap-0.5 sm:gap-1" (click)="handlePassButton()">
+              <span class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow-lg border border-[#ffbd59]/30 flex items-center justify-center text-[#ffbd59] hover:scale-110 transition-transform">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </span>
               <span class="text-xs text-gray-500">Bỏ qua</span>
             </button>
-            <button type="button" class="flex flex-col items-center gap-1" (click)="handleLikeButton()">
-              <span class="w-16 h-16 rounded-full bg-white shadow-xl border border-green-100 flex items-center justify-center text-[#2ECC71] hover:scale-110 transition-transform">
-                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+            <button type="button" class="flex flex-col items-center gap-0.5 sm:gap-1" (click)="handleLikeButton()">
+              <span class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white shadow-xl border border-green-100 flex items-center justify-center text-[#2ECC71] hover:scale-110 transition-transform">
+                <svg class="w-7 h-7 sm:w-8 sm:h-8" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                 </svg>
               </span>
               <span class="text-xs font-bold text-gray-500">Gửi lượt thích</span>
             </button>
           </div>
-          <p class="text-xs text-gray-400 mt-3 hidden sm:block">
+          <p class="text-xs text-gray-400 mt-2 sm:mt-3 hidden sm:block">
             Chạm thẻ để đổi ảnh • vuốt phải thích • vuốt trái bỏ qua
           </p>
         }
+        </div>
       </section>
 
       <!-- Right: profile detail -->
@@ -367,6 +380,99 @@
             }
           </div>
         </aside>
+      }
+
+      <nav class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-orange-100 safe-px flex items-center justify-around gap-1 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <button
+          type="button"
+          class="flex-1 py-2 px-2 text-xs font-semibold text-gray-700 rounded-lg hover:bg-orange-50"
+          (click)="toggleMobileWishlist()"
+        >
+          ❤ Yêu thích ({{ wishlistCount }})
+        </button>
+        <button
+          type="button"
+          class="flex-1 py-2 px-2 text-xs font-semibold text-gray-700 rounded-lg hover:bg-orange-50"
+          (click)="toggleFilterPanel()"
+        >
+          ⚙ Bộ lọc
+        </button>
+        <button
+          type="button"
+          class="flex-1 py-2 px-2 text-xs font-semibold rounded-lg"
+          [class.text-gray-700]="currentCard"
+          [class.hover:bg-orange-50]="currentCard"
+          [class.text-gray-300]="!currentCard"
+          [disabled]="!currentCard"
+          (click)="toggleMobileProfile()"
+        >
+          👤 Hồ sơ
+        </button>
+      </nav>
+
+      @if (showMobileWishlist) {
+        <div class="lg:hidden fixed inset-0 z-40">
+          <div class="absolute inset-0 bg-black/40" (click)="closeMobilePanels()"></div>
+          <div class="mobile-drawer-panel safe-px p-4">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-gray-900">Danh sách yêu thích</h3>
+              <button type="button" class="text-gray-400" (click)="closeMobilePanels()">✕</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              @if (likedUsers.length) {
+                @for (u of likedUsers; track u.userId) {
+                  <button
+                    type="button"
+                    class="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 text-left"
+                    (click)="focusWishlistCard(u.userId); closeMobilePanels()"
+                  >
+                    <img [src]="u.avatarUrl" [alt]="u.displayName" class="w-full h-full object-cover" />
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                      <span class="text-white text-xs font-bold truncate block">{{ u.displayName }}</span>
+                    </div>
+                  </button>
+                }
+              } @else {
+                <p class="col-span-2 text-center text-sm text-gray-500 py-8">Hãy thả tim để thêm vào danh sách!</p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (showMobileProfile && currentCard) {
+        <div class="lg:hidden fixed inset-0 z-40">
+          <div class="absolute inset-0 bg-black/40" (click)="closeMobilePanels()"></div>
+          <div class="mobile-drawer-panel safe-px p-4">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-gray-900">Chi tiết hồ sơ</h3>
+              <button type="button" class="text-gray-400" (click)="closeMobilePanels()">✕</button>
+            </div>
+            <div class="space-y-4">
+              <div class="text-center">
+                <img [src]="sidebarAvatarUrl" class="w-20 h-20 rounded-full object-cover mx-auto border-4 border-white shadow-md" [alt]="currentCard.displayName" />
+                <p class="font-bold text-lg mt-3">{{ currentCard.displayName }}@if (currentCard.age !== null) {, {{ currentCard.age }}}</p>
+                <p class="text-sm text-gray-500">{{ currentCard.jobLabel }}</p>
+                <p
+                  class="inline-flex mt-2 items-center gap-1 text-sm font-bold px-3 py-1 rounded-full"
+                  [style.background]="scoreColor(currentCard.matchingScore) + '22'"
+                  [style.color]="scoreColor(currentCard.matchingScore)"
+                >
+                  {{ currentCard.matchingScore }}% phù hợp
+                </p>
+              </div>
+              @if (isPremium || isGuest) {
+                <a
+                  [routerLink]="['/profile', currentCard.userId]"
+                  class="block w-full py-3 text-center rounded-xl border border-gray-200 text-gray-800 font-medium"
+                  (click)="closeMobilePanels()"
+                >
+                  Xem hồ sơ đầy đủ
+                </a>
+              }
+            </div>
+          </div>
+        </div>
       }
     </main>
   }

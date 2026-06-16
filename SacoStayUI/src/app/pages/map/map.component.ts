@@ -46,6 +46,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   loadError = '';
   searchQuery = '';
   showFilters = false;
+  showMobileList = false;
 
   filters: MapFilters = {
     city: 'all',
