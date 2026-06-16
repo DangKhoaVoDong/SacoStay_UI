@@ -4,29 +4,54 @@
 }
 
 .home-hero {
-  background-image: url('/image/Background_Image_2.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   width: 100%;
-  aspect-ratio: 21 / 9;
-  min-height: clamp(220px, 38vw, 480px);
+  background-color: #fff8f0;
+  overflow: hidden;
+  line-height: 0;
 }
 
-@media (max-width: 639px) {
+.home-hero__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1942 / 809;
+  object-fit: contain;
+  object-position: top center;
+}
+
+/* Mobile dọc: khung cao hơn, scale full banner vừa chiều ngang */
+@media (max-width: 639px) and (orientation: portrait) {
   .home-hero {
-    aspect-ratio: 16 / 11;
-    min-height: clamp(168px, 46vw, 260px);
-    background-size: cover;
-    background-position: 22% center;
+    height: clamp(10.5rem, 42vw, 14rem);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .home-hero__image {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    object-fit: contain;
+    object-position: top center;
   }
 }
 
-@media (min-width: 640px) and (max-width: 1023px) {
-  .home-hero {
-    aspect-ratio: 20 / 9;
-    min-height: clamp(200px, 34vw, 360px);
-    background-position: 18% center;
+@media (max-width: 639px) and (orientation: landscape) {
+  .home-hero__image {
+    height: auto;
+    aspect-ratio: 1942 / 809;
+  }
+}
+
+/* Tablet & desktop: giữ đúng tỉ lệ ảnh gốc — tránh crop viền trên/dưới trên màn rộng */
+@media (min-width: 640px) {
+  .home-hero__image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1942 / 809;
+    object-fit: contain;
+    object-position: top center;
   }
 }
 
