@@ -4,6 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../../services/auth.service';
 import { isAdminUser } from '../../utils/user-display';
+import { landlordPostListingQueryParams } from '../../utils/auth-navigation';
+import { FAQ_ITEMS } from '../../data/faq.data';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { FooterComponent } from '../../components/layout/footer.component';
 @Component({
@@ -15,6 +17,17 @@ import { FooterComponent } from '../../components/layout/footer.component';
 })
 export class HomeComponent implements OnInit {
   isLoggedIn = false;
+  readonly landlordCtaQueryParams = landlordPostListingQueryParams();
+  readonly faqItems = FAQ_ITEMS;
+  expandedFaqId: string | null = null;
+
+  get landlordCtaLink(): string {
+    return this.isLoggedIn ? '/landlord-profile' : '/login';
+  }
+
+  toggleFaq(id: string): void {
+    this.expandedFaqId = this.expandedFaqId === id ? null : id;
+  }
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly authService = inject(AuthService);

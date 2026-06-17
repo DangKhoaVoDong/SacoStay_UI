@@ -10,6 +10,14 @@ import {
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  dateOfBirthErrorMessage,
+  maxDateOfBirthInput,
+  minDateOfBirthInput,
+  minimumAgeValidator,
+  PERSON_NAME_INVALID_MESSAGE,
+  personNameValidator
+} from '../../utils/profile-validators';
 import { AuthService, getApiErrorMessage } from '../../services/auth.service';
 import { KycService } from '../../services/kyc.service';
 import { UiToastService } from '../../services/ui-toast.service';
@@ -42,6 +50,10 @@ export class ProfileSetupComponent implements OnInit {
   profileLoading = true;
   avatarUploading = false;
   avatarDeleting = false;
+  readonly maxDateOfBirth = maxDateOfBirthInput();
+  readonly minDateOfBirth = minDateOfBirthInput();
+  readonly personNameInvalidMessage = PERSON_NAME_INVALID_MESSAGE;
+  readonly dateOfBirthErrorMessage = dateOfBirthErrorMessage;
   private avatarObjectUrl: string | null = null;
 
   constructor(
@@ -91,9 +103,9 @@ export class ProfileSetupComponent implements OnInit {
     const livingSeed = profileLivingAreaSeed(this.existingUser);
 
     this.profileForm = this.fb.group({
-      firstName: [fnSeed, Validators.required],
-      lastName: [lnSeed, Validators.required],
-      dateOfBirth: [dobSeed, Validators.required],
+      firstName: [fnSeed, [Validators.required, personNameValidator()]],
+      lastName: [lnSeed, [Validators.required, personNameValidator()]],
+      dateOfBirth: [dobSeed, [Validators.required, minimumAgeValidator()]],
       gender: [genderToFormValue(this.existingUser['gender']), Validators.required],
       job: [jobSeed, Validators.required],
       phoneNumber: [phoneSeed, [Validators.pattern('^$|^[0-9]{10,11}$')]],

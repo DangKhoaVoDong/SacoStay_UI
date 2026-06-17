@@ -1,0 +1,47 @@
+<div class="min-h-screen bg-gray-50 flex flex-col">
+  <app-navbar />
+
+  <main class="flex-1">
+    <div class="legal-page-hero bg-gradient-to-br from-[#1A1A2E] via-[#2d3748] to-[#FF9F43]/90 text-white">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <p class="text-sm text-white/80 uppercase tracking-wide font-medium">Hỗ trợ · SacoStay</p>
+        <h1 class="text-2xl sm:text-3xl font-bold mt-2 leading-snug text-white">Câu hỏi thường gặp (FAQ)</h1>
+        <p class="mt-3 text-white/90 text-sm sm:text-base max-w-2xl">
+          Giải đáp nhanh các thắc mắc phổ biến và dẫn bạn đến trang thông tin chi tiết.
+        </p>
+      </div>
+    </div>
+
+    <article class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-12 -mt-6">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-10 space-y-4">
+        @for (item of faqItems; track item.id) {
+          <div class="home-faq-item" [class.home-faq-item--open]="expandedId === item.id">
+            <button
+              type="button"
+              class="home-faq-item__trigger"
+              (click)="toggle(item.id)"
+              [attr.aria-expanded]="expandedId === item.id"
+            >
+              <span class="font-semibold text-[#1A1A2E] text-left">{{ item.question }}</span>
+              <span class="home-faq-item__icon" aria-hidden="true">{{ expandedId === item.id ? '−' : '+' }}</span>
+            </button>
+            @if (expandedId === item.id) {
+              <div class="home-faq-item__body">
+                <p class="text-sm text-[#6B7280] leading-relaxed">{{ item.shortAnswer }}</p>
+                <a [routerLink]="item.detailPath" class="legal-inline-link inline-block mt-4 text-sm font-semibold">
+                  {{ item.ctaLabel }} →
+                </a>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="pt-6 border-t border-gray-100">
+          <a routerLink="/" class="legal-btn-outline">Về trang chủ</a>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <app-footer />
+</div>

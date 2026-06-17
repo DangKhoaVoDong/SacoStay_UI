@@ -95,6 +95,40 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/legal/terms-of-use/terms-of-use.component').then((m) => m.TermsOfUseComponent)
   },
+  {
+    path: 'faq',
+    loadComponent: () => import('./pages/legal/faq/faq.component').then((m) => m.FaqComponent)
+  },
+  {
+    path: 'pricing',
+    loadComponent: () =>
+      import('./pages/legal/faq-detail/faq-detail.component').then((m) => m.FaqDetailComponent),
+    data: { faqId: 'pricing' }
+  },
+  {
+    path: 'roommate-matching',
+    loadComponent: () =>
+      import('./pages/legal/faq-detail/faq-detail.component').then((m) => m.FaqDetailComponent),
+    data: { faqId: 'roommate-matching' }
+  },
+  {
+    path: 'verified-listings',
+    loadComponent: () =>
+      import('./pages/legal/faq-detail/faq-detail.component').then((m) => m.FaqDetailComponent),
+    data: { faqId: 'verified-listings' }
+  },
+  {
+    path: 'help/contact-landlord',
+    loadComponent: () =>
+      import('./pages/legal/faq-detail/faq-detail.component').then((m) => m.FaqDetailComponent),
+    data: { faqId: 'contact-landlord' }
+  },
+  {
+    path: 'help/roommate-support',
+    loadComponent: () =>
+      import('./pages/legal/faq-detail/faq-detail.component').then((m) => m.FaqDetailComponent),
+    data: { faqId: 'roommate-support' }
+  },
   { path: 'privacy', redirectTo: 'terms', pathMatch: 'full' },
   {
     path: 'landlord-profile',

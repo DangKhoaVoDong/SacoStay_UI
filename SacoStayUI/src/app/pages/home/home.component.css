@@ -99,6 +99,112 @@
   }
 }
 
+.home-hero-intro__eyebrow {
+  font-size: 1.006rem;
+}
+
+.home-hero-intro__title {
+  font-size: clamp(2.16rem, 5.75vw, 2.875rem);
+}
+
+.home-hero-intro__sub {
+  font-size: clamp(0.625rem, 1.05vw + 0.5rem, 1.2075rem);
+  max-width: 100%;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .home-hero-intro__sub {
+    font-size: clamp(0.58rem, 2.4vw, 0.805rem);
+  }
+}
+
+.home-sections-scaled {
+  zoom: 1.05;
+}
+
+.home-feature-card {
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 1rem;
+  border: 1px solid #fff0e0;
+  box-shadow: 0 2px 16px rgba(255, 159, 67, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.home-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(255, 159, 67, 0.12);
+}
+
+.home-feature-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  background: #fff8f0;
+  border-radius: 0.75rem;
+}
+
+.home-step-card {
+  position: relative;
+  padding: 1.75rem 1.5rem;
+  background: #fff;
+  border-radius: 1.25rem;
+  border: 1px solid #ffe8cc;
+  text-align: center;
+}
+
+.home-step-card__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 1rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #ff9f43, #ff8c2a);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.home-community-card {
+  padding: 1.5rem;
+  background: #fffbf7;
+  border: 1px solid #ffe8cc;
+  border-radius: 1rem;
+  height: 100%;
+}
+
+.home-landlord-panel {
+  background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+  box-shadow: 0 12px 40px rgba(26, 26, 46, 0.15);
+}
+
+.home-trust-card {
+  padding: 1.25rem 1.5rem;
+  background: #fffbf7;
+  border-left: 3px solid #ff9f43;
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.home-final-cta-card {
+  padding: 2rem;
+  background: #fff;
+  border-radius: 1.25rem;
+  border: 1px solid #ffe8cc;
+  box-shadow: 0 4px 20px rgba(255, 159, 67, 0.08);
+}
+
+.home-final-cta-card--landlord {
+  background: linear-gradient(180deg, #fff 0%, #fffbf7 100%);
+}
+
 /* Custom styles for landing page */
 .space-y-4 > * + * {
   margin-top: 1rem;

@@ -2,11 +2,11 @@
   <app-navbar></app-navbar>
 
   <div class="flex-1">
-    <!-- Hero: cùng layout cho khách và đã đăng nhập -->
+    <!-- 1. Hero banner (giữ ảnh nền) -->
     <section class="home-hero relative overflow-hidden" aria-label="SacoStay">
       <img
         src="/image/Background_Image_2.png"
-        alt=""
+        alt="SacoStay — Tìm đúng người, chọn đúng nơi"
         class="home-hero__image"
         width="1942"
         height="809"
@@ -15,90 +15,270 @@
       />
     </section>
 
-    <section class="py-20 bg-white rounded-t-[3rem]">
+    <!-- Hero copy -->
+    <section class="home-hero-intro bg-white border-b border-orange-50">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 py-10 sm:py-12 text-center">
+        <p class="home-hero-intro__sub text-[#6B7280] mx-auto">
+          Cộng đồng sinh viên giúp bạn tìm phòng trọ đáng tin cậy và roommate phù hợp cho hành trình đại học.
+        </p>
+      </div>
+    </section>
+
+    <div class="home-sections-scaled">
+    <!-- 2. Vì sao chọn SacoStay? -->
+    <section class="py-16 sm:py-20 bg-white rounded-t-[2rem] sm:rounded-t-[3rem] -mt-4 relative z-[1]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-          <h2 class="text-3xl font-bold text-[#1A1A2E]">Tại sao chọn SacoStay?</h2>
-          <p class="mt-4 text-[#6B7280]">Chúng tôi hiểu rằng tìm bạn ở ghép không chỉ là chia sẻ tiền phòng</p>
+        <div class="text-center mb-12 sm:mb-14">
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1A1A2E]">Vì sao chọn SacoStay?</h2>
+          <p class="mt-3 text-[#6B7280] max-w-2xl mx-auto">
+            Nền tảng dành riêng cho sinh viên — minh bạch, an toàn và dễ bắt đầu.
+          </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div
-            class="p-8 bg-white rounded-2xl border border-orange-50 shadow-[0_2px_16px_rgba(255,159,67,0.08)] hover:shadow-[0_8px_30px_rgba(255,159,67,0.12)] hover:-translate-y-1 transition-all duration-300">
-            <div class="w-14 h-14 bg-[#FFF8F0] rounded-2xl flex items-center justify-center mb-6">
-              <svg class="w-7 h-7 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
-                </path>
-              </svg>
-            </div>
-            <h3 class="text-xl font-bold text-[#1A1A2E] mb-3">Hòa hợp lối sống</h3>
-            <p class="text-[#6B7280] leading-relaxed">Hệ thống matching thông minh dựa trên thói quen sinh hoạt: giờ
-              giấc, vệ sinh, thú cưng...</p>
-          </div>
-          <div
-            class="p-8 bg-white rounded-2xl border border-orange-50 shadow-[0_2px_16px_rgba(255,159,67,0.08)] hover:shadow-[0_8px_30px_rgba(255,159,67,0.12)] hover:-translate-y-1 transition-all duration-300">
-            <div class="w-14 h-14 bg-[#FFF8F0] rounded-2xl flex items-center justify-center mb-6">
-              <svg class="w-7 h-7 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-            <h3 class="text-xl font-bold text-[#1A1A2E] mb-3">Xác thực an toàn</h3>
-            <p class="text-[#6B7280] leading-relaxed">Tất cả người dùng đều được xác thực qua thẻ sinh viên hoặc CCCD để
-              đảm bảo an toàn.</p>
-          </div>
-          <div
-            class="p-8 bg-white rounded-2xl border border-orange-50 shadow-[0_2px_16px_rgba(255,159,67,0.08)] hover:shadow-[0_8px_30px_rgba(255,159,67,0.12)] hover:-translate-y-1 transition-all duration-300">
-            <div class="w-14 h-14 bg-[#FFF8F0] rounded-2xl flex items-center justify-center mb-6">
-              <svg class="w-7 h-7 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
-                </path>
-              </svg>
-            </div>
-            <h3 class="text-xl font-bold text-[#1A1A2E] mb-3">Cộng đồng văn minh</h3>
-            <p class="text-[#6B7280] leading-relaxed">Kết nối với những người bạn cùng trang lứa, cùng trường hoặc cùng
-              sở thích.</p>
-          </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+          <article class="home-feature-card">
+            <span class="home-feature-card__icon" aria-hidden="true">🏠</span>
+            <h3 class="text-lg font-bold text-[#1A1A2E] mb-2">Tin đăng đã kiểm duyệt</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">
+              Tin đăng được kiểm duyệt trước khi xuất hiện trên nền tảng nhằm hạn chế thông tin sai lệch và giảm rủi ro cho sinh viên.
+            </p>
+          </article>
+          <article class="home-feature-card">
+            <span class="home-feature-card__icon" aria-hidden="true">👤</span>
+            <h3 class="text-lg font-bold text-[#1A1A2E] mb-2">Chủ trọ đã xác minh</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">
+              Chủ trọ được xác minh thông tin nhằm tăng độ tin cậy và tạo môi trường thuê trọ minh bạch hơn.
+            </p>
+          </article>
+          <article class="home-feature-card">
+            <span class="home-feature-card__icon" aria-hidden="true">🤝</span>
+            <h3 class="text-lg font-bold text-[#1A1A2E] mb-2">Ghép roommate thông minh</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">
+              Tìm roommate phù hợp dựa trên nhu cầu, sở thích và thói quen sinh hoạt.
+            </p>
+          </article>
+          <article class="home-feature-card">
+            <span class="home-feature-card__icon" aria-hidden="true">🎓</span>
+            <h3 class="text-lg font-bold text-[#1A1A2E] mb-2">Cộng đồng sinh viên</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">
+              Cộng đồng dành riêng cho sinh viên để chia sẻ kinh nghiệm thuê trọ và cuộc sống xa nhà.
+            </p>
+          </article>
         </div>
       </div>
     </section>
 
-    <section class="bg-[#FFF8F0] py-20">
+    <!-- 3. Cách SacoStay hoạt động -->
+    <section class="py-16 sm:py-20 bg-[#FFF8F0]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 class="text-3xl font-bold text-[#1A1A2E] mb-6">An tâm tìm bạn, <br />Thoải mái sống chung</h2>
-            <ul class="space-y-4">
-              <li class="flex items-center text-[#6B7280]"><span class="mr-3">✓</span>100% người dùng được xác thực danh
-                tính</li>
-              <li class="flex items-center text-[#6B7280]"><span class="mr-3">✓</span>Đánh giá độ hòa hợp trước khi chat
-              </li>
-              <li class="flex items-center text-[#6B7280]"><span class="mr-3">✓</span>Thông tin minh bạch, rõ ràng</li>
-              <li class="flex items-center text-[#6B7280]"><span class="mr-3">✓</span>Hỗ trợ giải quyết mâu thuẫn</li>
+        <div class="text-center mb-12">
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1A1A2E]">Cách SacoStay hoạt động</h2>
+          <p class="mt-3 text-[#6B7280]">Ba bước đơn giản để bắt đầu hành trình mới.</p>
+        </div>
+
+        <ol class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <li class="home-step-card">
+            <span class="home-step-card__num">1</span>
+            <h3 class="text-xl font-bold text-[#1A1A2E] mb-2">Tìm kiếm</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">
+              Tìm phòng hoặc roommate phù hợp theo khu vực, trường học và ngân sách.
+            </p>
+          </li>
+          <li class="home-step-card">
+            <span class="home-step-card__num">2</span>
+            <h3 class="text-xl font-bold text-[#1A1A2E] mb-2">Xác minh</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">
+              Xem các tin đăng và chủ trọ đã được xác minh trên hệ thống.
+            </p>
+          </li>
+          <li class="home-step-card">
+            <span class="home-step-card__num">3</span>
+            <h3 class="text-xl font-bold text-[#1A1A2E] mb-2">Kết nối</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">
+              Liên hệ chủ trọ hoặc kết nối với roommate phù hợp để bắt đầu hành trình mới.
+            </p>
+          </li>
+        </ol>
+
+        <div class="text-center mt-10">
+          <a routerLink="/rooms" class="home-hero-btn home-hero-btn-primary inline-flex">
+            Bắt đầu tìm kiếm
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Community -->
+    <section id="community" class="py-16 sm:py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12 max-w-3xl mx-auto">
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1A1A2E]">
+            Không chỉ là nơi tìm phòng, đây còn là cộng đồng sinh viên.
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <article class="home-community-card">
+            <h3 class="text-lg font-bold text-[#FF9F43] mb-4">Thuê trọ an toàn</h3>
+            <ul class="space-y-2.5 text-sm text-[#6B7280]">
+              <li class="flex gap-2"><span class="text-[#FF9F43] shrink-0">•</span>Những điều cần kiểm tra trước khi đặt cọc.</li>
+              <li class="flex gap-2"><span class="text-[#FF9F43] shrink-0">•</span>Kinh nghiệm tránh lừa đảo khi tìm phòng.</li>
             </ul>
-            <div class="mt-8" *ngIf="!isLoggedIn">
-              <a routerLink="/register"
-                class="bg-[#FF9F43] text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-[#FF8C2A] transition-colors inline-block">
-                Tham gia ngay
-              </a>
-            </div>
-            <div class="mt-8" *ngIf="isLoggedIn">
-              <a routerLink="/profile-setup"
-                class="bg-[#FF9F43] text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-[#FF8C2A] transition-colors inline-block">
-                Cập nhật hồ sơ
+          </article>
+          <article class="home-community-card">
+            <h3 class="text-lg font-bold text-[#FF9F43] mb-4">Roommate</h3>
+            <ul class="space-y-2.5 text-sm text-[#6B7280]">
+              <li class="flex gap-2"><span class="text-[#FF9F43] shrink-0">•</span>Những yếu tố quan trọng khi chọn roommate.</li>
+              <li class="flex gap-2"><span class="text-[#FF9F43] shrink-0">•</span>Kinh nghiệm sống chung hiệu quả.</li>
+            </ul>
+          </article>
+          <article class="home-community-card">
+            <h3 class="text-lg font-bold text-[#FF9F43] mb-4">Student Life</h3>
+            <ul class="space-y-2.5 text-sm text-[#6B7280]">
+              <li class="flex gap-2"><span class="text-[#FF9F43] shrink-0">•</span>Kinh nghiệm sống xa nhà.</li>
+              <li class="flex gap-2"><span class="text-[#FF9F43] shrink-0">•</span>Quản lý chi tiêu sinh viên.</li>
+              <li class="flex gap-2"><span class="text-[#FF9F43] shrink-0">•</span>Chuẩn bị cho kỳ thực tập.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="text-center mt-10">
+          <a routerLink="/discovery" class="home-hero-btn home-hero-btn-secondary inline-flex">
+            Khám phá cộng đồng
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Dành cho chủ trọ -->
+    <section class="py-16 sm:py-20 bg-[#FFF8F0]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-wide text-[#FF9F43] mb-2">Dành cho chủ trọ</p>
+            <h2 class="text-2xl sm:text-3xl font-bold text-[#1A1A2E] mb-5">
+              Tiếp cận đúng sinh viên, tìm đúng người thuê.
+            </h2>
+            <p class="text-[#6B7280] mb-6">SacoStay giúp chủ trọ:</p>
+            <ul class="space-y-3 text-[#6B7280]">
+              <li class="flex items-start gap-2"><span class="text-[#2ECC71] font-bold shrink-0">✓</span>Tiếp cận cộng đồng sinh viên.</li>
+              <li class="flex items-start gap-2"><span class="text-[#2ECC71] font-bold shrink-0">✓</span>Đăng tin dễ dàng.</li>
+              <li class="flex items-start gap-2"><span class="text-[#2ECC71] font-bold shrink-0">✓</span>Nâng cao độ tin cậy thông qua xác minh.</li>
+              <li class="flex items-start gap-2"><span class="text-[#2ECC71] font-bold shrink-0">✓</span>Kết nối đúng đối tượng có nhu cầu thuê.</li>
+            </ul>
+            <div class="mt-8">
+              <a
+                [routerLink]="landlordCtaLink"
+                [queryParams]="landlordCtaQueryParams"
+                class="home-hero-btn home-hero-btn-primary inline-flex"
+              >
+                Đăng tin ngay
               </a>
             </div>
           </div>
-          <div class="relative">
-            <img
-              src="https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"
-              alt="Roommates hanging out" class="rounded-3xl shadow-2xl" />
+          <div class="home-landlord-panel rounded-3xl p-8 sm:p-10">
+            <p class="text-white/90 text-sm leading-relaxed">
+              Hàng nghìn sinh viên đang tìm phòng trọ gần trường học mỗi tháng. Hãy để SacoStay giúp bạn tiếp cận đúng đối tượng — minh bạch, có xác minh và dễ quản lý tin đăng.
+            </p>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- 6. Xây dựng niềm tin -->
+    <section class="py-16 sm:py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1A1A2E]">Xây dựng niềm tin cùng SacoStay</h2>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <article class="home-trust-card">
+            <h3 class="font-bold text-[#1A1A2E] mb-2">Tin đăng được kiểm duyệt</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Mọi tin đăng đều trải qua quá trình kiểm tra trước khi hiển thị.</p>
+          </article>
+          <article class="home-trust-card">
+            <h3 class="font-bold text-[#1A1A2E] mb-2">Chủ trọ được xác minh</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">SacoStay ưu tiên các chủ trọ đã xác minh thông tin.</p>
+          </article>
+          <article class="home-trust-card">
+            <h3 class="font-bold text-[#1A1A2E] mb-2">Bảo vệ cộng đồng sinh viên</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Tạo môi trường tìm kiếm nơi ở minh bạch và an toàn hơn.</p>
+          </article>
+          <article class="home-trust-card">
+            <h3 class="font-bold text-[#1A1A2E] mb-2">Hỗ trợ người dùng</h3>
+            <p class="text-sm text-[#6B7280] leading-relaxed">Người dùng có thể báo cáo những tin đăng không phù hợp hoặc đáng ngờ.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ trên Homepage -->
+    <section id="faq" class="py-16 sm:py-20 bg-[#FFF8F0]">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+          <h2 class="text-2xl sm:text-3xl font-bold text-[#1A1A2E]">Câu hỏi thường gặp</h2>
+          <p class="mt-3 text-[#6B7280] text-sm sm:text-base">
+            Giải đáp nhanh — chọn câu hỏi để xem chi tiết hoặc
+            <a routerLink="/faq" class="text-[#FF9F43] font-semibold hover:underline">xem tất cả FAQ</a>.
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          @for (item of faqItems; track item.id) {
+            <div class="home-faq-item" [class.home-faq-item--open]="expandedFaqId === item.id">
+              <button
+                type="button"
+                class="home-faq-item__trigger"
+                (click)="toggleFaq(item.id)"
+                [attr.aria-expanded]="expandedFaqId === item.id"
+              >
+                <span class="font-semibold text-[#1A1A2E] text-left text-sm sm:text-base">{{ item.question }}</span>
+                <span class="home-faq-item__icon" aria-hidden="true">{{ expandedFaqId === item.id ? '−' : '+' }}</span>
+              </button>
+              @if (expandedFaqId === item.id) {
+                <div class="home-faq-item__body">
+                  <p class="text-sm text-[#6B7280] leading-relaxed">{{ item.shortAnswer }}</p>
+                  <a [routerLink]="item.detailPath" class="inline-block mt-4 text-sm font-semibold text-[#FF9F43] hover:underline">
+                    {{ item.ctaLabel }} →
+                  </a>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. CTA cuối trang -->
+    <section class="py-16 sm:py-20 bg-[#FFF8F0]">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <article class="home-final-cta-card">
+            <h3 class="text-xl font-bold text-[#1A1A2E] mb-3">Dành cho sinh viên</h3>
+            <p class="text-[#6B7280] mb-6 leading-relaxed">
+              Bạn đã sẵn sàng tìm đúng người và chọn đúng nơi chưa?
+            </p>
+            <a routerLink="/rooms" class="home-hero-btn home-hero-btn-primary inline-flex">
+              Tìm phòng ngay
+            </a>
+          </article>
+          <article class="home-final-cta-card home-final-cta-card--landlord">
+            <h3 class="text-xl font-bold text-[#1A1A2E] mb-3">Dành cho chủ trọ</h3>
+            <p class="text-[#6B7280] mb-6 leading-relaxed">
+              Tiếp cận cộng đồng sinh viên ngay hôm nay.
+            </p>
+            <a
+              [routerLink]="landlordCtaLink"
+              [queryParams]="landlordCtaQueryParams"
+              class="home-hero-btn home-hero-btn-secondary inline-flex"
+            >
+              Đăng tin ngay
+            </a>
+          </article>
+        </div>
+      </div>
+    </section>
+    </div>
   </div>
 
   <app-footer></app-footer>

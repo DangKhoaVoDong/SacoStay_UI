@@ -123,14 +123,18 @@
             <input id="firstName" type="text" formControlName="firstName" placeholder="Nguyễn"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
               [class.border-red-300]="firstName?.invalid && firstName?.dirty" />
-            <div *ngIf="firstName?.invalid && firstName?.dirty" class="mt-1 text-sm text-red-600">Bắt buộc</div>
+            <div *ngIf="firstName?.invalid && firstName?.dirty" class="mt-1 text-sm text-red-600">
+              {{ firstName?.errors?.['required'] ? 'Bắt buộc' : personNameInvalidMessage }}
+            </div>
           </div>
           <div>
             <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1.5">Tên</label>
             <input id="lastName" type="text" formControlName="lastName" placeholder="Văn A"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
               [class.border-red-300]="lastName?.invalid && lastName?.dirty" />
-            <div *ngIf="lastName?.invalid && lastName?.dirty" class="mt-1 text-sm text-red-600">Bắt buộc</div>
+            <div *ngIf="lastName?.invalid && lastName?.dirty" class="mt-1 text-sm text-red-600">
+              {{ lastName?.errors?.['required'] ? 'Bắt buộc' : personNameInvalidMessage }}
+            </div>
           </div>
         </div>
 
@@ -138,9 +142,13 @@
           <div>
             <label for="dateOfBirth" class="block text-sm font-medium text-gray-700 mb-1.5">Ngày sinh</label>
             <input id="dateOfBirth" type="date" formControlName="dateOfBirth"
+              [min]="minDateOfBirth"
+              [max]="maxDateOfBirth"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm py-2.5 px-3 border"
               [class.border-red-300]="dateOfBirth?.invalid && dateOfBirth?.dirty" />
-            <div *ngIf="dateOfBirth?.invalid && dateOfBirth?.dirty" class="mt-1 text-sm text-red-600">Chọn ngày sinh</div>
+            <div *ngIf="dateOfBirth?.invalid && dateOfBirth?.dirty" class="mt-1 text-sm text-red-600">
+              {{ dateOfBirthErrorMessage(dateOfBirth?.errors) }}
+            </div>
           </div>
           <div>
             <label for="gender" class="block text-sm font-medium text-gray-700 mb-1.5">Giới tính</label>

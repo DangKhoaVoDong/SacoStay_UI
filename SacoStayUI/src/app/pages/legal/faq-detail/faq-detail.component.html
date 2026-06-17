@@ -1,0 +1,67 @@
+<div class="min-h-screen bg-gray-50 flex flex-col">
+  <app-navbar />
+
+  @if (faq) {
+    <main class="flex-1">
+      <div class="legal-page-hero bg-gradient-to-br from-[#1A1A2E] via-[#2d3748] to-[#FF9F43]/90 text-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+          <p class="text-sm text-white/80 uppercase tracking-wide font-medium">{{ faq.heroBadge }}</p>
+          <h1 class="text-2xl sm:text-3xl font-bold mt-2 leading-snug text-white">{{ faq.heroTitle }}</h1>
+          <p class="mt-3 text-white/90 text-sm sm:text-base max-w-2xl">{{ faq.heroSubtitle }}</p>
+          <p class="mt-4 text-xs text-white/70">Trả lời bởi: {{ faq.answeredBy }}</p>
+        </div>
+      </div>
+
+      <article class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-12 -mt-6">
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-10 prose-legal text-gray-700 space-y-8">
+          @for (section of faq.sections; track $index) {
+            <section>
+              @if (section.title) {
+                <h2 class="legal-h2">{{ section.title }}</h2>
+              }
+              @if (section.paragraphs?.length) {
+                @for (p of section.paragraphs; track $index) {
+                  <p [class.mt-3]="$index > 0">{{ p }}</p>
+                }
+              }
+              @if (section.list?.length) {
+                <ul class="legal-list">
+                  @for (item of section.list; track item) {
+                    <li>{{ item }}</li>
+                  }
+                </ul>
+              }
+            </section>
+          }
+
+          @if (faq.relatedLinks?.length) {
+            <section class="legal-section-divider">
+              <h2 class="legal-h2">Liên quan</h2>
+              <ul class="space-y-2 mt-2">
+                @for (link of faq.relatedLinks; track link.path) {
+                  <li>
+                    <a [routerLink]="link.path" class="legal-inline-link">{{ link.label }}</a>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+
+          <div class="pt-4 border-t border-gray-100 flex flex-wrap gap-3">
+            <a routerLink="/faq" class="legal-btn-outline">Tất cả câu hỏi</a>
+            <a routerLink="/" class="legal-btn-outline">Về trang chủ</a>
+          </div>
+        </div>
+      </article>
+    </main>
+  } @else {
+    <main class="flex-1 flex items-center justify-center px-4 py-20 text-center">
+      <div>
+        <h1 class="text-xl font-bold text-[#1A1A2E]">Không tìm thấy nội dung</h1>
+        <a routerLink="/faq" class="legal-inline-link mt-4 inline-block">Quay lại FAQ</a>
+      </div>
+    </main>
+  }
+
+  <app-footer />
+</div>
