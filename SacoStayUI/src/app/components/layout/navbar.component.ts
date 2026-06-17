@@ -14,7 +14,7 @@ import {
 } from '../../utils/user-display';
 import { landlordPostListingQueryParams, isTenantAuthPath } from '../../utils/auth-navigation';
 import { resolveMediaUrl } from '../../utils/media-url';
-import { SACOSTAY_LOGO_CLASS, SACOSTAY_LOGO_URL } from '../../utils/brand-assets';
+import { SACOSTAY_LOGO_CLASS, SACOSTAY_LOGO_URL, AUTH_LOGIN_ICON_URL, AUTH_REGISTER_ICON_URL } from '../../utils/brand-assets';
 import type { UserProfile } from '../../models/auth.models';
 
 interface NavLink {
@@ -34,6 +34,8 @@ interface NavLink {
 export class NavbarComponent implements OnInit {
     readonly logoUrl = SACOSTAY_LOGO_URL;
     readonly logoClass = SACOSTAY_LOGO_CLASS;
+    readonly loginIconUrl = AUTH_LOGIN_ICON_URL;
+    readonly registerIconUrl = AUTH_REGISTER_ICON_URL;
     isOpen = false;
     isLoggedIn = false;
     user: UserProfile | null = null;
