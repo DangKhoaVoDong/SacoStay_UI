@@ -170,15 +170,6 @@
 
             <ng-template #mobileGuestLinks>
                 <div class="space-y-3">
-                    <button
-                        type="button"
-                        (click)="onPostListingClick(); toggleMenu()"
-                        class="flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-[#FF9F43] to-[#FF8C2A] shadow-md shadow-orange-300/40">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Đăng tin
-                    </button>
                     <a routerLink="/login" (click)="toggleMenu()"
                         class="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-100 bg-white px-4 py-3 text-sm font-medium text-[#1A1A2E] hover:bg-[#FFF8F0] hover:text-[#FF9F43]">
                         <img [src]="loginIconUrl" alt="" class="w-4 h-4 object-contain shrink-0" aria-hidden="true" />
