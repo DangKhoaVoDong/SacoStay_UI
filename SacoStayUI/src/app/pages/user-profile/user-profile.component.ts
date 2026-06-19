@@ -9,8 +9,10 @@ import { NavbarComponent } from '../../components/layout/navbar.component';
 import { ReportModalComponent } from '../../components/shared/report-modal/report-modal.component';
 import { ProfilePhotosModalComponent } from '../../components/profile/profile-photos-modal/profile-photos-modal.component';
 import { CompatibilityBadgeComponent } from '../../components/profile/compatibility-badge.component';
+import { TenantRoomDetailsViewComponent } from '../../components/tenant-room/tenant-room-details-view.component';
 import { AuthService } from '../../services/auth.service';
 import { LifestyleService } from '../../services/lifestyle.service';
+import { TenantRoomProfileService } from '../../services/tenant-room-profile.service';
 import { ChatPeerProfileService } from '../../services/chat-peer-profile.service';
 import { environment } from '../../../environments/environment';
 import {
@@ -38,6 +40,7 @@ import {
 import { setLifestyleQuizCompleted } from '../../utils/lifestyle-storage';
 import { resolveMediaUrl } from '../../utils/media-url';
 import type { UserLifestyleAnswer } from '../../models/lifestyle.models';
+import type { TenantRoomProfile } from '../../models/tenant-room-profile.models';
 
 @Component({
   selector: 'app-user-profile',
@@ -48,7 +51,8 @@ import type { UserLifestyleAnswer } from '../../models/lifestyle.models';
     NavbarComponent,
     ReportModalComponent,
     ProfilePhotosModalComponent,
-    CompatibilityBadgeComponent
+    CompatibilityBadgeComponent,
+    TenantRoomDetailsViewComponent
   ],
   templateUrl: './user-profile.component.html'
 })
@@ -73,7 +77,7 @@ export class UserProfileComponent implements OnInit {
   compatibilityScore = 0;
 
   roomHasRoom = false;
-  roomPriceLabel = '';
+  tenantRoomProfile: TenantRoomProfile | null = null;
 
   targetUserId = '';
   chatQueryParams: Record<string, string> = {};
@@ -84,6 +88,7 @@ export class UserProfileComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly lifestyle = inject(LifestyleService);
+  private readonly tenantRoomProfiles = inject(TenantRoomProfileService);
   private readonly peerProfiles = inject(ChatPeerProfileService);
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
@@ -143,30 +148,36 @@ export class UserProfileComponent implements OnInit {
       .pipe(
         switchMap((p) => {
           const user = (p ?? this.auth.getCurrentUser()) as Record<string, unknown> | null;
-          if (!user) return of({ user: null as Record<string, unknown> | null, answers: [] as UserLifestyleAnswer[] });
+          if (!user) return of({ user: null as Record<string, unknown> | null, answers: [] as UserLifestyleAnswer[], tenantRoomProfile: null as TenantRoomProfile | null });
 
           const uid = userIdFromUser(user);
           if (!hasBasicProfileFilled(user)) {
             void this.router.navigate(['/profile-setup']);
-            return of({ user: null, answers: [] });
+            return of({ user: null, answers: [], tenantRoomProfile: null });
           }
 
           if (isLandlordUser(user)) {
-            return of({ user, answers: [] as UserLifestyleAnswer[] });
+            return of({ user, answers: [] as UserLifestyleAnswer[], tenantRoomProfile: null });
           }
 
           return this.lifestyle.getMyAnswers().pipe(
-            map((answers) => {
+            switchMap((answers) => {
               const uid = userIdFromUser(user);
               if (uid && answers.length > 0) setLifestyleQuizCompleted(uid);
-              return { user, answers };
+              const room = roomStatusFromAnswers(answers);
+              if (!room.hasRoom) {
+                return of({ user, answers, tenantRoomProfile: null as TenantRoomProfile | null });
+              }
+              return this.tenantRoomProfiles.getMyProfile().pipe(
+                map((tenantRoomProfile) => ({ user, answers, tenantRoomProfile }))
+              );
             })
           );
         }),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: ({ user, answers }) => {
+        next: ({ user, answers, tenantRoomProfile }) => {
           if (!user) {
             this.loading = false;
             return;
@@ -175,6 +186,7 @@ export class UserProfileComponent implements OnInit {
           this.lifestyleAnswers = answers;
           this.myAnswers = answers;
           this.applyRoomStatus(answers);
+          this.applyTenantRoomProfile(tenantRoomProfile);
           this.loading = false;
           this.cdr.detectChanges();
         },
@@ -194,12 +206,13 @@ export class UserProfileComponent implements OnInit {
           if (!userRaw) return of(null);
           const user = normalizeAuthUser(userRaw);
           if (isLandlordUser(user)) {
-            return of({ user, answers: [] as UserLifestyleAnswer[], match: { matchingScore: 0 } });
+            return of({ user, answers: [] as UserLifestyleAnswer[], match: { matchingScore: 0 }, tenantRoomProfile: null as TenantRoomProfile | null });
           }
           return forkJoin({
             answers: this.lifestyle.getUserAnswers(userId),
-            match: this.lifestyle.getMatchingScore(userId)
-          }).pipe(map(({ answers, match }) => ({ user, answers, match })));
+            match: this.lifestyle.getMatchingScore(userId),
+            tenantRoomProfile: this.tenantRoomProfiles.getByUserId(userId)
+          }).pipe(map(({ answers, match, tenantRoomProfile }) => ({ user, answers, match, tenantRoomProfile })));
         }),
         takeUntilDestroyed(this.destroyRef)
       )
@@ -212,11 +225,12 @@ export class UserProfileComponent implements OnInit {
             return;
           }
 
-          const { user, answers, match } = result;
+          const { user, answers, match, tenantRoomProfile } = result;
           this.applyUserView(user);
           this.lifestyleAnswers = answers;
           this.compatibilityScore = match.matchingScore;
           this.applyRoomStatus(answers);
+          this.applyTenantRoomProfile(tenantRoomProfile);
 
           const myId = userIdFromUser(this.auth.getCurrentUser());
           if (myId && !this.isLandlordProfileView) {
@@ -272,7 +286,13 @@ export class UserProfileComponent implements OnInit {
   private applyRoomStatus(answers: UserLifestyleAnswer[]): void {
     const room = roomStatusFromAnswers(answers);
     this.roomHasRoom = room.hasRoom;
-    this.roomPriceLabel = room.priceLabel ?? '';
+    if (!room.hasRoom) {
+      this.tenantRoomProfile = null;
+    }
+  }
+
+  private applyTenantRoomProfile(profile: TenantRoomProfile | null): void {
+    this.tenantRoomProfile = this.roomHasRoom ? profile : null;
   }
 
   get displayAnswers(): UserLifestyleAnswer[] {

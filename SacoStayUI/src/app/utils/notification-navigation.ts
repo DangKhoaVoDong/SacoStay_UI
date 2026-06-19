@@ -57,6 +57,20 @@ export function navigateFromNotification(
     return;
   }
 
+  if (pathOnly === '/shared-space') {
+    void router.navigate(['/shared-space'], {
+      queryParams: q['spaceId'] ? { spaceId: q['spaceId'] } : {}
+    });
+    return;
+  }
+
+  if (pathOnly === '/tenant-room-profile' || pathOnly === '/room-profile') {
+    void router.navigate(['/tenant-room-profile'], {
+      queryParams: q['returnUrl'] ? { returnUrl: q['returnUrl'] } : { returnUrl: '/profile/me' }
+    });
+    return;
+  }
+
   if (pathOnly.startsWith('/rooms/')) {
     void router.navigateByUrl(link);
     return;

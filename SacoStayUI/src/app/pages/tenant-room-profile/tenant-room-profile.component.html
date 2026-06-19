@@ -1,0 +1,90 @@
+<div class="min-h-screen bg-gray-50 flex flex-col">
+  <app-navbar />
+
+  <div class="flex-1 container mx-auto px-4 py-10 max-w-2xl">
+    @if (loading) {
+      <p class="text-center text-gray-500 py-16">Đang tải…</p>
+    } @else if (notEligible) {
+      <div class="bg-white rounded-2xl border border-gray-100 p-8 text-center shadow-sm">
+        <h1 class="text-xl font-bold text-gray-900 mb-2">Chưa áp dụng</h1>
+        <p class="text-sm text-gray-600 mb-6">
+          Trang này dành cho người đã có phòng trọ. Bạn có thể cập nhật lại trong trắc nghiệm lối sống.
+        </p>
+        <a routerLink="/profile/me" class="text-[#FF9F43] font-medium hover:underline">Về trang cá nhân</a>
+      </div>
+    } @else {
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Thông tin phòng trọ</h1>
+        <p class="text-sm text-gray-600 mt-2">
+          Điền địa điểm, số người và tiện nghi để người tìm bạn hiểu rõ hơn về căn trọ bạn đang thuê.
+        </p>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+        <app-tenant-room-details-form [form]="form" (formChange)="onFormChange($event)" />
+
+        @if (!guestMode) {
+          <div class="mt-8 pt-6 border-t border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-900 mb-1">Ảnh phòng trọ</h3>
+            <p class="text-xs text-gray-500 mb-3">Tối đa {{ maxImages }} ảnh. Ảnh mới sẽ upload sau khi lưu thông tin.</p>
+
+            @if (existingImages.length || pendingImagePreviews.length) {
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                @for (url of existingImages; track url) {
+                  <div class="relative group">
+                    <img [src]="imageSrc(url)" alt="Ảnh phòng" class="w-full h-24 object-cover rounded-lg border border-gray-100" />
+                    <button
+                      type="button"
+                      class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/55 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      [disabled]="deletingImageUrl === url"
+                      (click)="deleteExistingImage(url)"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                }
+                @for (preview of pendingImagePreviews; track preview; let i = $index) {
+                  <div class="relative group">
+                    <img [src]="preview" alt="Ảnh chờ upload" class="w-full h-24 object-cover rounded-lg border border-orange-200" />
+                    <button
+                      type="button"
+                      class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/55 text-white text-xs"
+                      (click)="removePendingImage(i)"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (canAddMoreImages) {
+              <label class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-orange-200 text-sm text-[#FF9F43] cursor-pointer hover:bg-orange-50">
+                <span>+ Thêm ảnh</span>
+                <input type="file" accept="image/*" multiple class="hidden" (change)="onImagesSelected($event)" />
+              </label>
+            }
+          </div>
+        }
+
+        <div class="flex flex-col sm:flex-row gap-3 mt-8 pt-6 border-t border-gray-100">
+          <button
+            type="button"
+            class="flex-1 py-2.5 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A] disabled:opacity-50"
+            [disabled]="saving"
+            (click)="save()"
+          >
+            {{ saving ? 'Đang lưu…' : 'Lưu thông tin phòng' }}
+          </button>
+          <button
+            type="button"
+            class="px-5 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50"
+            (click)="skipForNow()"
+          >
+            Để sau
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

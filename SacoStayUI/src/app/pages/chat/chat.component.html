@@ -128,6 +128,16 @@
               </span>
             </div>
           </div>
+          @if (canShowSharedSpaceAction) {
+            <button
+              type="button"
+              class="shrink-0 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold border border-[#FF9F43] text-[#FF9F43] hover:bg-[#FFF8F0] disabled:opacity-50"
+              [disabled]="creatingSharedSpace"
+              (click)="onSharedSpaceAction()"
+            >
+              {{ creatingSharedSpace ? 'Đang xử lý…' : sharedSpaceButtonLabel }}
+            </button>
+          }
         </header>
 
         <div id="chat-messages-scroll" class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 bg-gray-50/50">

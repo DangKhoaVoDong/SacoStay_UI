@@ -1,6 +1,7 @@
 import { FREE_WEEKLY_SWIPE_LIMIT } from './discovery-filters';
 import type { LifestyleQuestion } from '../models/lifestyle.models';
 import type { UserLifestyleAnswer, WishlistItem } from '../models/lifestyle.models';
+import type { TenantRoomProfileForm } from './tenant-room-filters';
 
 const SESSION_KEY = 'saco_guest_discovery_v1';
 const REGISTER_SYNC_KEY = 'saco_guest_register_sync';
@@ -26,6 +27,7 @@ export interface GuestDiscoverySession {
     name: string;
     avatar: string;
   };
+  tenantRoomProfile?: TenantRoomProfileForm;
 }
 
 function emptySession(): GuestDiscoverySession {
@@ -131,6 +133,16 @@ export function getGuestAnswers(): UserLifestyleAnswer[] {
 
 export function getGuestSelectedOptionIds(): number[] {
   return getGuestDiscoverySession().selectedOptionIds;
+}
+
+export function saveGuestTenantRoomProfile(profile: TenantRoomProfileForm): void {
+  const session = getGuestDiscoverySession();
+  session.tenantRoomProfile = profile;
+  write(session);
+}
+
+export function getGuestTenantRoomProfile(): TenantRoomProfileForm | null {
+  return getGuestDiscoverySession().tenantRoomProfile ?? null;
 }
 
 export function getGuestWishlist(): WishlistItem[] {

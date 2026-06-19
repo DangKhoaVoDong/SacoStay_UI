@@ -5,6 +5,7 @@ export const SACOSTAY_LANDLORD_LOGO_URL = 'image/ảnh web logo SacoStay trắng
 
 export const AUTH_LOGIN_ICON_URL = '/image/Icon/Login_icon.png';
 export const AUTH_REGISTER_ICON_URL = '/image/Icon/Register_icon.png';
+export const NOTE_ICON_URL = '/image/Icon/Note_Icon.png';
 
 /** Logo navbar / sidebar — responsive theo breakpoint. */
 export const SACOSTAY_LOGO_CLASS =

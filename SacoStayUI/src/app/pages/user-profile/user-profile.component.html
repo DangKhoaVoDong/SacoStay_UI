@@ -142,28 +142,6 @@
             }
           </div>
 
-          @if (!isLandlordProfileView) {
-            <div class="p-6 bg-orange-50/50 rounded-2xl border border-orange-100">
-              <h3 class="font-bold text-gray-900 mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                Tình trạng phòng
-              </h3>
-              @if (roomHasRoom) {
-                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 mb-2">Đã có phòng trọ</span>
-                @if (roomPriceLabel) {
-                  <p class="text-sm text-gray-600">
-                    <span class="font-medium text-gray-900">Giá phòng:</span> {{ roomPriceLabel }}
-                  </p>
-                }
-              } @else {
-                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 mb-2">Chưa có phòng trọ</span>
-                <p class="text-sm text-gray-600 mt-2">Đang tìm kiếm phòng trọ và bạn cùng phòng phù hợp.</p>
-              }
-            </div>
-          }
-
           <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
             <h3 class="font-bold text-gray-900 mb-4">Giới thiệu</h3>
             <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
@@ -222,6 +200,43 @@
                     </div>
                   }
                 </div>
+              }
+            </div>
+
+            <div class="p-6 bg-orange-50/50 rounded-2xl border border-orange-100">
+              <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h3 class="font-bold text-gray-900 flex items-center">
+                  <svg class="w-5 h-5 mr-2 text-[#FF9F43]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  Tình trạng phòng
+                </h3>
+                @if (roomHasRoom) {
+                  <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Đã có phòng trọ</span>
+                } @else {
+                  <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">Chưa có phòng trọ</span>
+                }
+              </div>
+
+              @if (roomHasRoom) {
+                @if (tenantRoomProfile) {
+                  <app-tenant-room-details-view [profile]="tenantRoomProfile" />
+                } @else if (isOwnProfile) {
+                  <p class="text-sm text-gray-500">Chưa có chi tiết phòng trọ. Hãy thêm địa điểm, giá thuê và tiện nghi.</p>
+                } @else {
+                  <p class="text-sm text-gray-500">Người dùng chưa cập nhật chi tiết phòng trọ.</p>
+                }
+                @if (isOwnProfile) {
+                  <a
+                    routerLink="/tenant-room-profile"
+                    [queryParams]="{ returnUrl: '/profile/me' }"
+                    class="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-[#FF9F43] hover:underline"
+                  >
+                    {{ tenantRoomProfile ? 'Chỉnh sửa thông tin phòng' : 'Thêm thông tin phòng' }}
+                  </a>
+                }
+              } @else {
+                <p class="text-sm text-gray-600">Đang tìm kiếm phòng trọ và bạn cùng phòng phù hợp.</p>
               }
             </div>
           </div>

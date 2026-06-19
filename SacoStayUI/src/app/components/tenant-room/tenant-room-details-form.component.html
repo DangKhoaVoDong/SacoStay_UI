@@ -1,0 +1,83 @@
+<div class="tenant-room-form" [class.tenant-room-form--compact]="compact">
+  <section>
+    <h3 class="tenant-room-form__label">Địa điểm</h3>
+    <p class="tenant-room-form__hint">Chọn thành phố và quận/huyện nơi bạn đang thuê</p>
+    <div class="tenant-room-form__chips">
+      @for (opt of cityOptions; track opt.value) {
+        <button type="button" [class]="chipBtn(form.city === opt.value)" (click)="onCityChange(opt.value)">
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+    @if (form.city !== 'all') {
+      <div class="tenant-room-form__chips tenant-room-form__chips--sub">
+        @for (opt of districtOptions; track opt.value) {
+          <button type="button" [class]="chipBtn(form.district === opt.value)" (click)="onDistrictChange(opt.value)">
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  <section>
+    <h3 class="tenant-room-form__label">Số người tối đa</h3>
+    <div class="tenant-room-form__chips">
+      @for (opt of maxPeopleOptions; track opt.value) {
+        <button type="button" [class]="chipBtn(form.maxPeople === opt.value)" (click)="onMaxPeopleChange(opt.value)">
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <section>
+    <h3 class="tenant-room-form__label">Giá tiền trọ</h3>
+    <p class="tenant-room-form__hint">Nhập giá thuê bằng số VND/tháng (VD: 3000000)</p>
+    <div class="tenant-room-form__price-row">
+      <input
+        type="text"
+        inputmode="numeric"
+        class="tenant-room-form__input tenant-room-form__input--price"
+        maxlength="12"
+        placeholder="3000000"
+        [ngModel]="form.priceInput"
+        (ngModelChange)="onPriceInputChange($event)"
+      />
+      <span class="tenant-room-form__price-suffix">đ/tháng</span>
+    </div>
+    @if (pricePreview) {
+      <p class="tenant-room-form__price-preview">Hiển thị: <strong>{{ pricePreview }}</strong></p>
+    }
+  </section>
+
+  <section>
+    <h3 class="tenant-room-form__label">Tiện nghi</h3>
+    <p class="tenant-room-form__hint">Chọn các tiện nghi có trong phòng (có thể chọn nhiều)</p>
+    <div class="tenant-room-form__amenities">
+      @for (opt of amenityOptions; track opt.value) {
+        <button
+          type="button"
+          class="tenant-room-form__amenity"
+          [class.tenant-room-form__amenity--active]="isAmenitySelected(opt.value)"
+          (click)="toggleAmenity(opt.value)"
+        >
+          <span aria-hidden="true">{{ opt.icon }}</span>
+          <span>{{ opt.value }}</span>
+        </button>
+      }
+    </div>
+  </section>
+
+  <section>
+    <h3 class="tenant-room-form__label">Thông tin thêm (tuỳ chọn)</h3>
+    <textarea
+      class="tenant-room-form__textarea"
+      rows="3"
+      maxlength="500"
+      placeholder="Ví dụ: gần trường, có ban công nhỏ, cho nuôi mèo..."
+      [ngModel]="form.extraNotes"
+      (ngModelChange)="onExtraNotesChange($event)"
+    ></textarea>
+  </section>
+</div>

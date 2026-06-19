@@ -1,76 +1,77 @@
-<div class="min-h-screen bg-gray-50 flex flex-col">
-  <app-navbar />
-
-  <div class="flex-1 container mx-auto px-4 py-12 max-w-2xl">
-    @if (loading) {
-      <p class="text-center text-gray-500 py-16">Đang tải câu hỏi...</p>
-    } @else if (!currentQuestion) {
-      <div class="bg-white rounded-2xl border border-gray-100 p-8 text-center">
-        <p class="text-gray-600">{{ errorMessage || 'Không có câu hỏi.' }}</p>
-        <button type="button" class="mt-4 text-[#FF9F43] font-medium" (click)="goHome()">Về trang chủ</button>
-      </div>
-    } @else {
-      <div class="mb-8">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold text-gray-900">Câu hỏi {{ currentIndex + 1 }}/{{ activeQuestions.length }}</h2>
-          <span class="text-sm font-medium text-[#FF6B6B]">{{ progress | number: '1.0-0' }}%</span>
-        </div>
-        <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-          <div
-            class="bg-[#FF6B6B] h-2.5 rounded-full transition-all duration-300 ease-out"
-            [style.width.%]="progress"
-          ></div>
-        </div>
-      </div>
-
-      @if (errorMessage) {
-        <p class="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">{{ errorMessage }}</p>
-      }
-
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 min-h-[400px] flex flex-col">
-        <h1 class="text-2xl font-bold text-gray-900 mb-8 text-center">{{ currentQuestion.content }}</h1>
-
-        <div class="space-y-4 flex-1">
-          @for (opt of currentQuestion.options; track opt.id) {
-            <button
-              type="button"
-              (click)="selectOption(opt.id)"
-              class="w-full p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center justify-between"
-              [class.border-[#FF6B6B]]="selectedOptionId(currentQuestion.id) === opt.id"
-              [class.bg-[#FFF5F5]]="selectedOptionId(currentQuestion.id) === opt.id"
-              [class.text-[#FF6B6B]]="selectedOptionId(currentQuestion.id) === opt.id"
-              [class.border-gray-200]="selectedOptionId(currentQuestion.id) !== opt.id"
-              [class.hover:border-[#FF6B6B]/50]="selectedOptionId(currentQuestion.id) !== opt.id"
-            >
-              <span class="font-medium">{{ opt.content }}</span>
-              @if (selectedOptionId(currentQuestion.id) === opt.id) {
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-              }
-            </button>
-          }
-        </div>
-
-        <div class="flex justify-between mt-8 pt-6 border-t border-gray-100">
-          <button
-            type="button"
-            (click)="goBack()"
-            [disabled]="currentIndex === 0"
-            class="px-4 py-2 text-sm font-medium text-gray-600 disabled:opacity-40"
-          >
-            Quay lại
-          </button>
-          <button
-            type="button"
-            (click)="goNext()"
-            [disabled]="!selectedOptionId(currentQuestion.id) || submitting"
-            class="px-6 py-2 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A] disabled:opacity-50"
-          >
-            {{ submitting ? 'Đang lưu...' : isLastQuestion ? 'Hoàn tất' : 'Tiếp theo' }}
-          </button>
-        </div>
-      </div>
-    }
-  </div>
-</div>
+<div class="min-h-screen bg-gray-50 flex flex-col">
+  <app-navbar />
+
+  <div class="flex-1 container mx-auto px-4 py-12 max-w-2xl">
+    @if (loading) {
+      <p class="text-center text-gray-500 py-16">Đang tải câu hỏi...</p>
+    } @else if (!currentQuestion) {
+      <div class="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+        <p class="text-gray-600">{{ errorMessage || 'Không có câu hỏi.' }}</p>
+        <button type="button" class="mt-4 text-[#FF9F43] font-medium" (click)="goHome()">Về trang chủ</button>
+      </div>
+    } @else {
+      <div class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-gray-900">Câu hỏi {{ currentIndex + 1 }}/{{ totalSteps }}</h2>
+          <span class="text-sm font-medium text-[#FF6B6B]">{{ progress | number: '1.0-0' }}%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+          <div
+            class="bg-[#FF6B6B] h-2.5 rounded-full transition-all duration-300 ease-out"
+            [style.width.%]="progress"
+          ></div>
+        </div>
+      </div>
+
+      @if (errorMessage) {
+        <p class="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">{{ errorMessage }}</p>
+      }
+
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 min-h-[400px] flex flex-col">
+        <h1 class="text-2xl font-bold text-gray-900 mb-8 text-center">{{ currentQuestion.content }}</h1>
+
+        <div class="space-y-4 flex-1">
+          @for (opt of currentQuestion.options; track opt.id) {
+            <button
+              type="button"
+              (click)="selectOption(opt.id)"
+              class="w-full p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center justify-between"
+              [class.border-[#FF6B6B]]="selectedOptionId(currentQuestion.id) === opt.id"
+              [class.bg-[#FFF5F5]]="selectedOptionId(currentQuestion.id) === opt.id"
+              [class.text-[#FF6B6B]]="selectedOptionId(currentQuestion.id) === opt.id"
+              [class.border-gray-200]="selectedOptionId(currentQuestion.id) !== opt.id"
+              [class.hover:border-[#FF6B6B]/50]="selectedOptionId(currentQuestion.id) !== opt.id"
+            >
+              <span class="font-medium">{{ opt.content }}</span>
+              @if (selectedOptionId(currentQuestion.id) === opt.id) {
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              }
+            </button>
+          }
+        </div>
+
+        <div class="flex justify-between mt-8 pt-6 border-t border-gray-100">
+          <button
+            type="button"
+            (click)="goBack()"
+            [disabled]="currentIndex === 0"
+            class="px-4 py-2 text-sm font-medium text-gray-600 disabled:opacity-40"
+          >
+            Quay lại
+          </button>
+          <button
+            type="button"
+            (click)="goNext()"
+            [disabled]="!selectedOptionId(currentQuestion.id) || submitting"
+            class="px-6 py-2 rounded-lg bg-[#FF9F43] text-white text-sm font-medium hover:bg-[#FF8C2A] disabled:opacity-50"
+          >
+            {{ submitting ? 'Đang lưu...' : isLastStep ? 'Hoàn tất' : 'Tiếp theo' }}
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+

@@ -6,6 +6,7 @@ import { filter, map, switchMap, take, skip } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { DiscoveryFilterPanelComponent } from '../../components/discovery/discovery-filter-panel.component';
+import { TenantRoomDetailsViewComponent } from '../../components/tenant-room/tenant-room-details-view.component';
 import { AuthService } from '../../services/auth.service';
 import { LifestyleService } from '../../services/lifestyle.service';
 import { DiscoveryProfileService, type DiscoveryCard } from '../../services/discovery-profile.service';
@@ -29,6 +30,7 @@ import {
   type DiscoveryFilters
 } from '../../utils/discovery-filters';
 import type { UserLifestyleAnswer, WishlistItem as ApiWishlistItem, SwipeQuota } from '../../models/lifestyle.models';
+import { NOTE_ICON_URL } from '../../utils/brand-assets';
 
 /** Sidebar wishlist — đồng bộ từ GET /api/Lifestyle/my-likes */
 export type DiscoveryWishlistItem = ApiWishlistItem;
@@ -40,9 +42,11 @@ export type DiscoveryWishlistItem = ApiWishlistItem;
     CommonModule,
     RouterLink,
     NavbarComponent,
-    DiscoveryFilterPanelComponent
+    DiscoveryFilterPanelComponent,
+    TenantRoomDetailsViewComponent
   ],
-  templateUrl: './discovery.component.html'
+  templateUrl: './discovery.component.html',
+  styleUrl: './discovery.component.css'
 })
 export class DiscoveryComponent implements OnInit {
   isGuest = false;
@@ -65,6 +69,9 @@ export class DiscoveryComponent implements OnInit {
   showFilterPanel = false;
   showMobileWishlist = false;
   showMobileProfile = false;
+  showWishlistSpaceHint = false;
+  showTenantRoomPopup = false;
+  readonly noteIconUrl = NOTE_ICON_URL;
   activeFilters: DiscoveryFilters = { ...DEFAULT_DISCOVERY_FILTERS };
   draftFilters: DiscoveryFilters = { ...DEFAULT_DISCOVERY_FILTERS };
 
@@ -316,6 +323,28 @@ export class DiscoveryComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  toggleWishlistSpaceHint(): void {
+    this.showWishlistSpaceHint = !this.showWishlistSpaceHint;
+    this.cdr.detectChanges();
+  }
+
+  get canOpenTenantRoomDetails(): boolean {
+    const card = this.currentCard;
+    return !!card?.hasRoom && !!card.tenantRoomProfile;
+  }
+
+  openTenantRoomPopup(event?: Event): void {
+    event?.stopPropagation();
+    if (!this.canOpenTenantRoomDetails) return;
+    this.showTenantRoomPopup = true;
+    this.cdr.detectChanges();
+  }
+
+  closeTenantRoomPopup(): void {
+    this.showTenantRoomPopup = false;
+    this.cdr.detectChanges();
+  }
+
   toggleMobileProfile(): void {
     if (!this.currentCard) return;
     this.showMobileProfile = !this.showMobileProfile;
@@ -461,6 +490,8 @@ export class DiscoveryComponent implements OnInit {
 
   onCardPointerDown(event: PointerEvent): void {
     if (!this.hasMoreCards || this.swipeAnim) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('[data-discovery-card-action]')) return;
     this.dragging = true;
     this.dragStartX = event.clientX;
     this.pointerId = event.pointerId;

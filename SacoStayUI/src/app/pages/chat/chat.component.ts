@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angul
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, interval, of, switchMap, startWith } from 'rxjs';
 import { NavbarComponent } from '../../components/layout/navbar.component';
 import { FooterComponent } from '../../components/layout/footer.component';
@@ -15,6 +15,9 @@ import { ChatPeerProfileService, isGenericChatLabel } from '../../services/chat-
 import { PresenceService } from '../../services/presence.service';
 import { presenceLabel } from '../../utils/presence';
 import { loadStoredChatContacts, upsertStoredChatContact } from '../../utils/chat-contacts-storage';
+import { SharedSpaceService } from '../../services/shared-space.service';
+import { UiToastService } from '../../services/ui-toast.service';
+import type { SharedSpaceSummary } from '../../models/shared-space.models';
 import type {
   ChatConversation,
   ChatConversationSummary,
@@ -41,6 +44,9 @@ export class ChatComponent implements OnInit {
   private readonly peerProfiles = inject(ChatPeerProfileService);
   private readonly presence = inject(PresenceService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly sharedSpace = inject(SharedSpaceService);
+  private readonly toast = inject(UiToastService);
 
   conversations: ChatConversation[] = [];
   messages: ChatMessage[] = [];
@@ -56,6 +62,8 @@ export class ChatComponent implements OnInit {
   hubConnecting = false;
   /** Mobile: hiển thị khung chat thay vì danh sách hội thoại. */
   mobileThreadOpen = false;
+  sharedSpaces: SharedSpaceSummary[] = [];
+  creatingSharedSpace = false;
 
   currentUserId = '';
   hostShell: ChatHostShell = 'tenant';
@@ -321,6 +329,75 @@ export class ChatComponent implements OnInit {
   private initChatSession(): void {
     this.loadContactList();
     this.connectChatHub();
+    if (this.hostShell === 'tenant') {
+      this.loadSharedSpaces();
+    }
+  }
+
+  private loadSharedSpaces(): void {
+    this.sharedSpace
+      .listSpaces()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (spaces) => {
+          this.sharedSpaces = spaces;
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  get canShowSharedSpaceAction(): boolean {
+    return this.hostShell === 'tenant' && !!this.activeOtherUserId && !this.isActivePeerLandlord;
+  }
+
+  get isActivePeerLandlord(): boolean {
+    const peer = this.activeOtherUser;
+    return !!peer && this.chatService.isLandlordRole(peer.roles);
+  }
+
+  get partnerSharedSpace(): SharedSpaceSummary | undefined {
+    if (!this.activeOtherUserId) return undefined;
+    return this.sharedSpaces.find((s) => this.sameUserId(s.partnerId, this.activeOtherUserId!));
+  }
+
+  get sharedSpaceButtonLabel(): string {
+    const space = this.partnerSharedSpace;
+    if (!space) return 'Tạo không gian chung';
+    if (space.status === 'Finalized') return 'Không gian chung (đã chốt)';
+    return 'Vào không gian chung';
+  }
+
+  onSharedSpaceAction(): void {
+    const partnerId = this.activeOtherUserId;
+    if (!partnerId) return;
+
+    const existing = this.partnerSharedSpace;
+    if (existing) {
+      void this.router.navigate(['/shared-space'], { queryParams: { spaceId: existing.id } });
+      return;
+    }
+
+    if (this.creatingSharedSpace) return;
+    this.creatingSharedSpace = true;
+    this.sharedSpace
+      .createSpace(partnerId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.creatingSharedSpace = false;
+          this.toast.success(res.message);
+          this.loadSharedSpaces();
+          if (res.spaceId) {
+            void this.router.navigate(['/shared-space'], { queryParams: { spaceId: res.spaceId } });
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.creatingSharedSpace = false;
+          this.toast.error(err?.error?.message ?? 'Không thể tạo không gian chung.');
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   private connectChatHub(): void {

@@ -1,0 +1,130 @@
+.tenant-room-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tenant-room-form--compact {
+  gap: 1.25rem;
+}
+
+.tenant-room-form__label {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 0.35rem;
+}
+
+.tenant-room-form__hint {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0 0 0.75rem;
+}
+
+.tenant-room-form__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tenant-room-form__chips--sub {
+  margin-top: 0.75rem;
+}
+
+.tenant-room-form__amenities {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .tenant-room-form__amenities {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.tenant-room-form__amenity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.8125rem;
+  color: #374151;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.tenant-room-form__amenity:hover {
+  border-color: rgba(255, 159, 67, 0.45);
+}
+
+.tenant-room-form__amenity--active {
+  border-color: #ff9f43;
+  background: #fff8f0;
+  color: #9a3412;
+  font-weight: 600;
+}
+
+.tenant-room-form__textarea {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  resize: vertical;
+  min-height: 5rem;
+}
+
+.tenant-room-form__textarea:focus {
+  outline: 2px solid rgba(255, 159, 67, 0.35);
+  border-color: #ff9f43;
+}
+
+.tenant-room-form__input {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.tenant-room-form__input:focus {
+  outline: 2px solid rgba(255, 159, 67, 0.35);
+  border-color: #ff9f43;
+}
+
+.tenant-room-form__price-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tenant-room-form__input--price {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.tenant-room-form__price-suffix {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tenant-room-form__price-preview {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.tenant-room-form__price-preview strong {
+  color: #ff9f43;
+  font-weight: 600;
+}

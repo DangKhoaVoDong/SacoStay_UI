@@ -11,6 +11,7 @@ import { LandlordLayoutComponent } from '../../../components/layout/landlord/lan
 import { CompatibilityBadgeComponent } from '../../../components/profile/compatibility-badge.component';
 import { AuthService } from '../../../services/auth.service';
 import { LifestyleService } from '../../../services/lifestyle.service';
+import { TenantRoomProfileService } from '../../../services/tenant-room-profile.service';
 import { RoomPostService } from '../../../services/room-post.service';
 import { getApiErrorMessage } from '../../../services/auth.service';
 import { environment } from '../../../../environments/environment';
@@ -37,6 +38,7 @@ import {
   type VipTier
 } from '../../../utils/user-display';
 import { resolveMediaUrl } from '../../../utils/media-url';
+import { tenantRoomPriceLabel } from '../../../utils/tenant-room-filters';
 import { normalizeLandlordPackageCode } from '../../../utils/vip-tier-styles';
 
 export interface ViewerDisplayRow extends RoomPostViewerRow {
@@ -86,6 +88,7 @@ export class ListingViewersComponent implements OnInit {
   private readonly peerProfiles = inject(ChatPeerProfileService);
   private readonly chatService = inject(ChatService);
   private readonly lifestyle = inject(LifestyleService);
+  private readonly tenantRoomProfiles = inject(TenantRoomProfileService);
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -193,11 +196,12 @@ export class ListingViewersComponent implements OnInit {
         .pipe(catchError(() => of(null))),
       answers: this.lifestyle.getUserAnswers(row.tenantId),
       match: this.lifestyle.getMatchingScore(row.tenantId),
-      myAnswers: this.lifestyle.getMyAnswers().pipe(catchError(() => of([] as UserLifestyleAnswer[])))
+      myAnswers: this.lifestyle.getMyAnswers().pipe(catchError(() => of([] as UserLifestyleAnswer[]))),
+      tenantRoomProfile: this.tenantRoomProfiles.getByUserId(row.tenantId).pipe(catchError(() => of(null)))
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ userRaw, answers, match, myAnswers }) => {
+        next: ({ userRaw, answers, match, myAnswers, tenantRoomProfile }) => {
           if (!userRaw) {
             this.viewerProfileError = 'Không tải được hồ sơ người xem.';
             this.viewerProfileLoading = false;
@@ -225,7 +229,7 @@ export class ListingViewersComponent implements OnInit {
 
           const room = roomStatusFromAnswers(answers);
           this.viewerRoomHasRoom = room.hasRoom;
-          this.viewerRoomPriceLabel = room.priceLabel ?? '';
+          this.viewerRoomPriceLabel = room.hasRoom ? tenantRoomPriceLabel(tenantRoomProfile) : '';
           this.viewerRoomStatusLabel = roomStatusBadge(room.hasRoom);
 
           this.peerProfiles.seedFromHints(row.tenantId, {

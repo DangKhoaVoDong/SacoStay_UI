@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { LifestyleService } from './lifestyle.service';
+import { TenantRoomProfileService } from './tenant-room-profile.service';
 import {
   ageFromDateOfBirth,
   jobLabelVi,
@@ -21,8 +22,10 @@ import {
 } from '../utils/user-display';
 import { resolveMediaUrl } from '../utils/media-url';
 import { computeLifestyleMatchPercent } from '../utils/guest-match';
+import { tenantRoomPriceLabel } from '../utils/tenant-room-filters';
 import { profileGenderFromRaw, type ProfileGender } from '../utils/discovery-filters';
 import type { SwipeDeckCard, UserLifestyleAnswer } from '../models/lifestyle.models';
+import type { TenantRoomProfile } from '../models/tenant-room-profile.models';
 
 export interface DiscoveryCard extends SwipeDeckCard {
   displayName: string;
@@ -41,12 +44,14 @@ export interface DiscoveryCard extends SwipeDeckCard {
   roomStatusLabel: string;
   roomPriceLabel: string;
   lifestyleAnswers: UserLifestyleAnswer[];
+  tenantRoomProfile: TenantRoomProfile | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class DiscoveryProfileService {
   private readonly http = inject(HttpClient);
   private readonly lifestyle = inject(LifestyleService);
+  private readonly tenantRoomProfiles = inject(TenantRoomProfileService);
   private readonly apiUrl = environment.apiUrl;
 
   enrichDeck(
@@ -69,7 +74,14 @@ export class DiscoveryProfileService {
       ),
       answers: this.lifestyle.getUserAnswers(card.userId)
     }).pipe(
-      map(({ profileRaw, answers }) => {
+      switchMap(({ profileRaw, answers }) => {
+        const room = roomStatusFromAnswers(answers);
+        const tenantRoom$ = room.hasRoom
+          ? this.tenantRoomProfiles.getByUserId(card.userId)
+          : of(null as TenantRoomProfile | null);
+        return tenantRoom$.pipe(map((tenantRoomProfile) => ({ profileRaw, answers, tenantRoomProfile, room })));
+      }),
+      map(({ profileRaw, answers, tenantRoomProfile, room }) => {
         const profile = profileRaw ? normalizeAuthUser(profileRaw) : {};
         const displayName = navProfileLabel(profile) || 'Người dùng';
         const age = ageFromDateOfBirth(profileDateOfBirthSeed(profile));
@@ -82,7 +94,6 @@ export class DiscoveryProfileService {
         const fallbackAvatarUrl = av ? resolveMediaUrl(av) : placeholder;
         const avatarUrl = profileImageUrls.length ? profileImageUrls[0] : fallbackAvatarUrl;
 
-        const room = roomStatusFromAnswers(answers);
         const matchingScore = guestMatch
           ? computeLifestyleMatchPercent(myAnswers, answers)
           : card.matchingScore;
@@ -100,8 +111,9 @@ export class DiscoveryProfileService {
           bio,
           hasRoom: room.hasRoom,
           roomStatusLabel: roomStatusBadge(room.hasRoom),
-          roomPriceLabel: room.priceLabel ?? '',
-          lifestyleAnswers: lifestyleAnswersForDisplay(answers)
+          roomPriceLabel: room.hasRoom ? tenantRoomPriceLabel(tenantRoomProfile) : '',
+          lifestyleAnswers: lifestyleAnswersForDisplay(answers),
+          tenantRoomProfile: room.hasRoom ? tenantRoomProfile : null
         } satisfies DiscoveryCard;
       })
     );

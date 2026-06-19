@@ -1595,6 +1595,221 @@
         }
       }
     },
+    "/api/SharedSpace/create": {
+      "post": {
+        "tags": [
+          "SharedSpace"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpaceDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpaceDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpaceDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/SharedSpace/current": {
+      "get": {
+        "tags": [
+          "SharedSpace"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/SharedSpace/{spaceId}/shortlist": {
+      "post": {
+        "tags": [
+          "SharedSpace"
+        ],
+        "parameters": [
+          {
+            "name": "spaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddToShortlistDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddToShortlistDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddToShortlistDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/SharedSpace/shortlist/{shortlistId}/vote": {
+      "post": {
+        "tags": [
+          "SharedSpace"
+        ],
+        "parameters": [
+          {
+            "name": "shortlistId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoteRoomDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoteRoomDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoteRoomDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/SharedSpace/{spaceId}/propose-finalize": {
+      "put": {
+        "tags": [
+          "SharedSpace"
+        ],
+        "parameters": [
+          {
+            "name": "spaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinalizeSpaceDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinalizeSpaceDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FinalizeSpaceDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/SharedSpace/{spaceId}/accept-finalize": {
+      "put": {
+        "tags": [
+          "SharedSpace"
+        ],
+        "parameters": [
+          {
+            "name": "spaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/SharedSpace/{spaceId}/reject-finalize": {
+      "put": {
+        "tags": [
+          "SharedSpace"
+        ],
+        "parameters": [
+          {
+            "name": "spaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/User/profile-images": {
       "get": {
         "tags": [
@@ -1662,6 +1877,19 @@
   },
   "components": {
     "schemas": {
+      "AddToShortlistDTO": {
+        "required": [
+          "roomId"
+        ],
+        "type": "object",
+        "properties": {
+          "roomId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
       "BuyLandlordPackageDTO": {
         "type": "object",
         "properties": {
@@ -1699,6 +1927,32 @@
               "type": "string"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateSpaceDTO": {
+        "required": [
+          "targetUserId"
+        ],
+        "type": "object",
+        "properties": {
+          "targetUserId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FinalizeSpaceDTO": {
+        "required": [
+          "shortlistId"
+        ],
+        "type": "object",
+        "properties": {
+          "shortlistId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -1883,6 +2137,20 @@
           "otp": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VoteRoomDTO": {
+        "required": [
+          "voteStatus"
+        ],
+        "type": "object",
+        "properties": {
+          "voteStatus": {
+            "minLength": 1,
+            "pattern": "Like|Dislike",
+            "type": "string"
           }
         },
         "additionalProperties": false

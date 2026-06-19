@@ -7,39 +7,23 @@ export interface RoomQuestionPair {
   roomPrice: LifestyleQuestion | null;
 }
 
-/** Hai câu cuối quiz (theo id tăng dần) = tình trạng phòng + giá phòng. */
+/** Câu tình trạng phòng tách khỏi lifestyle; giá phòng chuyển sang tenant room profile. */
 export function resolveRoomQuestionPair(questions: LifestyleQuestion[]): RoomQuestionPair {
   const sorted = [...questions].sort((a, b) => a.id - b.id);
-  if (sorted.length >= 2) {
-    return {
-      lifestyle: sorted.slice(0, -2),
-      roomStatus: sorted[sorted.length - 2],
-      roomPrice: sorted[sorted.length - 1]
-    };
-  }
   const roomStatus = sorted.find((q) => isRoomStatusQuestion(q.content)) ?? null;
-  const roomPrice = sorted.find((q) => isRoomPriceQuestion(q.content)) ?? null;
-  return {
-    lifestyle: sorted.filter((q) => q.id !== roomStatus?.id && q.id !== roomPrice?.id),
-    roomStatus,
-    roomPrice
-  };
+  const lifestyle = sorted.filter(
+    (q) => q.id !== roomStatus?.id && !isRoomPriceQuestion(q.content)
+  );
+  return { lifestyle, roomStatus, roomPrice: null };
 }
 
 export function resolveRoomQuestionPairFromAnswers(answers: UserLifestyleAnswer[]): {
   roomStatus: UserLifestyleAnswer | null;
   roomPrice: UserLifestyleAnswer | null;
 } {
-  const sorted = [...answers].sort((a, b) => a.questionId - b.questionId);
-  if (sorted.length >= 2) {
-    return {
-      roomStatus: sorted[sorted.length - 2],
-      roomPrice: sorted[sorted.length - 1]
-    };
-  }
   return {
-    roomStatus: sorted.find((a) => isRoomStatusQuestion(a.questionContent)) ?? null,
-    roomPrice: sorted.find((a) => isRoomPriceQuestion(a.questionContent)) ?? null
+    roomStatus: answers.find((a) => isRoomStatusQuestion(a.questionContent)) ?? null,
+    roomPrice: null
   };
 }
 
@@ -56,8 +40,7 @@ const QUESTION_LABEL_BY_ID: Record<number, string> = {
   5: 'Mức độ sạch sẽ của người ở ghép',
   7: 'Mong muốn mối quan hệ với người ở ghép',
   11: 'Tiêu chí lựa chọn người ở ghép',
-  22: 'Tình trạng phòng',
-  23: 'Ngân sách thuê phòng'
+  22: 'Tình trạng phòng'
 };
 
 /** Thứ tự quan trọng: câu dài / cụ thể trước, tránh trùng nhãn chung. */
@@ -160,37 +143,19 @@ export function lifestyleAnswersForDisplay(answers: UserLifestyleAnswer[]): User
 
 export interface RoomStatusView {
   hasRoom: boolean;
-  priceLabel?: string;
 }
 
 export function roomStatusFromAnswers(answers: UserLifestyleAnswer[]): RoomStatusView {
-  let hasRoom = false;
-  let priceLabel: string | undefined;
-
-  const { roomStatus, roomPrice } = resolveRoomQuestionPairFromAnswers(answers);
-
+  const { roomStatus } = resolveRoomQuestionPairFromAnswers(answers);
   if (roomStatus) {
-    hasRoom = isHasRoomYesOption(roomStatus.optionContent);
-  } else {
-    for (const a of answers) {
-      if (isRoomStatusQuestion(a.questionContent)) {
-        hasRoom = isHasRoomYesOption(a.optionContent);
-      }
+    return { hasRoom: isHasRoomYesOption(roomStatus.optionContent) };
+  }
+  for (const a of answers) {
+    if (isRoomStatusQuestion(a.questionContent)) {
+      return { hasRoom: isHasRoomYesOption(a.optionContent) };
     }
   }
-
-  if (roomPrice && hasRoom) {
-    priceLabel = roomPrice.optionContent.trim();
-  } else {
-    for (const a of answers) {
-      if (isRoomPriceQuestion(a.questionContent)) {
-        priceLabel = a.optionContent.trim();
-      }
-    }
-    if (!hasRoom) priceLabel = undefined;
-  }
-
-  return { hasRoom, priceLabel };
+  return { hasRoom: false };
 }
 
 export function jobLabelVi(job: string | null | undefined): string {

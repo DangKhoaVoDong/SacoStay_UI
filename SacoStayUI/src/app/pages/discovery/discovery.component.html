@@ -19,6 +19,7 @@
             <li>Trả lời trắc nghiệm về thói quen sinh hoạt và lối sống</li>
             <li>Hệ thống tính % hòa hợp với từng người thuê trọ khác</li>
             <li>Lướt thẻ — thích người bạn cảm thấy phù hợp, bỏ qua nếu chưa hợp</li>
+            <li>Khi cả hai thích nhau (match), mở <strong>Tin nhắn</strong> và tạo không gian chung từ cuộc trò chuyện</li>
             <li>Đăng ký tài khoản để lưu kết quả, kết nối và tiếp tục tìm bạn</li>
           </ol>
         </div>
@@ -52,46 +53,75 @@
   } @else {
     <main class="flex-1 flex w-full max-w-[1600px] mx-auto h-[calc(100dvh-3.5rem)] sm:h-[calc(100vh-64px)] overflow-hidden pb-16 lg:pb-0">
       <!-- Left: wishlist -->
-      <aside class="hidden lg:flex w-72 flex-col bg-white border-r border-orange-100 shrink-0">
-        <div class="p-4 border-b border-orange-100">
-          <h3 class="font-bold text-gray-900">Danh sách yêu thích</h3>
-          <p class="text-xs text-gray-500 mt-0.5">{{ wishlistCount }} người</p>
-        </div>
-        <div class="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3 content-start">
-          @if (likedUsers.length) {
-            @for (u of likedUsers; track u.userId) {
-              <button
-                type="button"
-                class="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF9F43]"
-                [class.ring-2]="isWishlistCardActive(u.userId)"
-                [class.ring-[#FF9F43]]="isWishlistCardActive(u.userId)"
-                (click)="focusWishlistCard(u.userId)"
-              >
-                <img [src]="u.avatarUrl" [alt]="u.displayName" class="w-full h-full object-cover object-center" />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2 pointer-events-none">
-                  <span class="text-white font-bold text-xs truncate">{{ u.displayName }}</span>
-                </div>
-                <span
-                  class="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full pointer-events-none"
-                  [style.background]="scoreColor(u.matchingScore)"
-                >
-                  {{ u.matchingScore }}%
-                </span>
-                <button
-                  type="button"
-                  class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#ffbd59] transition-all"
-                  title="Xóa khỏi danh sách"
-                  (click)="removeFromWishlist(u.userId, $event)"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </button>
-            }
-          } @else {
-            <p class="col-span-2 text-center text-sm text-gray-500 py-8">Hãy thả tim để thêm vào danh sách yêu thích!</p>
+      <aside class="hidden lg:flex w-72 flex-col bg-white border-r border-orange-100 shrink-0 min-h-0">
+        <div class="p-4 border-b border-orange-100 shrink-0">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <h3 class="font-bold text-gray-900">Danh sách yêu thích</h3>
+              <p class="text-xs text-gray-500 mt-0.5">{{ wishlistCount }} người</p>
+            </div>
+            <button
+              type="button"
+              class="wishlist-hint-toggle shrink-0"
+              (click)="toggleWishlistSpaceHint()"
+              [attr.aria-expanded]="showWishlistSpaceHint"
+              aria-label="Hướng dẫn không gian chung"
+            >
+              <img [src]="noteIconUrl" alt="" width="28" height="28" class="block" />
+            </button>
+          </div>
+            @if (showWishlistSpaceHint) {
+            <div class="discovery-flow-hint mt-3">
+              <p class="discovery-flow-hint__title">Không gian chung</p>
+              <ol>
+                <li>Match hai chiều trên Discovery</li>
+                <li>Mở <strong>Tin nhắn</strong> với người đó</li>
+                <li>Nhấn <strong>Tạo không gian chung</strong> trong hội thoại</li>
+              </ol>
+            </div>
           }
+        </div>
+        <div class="wishlist-sidebar__list">
+          <div class="wishlist-grid">
+            @if (likedUsers.length) {
+              @for (u of likedUsers; track u.userId) {
+                <div class="wishlist-card">
+                  <div class="wishlist-card__surface group">
+                    <button
+                      type="button"
+                      class="wishlist-card__hit"
+                      [class.ring-2]="isWishlistCardActive(u.userId)"
+                      [class.ring-[#FF9F43]]="isWishlistCardActive(u.userId)"
+                      (click)="focusWishlistCard(u.userId)"
+                    >
+                      <img [src]="u.avatarUrl" [alt]="u.displayName" class="w-full h-full object-cover object-center" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/50 to-transparent pt-8 pb-2 px-2 pointer-events-none">
+                        <span class="text-white font-bold text-xs truncate block pr-7">{{ u.displayName }}</span>
+                      </div>
+                    </button>
+                    <span
+                      class="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full pointer-events-none z-[1]"
+                      [style.background]="scoreColor(u.matchingScore)"
+                    >
+                      {{ u.matchingScore }}%
+                    </span>
+                    <button
+                      type="button"
+                      class="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#ffbd59] transition-all z-[2]"
+                      title="Xóa khỏi danh sách"
+                      (click)="removeFromWishlist(u.userId, $event)"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            } @else {
+              <p class="wishlist-grid__empty">Hãy thả tim để thêm vào danh sách yêu thích!</p>
+            }
+          </div>
         </div>
       </aside>
 
@@ -210,10 +240,25 @@
                   </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#FF9F43] text-white">
+                <div class="flex flex-wrap items-center gap-2 pointer-events-auto relative z-20">
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#FF9F43] text-white pointer-events-none">
                     🏠 {{ currentCard.roomStatusLabel }}
                   </span>
+                  @if (canOpenTenantRoomDetails) {
+                    <button
+                      type="button"
+                      data-discovery-card-action
+                      class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/95 text-[#FF9F43] shadow-md hover:scale-105 transition-transform"
+                      title="Xem thông tin phòng trọ"
+                      (pointerdown)="$event.stopPropagation()"
+                      (pointerup)="$event.stopPropagation()"
+                      (click)="openTenantRoomPopup($event)"
+                    >
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                      </svg>
+                    </button>
+                  }
                 </div>
               </div>
             </article>
@@ -307,6 +352,18 @@
               <div class="flex items-center gap-2">
                 <span class="text-gray-400 w-5 text-center">🏠</span>
                 <span>{{ currentCard.roomStatusLabel }}</span>
+                @if (canOpenTenantRoomDetails) {
+                  <button
+                    type="button"
+                    class="ml-auto inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#FFF8F0] text-[#FF9F43] border border-orange-100 hover:bg-orange-50"
+                    title="Xem thông tin phòng trọ"
+                    (click)="openTenantRoomPopup()"
+                  >
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                    </svg>
+                  </button>
+                }
               </div>
               @if (currentCard.roomPriceLabel) {
                 <div class="flex items-center gap-2">
@@ -413,28 +470,55 @@
       @if (showMobileWishlist) {
         <div class="lg:hidden fixed inset-0 z-40">
           <div class="absolute inset-0 bg-black/40" (click)="closeMobilePanels()"></div>
-          <div class="mobile-drawer-panel safe-px p-4">
-            <div class="flex items-center justify-between mb-4">
+          <div class="mobile-drawer-panel safe-px p-4 flex flex-col min-h-0">
+            <div class="flex items-center justify-between gap-2 mb-3 shrink-0">
               <h3 class="font-bold text-gray-900">Danh sách yêu thích</h3>
-              <button type="button" class="text-gray-400" (click)="closeMobilePanels()">✕</button>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="wishlist-hint-toggle"
+                  (click)="toggleWishlistSpaceHint()"
+                  [attr.aria-expanded]="showWishlistSpaceHint"
+                  aria-label="Hướng dẫn không gian chung"
+                >
+                  <img [src]="noteIconUrl" alt="" width="28" height="28" class="block" />
+                </button>
+                <button type="button" class="text-gray-400 p-1" (click)="closeMobilePanels()">✕</button>
+              </div>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-              @if (likedUsers.length) {
-                @for (u of likedUsers; track u.userId) {
-                  <button
-                    type="button"
-                    class="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 text-left"
-                    (click)="focusWishlistCard(u.userId); closeMobilePanels()"
-                  >
-                    <img [src]="u.avatarUrl" [alt]="u.displayName" class="w-full h-full object-cover" />
-                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                      <span class="text-white text-xs font-bold truncate block">{{ u.displayName }}</span>
+            @if (showWishlistSpaceHint) {
+              <div class="discovery-flow-hint mb-4 shrink-0">
+                <p class="discovery-flow-hint__title">Không gian chung</p>
+                <ol>
+                  <li>Match hai chiều trên Discovery</li>
+                  <li>Mở <strong>Tin nhắn</strong> với người đó</li>
+                  <li>Nhấn <strong>Tạo không gian chung</strong> trong hội thoại</li>
+                </ol>
+              </div>
+            }
+            <div class="wishlist-sidebar__list wishlist-sidebar__list--drawer flex-1 min-h-0">
+              <div class="wishlist-grid">
+                @if (likedUsers.length) {
+                  @for (u of likedUsers; track u.userId) {
+                    <div class="wishlist-card">
+                      <div class="wishlist-card__surface group">
+                        <button
+                          type="button"
+                          class="wishlist-card__hit"
+                          (click)="focusWishlistCard(u.userId); closeMobilePanels()"
+                        >
+                          <img [src]="u.avatarUrl" [alt]="u.displayName" class="w-full h-full object-cover" />
+                          <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/50 to-transparent pt-8 pb-2 px-2">
+                            <span class="text-white text-xs font-bold truncate block pr-7">{{ u.displayName }}</span>
+                          </div>
+                        </button>
+                      </div>
                     </div>
-                  </button>
+                  }
+                } @else {
+                  <p class="wishlist-grid__empty">Hãy thả tim để thêm vào danh sách!</p>
                 }
-              } @else {
-                <p class="col-span-2 text-center text-sm text-gray-500 py-8">Hãy thả tim để thêm vào danh sách!</p>
-              }
+              </div>
             </div>
           </div>
         </div>
@@ -475,6 +559,28 @@
         </div>
       }
     </main>
+  }
+
+  @if (showTenantRoomPopup && currentCard; as roomCard) {
+    @if (roomCard.tenantRoomProfile) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45" (click)="closeTenantRoomPopup()">
+      <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl" (click)="$event.stopPropagation()">
+        <div class="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">Phòng trọ của {{ roomCard.displayName }}</h3>
+            @if (roomCard.roomPriceLabel) {
+              <p class="text-sm text-[#FF9F43] font-medium mt-1">{{ roomCard.roomPriceLabel }}</p>
+            }
+          </div>
+          <button type="button" class="text-gray-400 text-xl leading-none" (click)="closeTenantRoomPopup()">✕</button>
+        </div>
+        <app-tenant-room-details-view
+          [profile]="roomCard.tenantRoomProfile"
+          [priceLabel]="roomCard.roomPriceLabel"
+        />
+      </div>
+    </div>
+    }
   }
 
   @if (showUpgradePrompt) {

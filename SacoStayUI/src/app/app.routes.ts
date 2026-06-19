@@ -73,9 +73,20 @@ export const routes: Routes = [
       import('./pages/lifestyle-quiz/lifestyle-quiz.component').then((m) => m.LifestyleQuizComponent)
   },
   {
+    path: 'tenant-room-profile',
+    loadComponent: () =>
+      import('./pages/tenant-room-profile/tenant-room-profile.component').then((m) => m.TenantRoomProfileComponent)
+  },
+  {
     path: 'discovery',
     loadComponent: () => import('./pages/discovery/discovery.component').then((m) => m.DiscoveryComponent),
     canActivate: [tenantGuard]
+  },
+  {
+    path: 'shared-space',
+    loadComponent: () =>
+      import('./pages/shared-space/shared-space.component').then((m) => m.SharedSpaceComponent),
+    canActivate: [authGuard, tenantGuard]
   },
   {
     path: 'rooms',

@@ -1,0 +1,226 @@
+<div class="min-h-screen flex flex-col bg-[#FFF8F0]">
+  <app-navbar></app-navbar>
+
+  <main class="flex-1 max-w-4xl mx-auto w-full safe-px sm:px-6 py-6 sm:py-10">
+    <button
+      type="button"
+      class="inline-flex items-center gap-1.5 text-sm font-medium text-[#6B7280] hover:text-[#1A1A2E] mb-4"
+      (click)="goBack()"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Quay lại
+    </button>
+
+    @if (loading) {
+      <div class="text-center py-16 text-[#6B7280]">Đang tải không gian chung…</div>
+    } @else if (notFound || !space) {
+      <div class="shared-empty-card">
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#FFF8F0] border border-orange-100 flex items-center justify-center text-2xl" aria-hidden="true">🏠</div>
+          <h2 class="text-xl font-bold text-[#1A1A2E] mb-2">Chưa có không gian chung</h2>
+          <p class="text-sm text-[#6B7280]">Bạn chưa khởi tạo không gian tìm trọ chung với ai.</p>
+        </div>
+        <div class="text-left text-sm text-[#6B7280] bg-[#FFF8F0] rounded-xl border border-orange-100 p-4 mb-6 space-y-2">
+          <p class="font-semibold text-[#1A1A2E]">Trong không gian chung, hai bạn sẽ:</p>
+          <ol class="list-decimal list-inside space-y-1.5 leading-relaxed">
+            <li>Cùng thêm các phòng trọ muốn cân nhắc vào danh sách chung</li>
+            <li>Bình chọn <strong>Thích</strong> hoặc <strong>Không thích</strong> từng phòng</li>
+            <li>Khi cả hai cùng thích một phòng — một người đề xuất chốt, người kia xác nhận</li>
+          </ol>
+          <p class="pt-1 text-[#1A1A2E]">
+            Mở cuộc trò chuyện trên <strong>Tin nhắn</strong> với người bạn đã match, rồi nhấn <strong>Tạo không gian chung</strong> trong hội thoại.
+          </p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <a routerLink="/chat" class="shared-btn-primary inline-flex justify-center">Đi tới Tin nhắn</a>
+          <a routerLink="/discovery" class="shared-btn-outline inline-flex justify-center">Tìm bạn</a>
+        </div>
+      </div>
+    } @else {
+      <header class="mb-6 sm:mb-8">
+        <p class="text-sm font-semibold uppercase tracking-wide text-[#FF9F43] mb-1">Không gian tìm trọ chung</p>
+        <h1 class="text-xl sm:text-2xl font-bold text-[#1A1A2E]">
+          {{ space.myName }} &amp; {{ space.partnerName }}
+        </h1>
+        <p class="text-sm text-[#6B7280] mt-2">
+          Cùng lọc phòng, bình chọn và chốt căn phù hợp nhất cho hành trình ở ghép.
+        </p>
+        @if (isActive) {
+          <button type="button" class="shared-btn-primary mt-4" (click)="goFindRooms()">
+            Tìm phòng trọ
+          </button>
+        }
+      </header>
+
+      @if (isPendingFinalize && isProposer) {
+        <div class="shared-lock-banner shared-lock-banner--wait">
+          <p class="font-semibold text-[#1A1A2E]">Đã gửi đề xuất chốt, vui lòng đợi bạn cùng phòng phê duyệt…</p>
+          @if (proposedRoom) {
+            <p class="text-sm text-[#6B7280] mt-1">{{ proposedRoom.roomTitle }} — {{ formatPrice(proposedRoom.price) }}</p>
+          }
+          <button
+            type="button"
+            class="shared-btn-outline mt-4"
+            [disabled]="actionLoading"
+            (click)="onRejectFinalize()"
+          >
+            Hủy yêu cầu đề xuất
+          </button>
+        </div>
+      }
+
+      @if (isPendingFinalize && isApprover) {
+        <div class="shared-lock-banner shared-lock-banner--proposal">
+          <p class="font-semibold text-[#1A1A2E]">{{ space.partnerName }} đề xuất chốt phòng</p>
+          @if (proposedRoom) {
+            <p class="text-sm text-[#6B7280] mt-1">{{ proposedRoom.roomTitle }}</p>
+            <p class="text-sm text-[#FF9F43] font-medium mt-0.5">{{ formatPrice(proposedRoom.price) }}</p>
+            <p class="text-xs text-[#6B7280] mt-1">{{ proposedRoom.address }}</p>
+          }
+          <div class="flex flex-col sm:flex-row gap-3 mt-4">
+            <button
+              type="button"
+              class="shared-btn-primary flex-1"
+              [disabled]="actionLoading"
+              (click)="onAcceptFinalize()"
+            >
+              Đồng ý chốt
+            </button>
+            <button
+              type="button"
+              class="shared-btn-outline flex-1"
+              [disabled]="actionLoading"
+              (click)="onRejectFinalize()"
+            >
+              Từ chối
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (isFinalized) {
+        <div class="shared-lock-banner shared-lock-banner--done">
+          <p class="font-semibold text-[#1A1A2E]">Đã chốt phòng thành công!</p>
+          @if (proposedRoom) {
+            <p class="text-sm text-[#6B7280] mt-1">{{ proposedRoom.roomTitle }}</p>
+          }
+          <div class="flex flex-col sm:flex-row gap-3 mt-4">
+            @if (space.finalizedRoomId) {
+              <a [routerLink]="['/rooms', space.finalizedRoomId]" class="shared-btn-primary text-center flex-1">
+                Xem phòng đã chốt
+              </a>
+            }
+            <a
+              [routerLink]="['/chat']"
+              [queryParams]="{ with: space.partnerId, name: space.partnerName, role: 'tenant' }"
+              class="shared-btn-outline text-center flex-1"
+            >
+              Nhắn tin bạn cùng phòng
+            </a>
+          </div>
+        </div>
+      }
+
+      <section class="space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-lg font-bold text-[#1A1A2E]">Danh sách phòng cân nhắc</h2>
+          <span class="text-xs text-[#6B7280] shrink-0">{{ space.shortlist.length }} phòng</span>
+        </div>
+
+        @if (!space.shortlist.length) {
+          <div class="shared-empty-card text-center">
+            <p class="text-[#6B7280] mb-3">Chưa có phòng nào trong danh sách chung.</p>
+            <button type="button" class="shared-btn-primary inline-flex" (click)="goFindRooms()">Tìm phòng trọ</button>
+          </div>
+        } @else {
+          @for (item of space.shortlist; track item.id) {
+            <article class="shared-room-card" [class.shared-room-card--locked]="!isActive">
+              <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <h3 class="font-bold text-[#1A1A2E] truncate">{{ item.roomTitle }}</h3>
+                    @if (item.roomCategory) {
+                      <span class="shared-tag">{{ item.roomCategory }}</span>
+                    }
+                  </div>
+                  <p class="text-sm text-[#6B7280] line-clamp-2">{{ item.address }}</p>
+                  <p class="text-[#FF9F43] font-bold mt-2">{{ formatPrice(item.price) }}<span class="text-sm font-normal text-[#6B7280]">/tháng</span></p>
+                  @if (item.isAddedByMe) {
+                    <p class="text-xs text-[#6B7280] mt-1">Bạn đã thêm phòng này</p>
+                  }
+                </div>
+                <a [routerLink]="['/rooms', item.roomId]" class="shared-btn-outline text-sm shrink-0 self-start">
+                  Xem chi tiết
+                </a>
+              </div>
+
+              <div class="mt-4 pt-4 border-t border-orange-100">
+                <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm mb-4">
+                  <div>
+                    <p class="text-[#6B7280] mb-1">Bạn</p>
+                    <span [class]="voteClass(item.myVote, true)">{{ voteLabel(item.myVote) }}</span>
+                  </div>
+                  <div>
+                    <p class="text-[#6B7280] mb-1">{{ space.partnerName }}</p>
+                    <span [class]="voteClass(item.partnerVote, false)">{{ voteLabel(item.partnerVote) }}</span>
+                  </div>
+                </div>
+
+                @if (isActive) {
+                  <div class="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      class="shared-vote-btn shared-vote-btn--like"
+                      [class.shared-vote-btn--active]="item.myVote === 'Like'"
+                      [disabled]="actionLoading"
+                      (click)="onVote(item, 'Like')"
+                    >
+                      👍 Thích
+                    </button>
+                    <button
+                      type="button"
+                      class="shared-vote-btn shared-vote-btn--dislike"
+                      [class.shared-vote-btn--active]="item.myVote === 'Dislike'"
+                      [disabled]="actionLoading"
+                      (click)="onVote(item, 'Dislike')"
+                    >
+                      👎 Không thích
+                    </button>
+                    @if (bothLiked(item)) {
+                      <button
+                        type="button"
+                        class="shared-btn-primary text-sm ml-auto w-full sm:w-auto"
+                        [disabled]="actionLoading"
+                        (click)="onProposeFinalize(item)"
+                      >
+                        Đề xuất chốt phòng
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            </article>
+          }
+        }
+      </section>
+    }
+  </main>
+
+  @if (showCelebration) {
+    <div class="shared-celebration" role="dialog" aria-label="Chúc mừng">
+      <div class="shared-celebration__backdrop" (click)="dismissCelebration()"></div>
+      <div class="shared-celebration__panel">
+        <p class="text-4xl mb-3" aria-hidden="true">🎉</p>
+        <h2 class="text-xl font-bold text-[#1A1A2E] mb-2">Chúc mừng!</h2>
+        <p class="text-[#6B7280] text-sm leading-relaxed">
+          Hai bạn đã thống nhất chốt phòng. Hãy liên hệ chủ trọ và hoàn tất thủ tục thuê trọ nhé.
+        </p>
+        <button type="button" class="shared-btn-primary w-full mt-5" (click)="dismissCelebration()">
+          Tuyệt vời!
+        </button>
+      </div>
+    </div>
+  }
+</div>

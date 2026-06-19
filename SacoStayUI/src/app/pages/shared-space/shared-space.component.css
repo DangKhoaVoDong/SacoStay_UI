@@ -1,0 +1,210 @@
+.shared-empty-card {
+  padding: 2rem 1.5rem;
+  background: #fff;
+  border-radius: 1.25rem;
+  border: 1px solid #ffe8cc;
+  box-shadow: 0 4px 20px rgba(255, 159, 67, 0.08);
+}
+
+.shared-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #fff;
+  background: linear-gradient(90deg, #ff9f43 0%, #ff8c2a 100%);
+  box-shadow: 0 6px 20px rgba(255, 159, 67, 0.35);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shared-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(255, 159, 67, 0.42);
+}
+
+.shared-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.shared-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #1a1a2e;
+  background: #fff;
+  border: 1px solid #ffe8cc;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.shared-btn-outline:hover:not(:disabled) {
+  border-color: #ff9f43;
+  background: #fffbf7;
+}
+
+.shared-btn-outline:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.shared-lock-banner {
+  padding: 1.25rem 1.5rem;
+  border-radius: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #ffe8cc;
+  background: #fff;
+}
+
+.shared-lock-banner--wait {
+  background: #fffbf7;
+  border-color: #ffbd59;
+}
+
+.shared-lock-banner--proposal {
+  background: linear-gradient(180deg, #fff 0%, #fff8f0 100%);
+  border-color: #ff9f43;
+}
+
+.shared-lock-banner--done {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.shared-room-card {
+  padding: 1.25rem;
+  background: #fff;
+  border-radius: 1rem;
+  border: 1px solid #fff0e0;
+  box-shadow: 0 2px 16px rgba(255, 159, 67, 0.08);
+}
+
+.shared-room-card--locked {
+  opacity: 0.92;
+}
+
+.shared-tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  background: #fff8f0;
+  color: #ff9f43;
+}
+
+.shared-vote {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.shared-vote--like,
+.shared-vote--like-mine {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.shared-vote--dislike,
+.shared-vote--dislike-mine {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.shared-vote--none {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.shared-vote-btn {
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shared-vote-btn--like {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.shared-vote-btn--like.shared-vote-btn--active {
+  background: #22c55e;
+  color: #fff;
+  border-color: #22c55e;
+}
+
+.shared-vote-btn--dislike {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.shared-vote-btn--dislike.shared-vote-btn--active {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+
+.shared-vote-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.shared-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.shared-celebration__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 26, 46, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.shared-celebration__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 22rem;
+  padding: 1.75rem 1.5rem;
+  background: #fff;
+  border-radius: 1.25rem;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+  animation: sharedPop 0.35s ease-out;
+}
+
+@keyframes sharedPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
