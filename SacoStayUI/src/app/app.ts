@@ -5,12 +5,14 @@ import { ChatUnreadService } from './services/chat-unread.service';
 import { NotificationCenterService } from './services/notification-center.service';
 import { UiToastComponent } from './components/shared/ui-toast/ui-toast.component';
 import { UiConfirmDialogComponent } from './components/shared/ui-confirm-dialog/ui-confirm-dialog.component';
+import { routeFadeAnimation } from './animations/route.animations';
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, UiToastComponent, UiConfirmDialogComponent],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
+  animations: [routeFadeAnimation]
 })
 export class App implements OnInit {
   private readonly chatUnread = inject(ChatUnreadService);
@@ -21,5 +23,10 @@ export class App implements OnInit {
     this.title.setTitle('SacoStay — Tìm bạn ở ghép hợp gu');
     this.chatUnread.bindOwnerFromSession();
     this.notifications.bindFromSession();
+  }
+
+  routeState(outlet: RouterOutlet): string {
+    if (!outlet.isActivated) return 'root';
+    return outlet.activatedRoute.snapshot.url.map((s) => s.path).join('/') || 'root';
   }
 }

@@ -355,27 +355,20 @@ export class ChatComponent implements OnInit {
     return !!peer && this.chatService.isLandlordRole(peer.roles);
   }
 
-  get partnerSharedSpace(): SharedSpaceSummary | undefined {
-    if (!this.activeOtherUserId) return undefined;
-    return this.sharedSpaces.find((s) => this.sameUserId(s.partnerId, this.activeOtherUserId!));
+  private spacesWithPartner(partnerId: string): SharedSpaceSummary[] {
+    return this.sharedSpaces.filter((s) => this.sameUserId(s.partnerId, partnerId));
   }
 
   get sharedSpaceButtonLabel(): string {
-    const space = this.partnerSharedSpace;
-    if (!space) return 'Tạo không gian chung';
-    if (space.status === 'Finalized') return 'Không gian chung (đã chốt)';
-    return 'Vào không gian chung';
+    if (!this.activeOtherUserId) return 'Tạo không gian chung';
+    return this.spacesWithPartner(this.activeOtherUserId).length
+      ? 'Tạo không gian chung mới'
+      : 'Tạo không gian chung';
   }
 
   onSharedSpaceAction(): void {
     const partnerId = this.activeOtherUserId;
     if (!partnerId) return;
-
-    const existing = this.partnerSharedSpace;
-    if (existing) {
-      void this.router.navigate(['/shared-space'], { queryParams: { spaceId: existing.id } });
-      return;
-    }
 
     if (this.creatingSharedSpace) return;
     this.creatingSharedSpace = true;

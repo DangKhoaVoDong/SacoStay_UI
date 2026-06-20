@@ -1,3 +1,5 @@
-<router-outlet />
+<div class="route-outlet-wrap" [@routeFade]="routeState(outlet)">
+  <router-outlet #outlet="outlet" />
+</div>
 <app-ui-toast />
 <app-ui-confirm-dialog />

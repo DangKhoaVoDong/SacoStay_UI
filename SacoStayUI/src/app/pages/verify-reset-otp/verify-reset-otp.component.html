@@ -1,39 +1,41 @@
-<div class="verify-otp-container">
-  <div class="verify-otp-card">
-    <div class="card-header">
-      <h2>Xác thực OTP</h2>
-      <p>Nhập mã OTP đã được gửi đến email: <strong>{{ email }}</strong></p>
-    </div>
-
-    <form [formGroup]="otpForm" (ngSubmit)="submit()">
-      <div class="form-group">
-        <label for="otp">Mã OTP</label>
-        <input
-          id="otp"
-          type="text"
-          formControlName="otp"
-          placeholder="Nhập mã 6 số"
-          maxlength="6"
-          [class.error]="otpForm.get('otp')?.invalid && otpForm.get('otp')?.dirty"
-        />
-        <div class="error-message" *ngIf="otpForm.get('otp')?.invalid && otpForm.get('otp')?.dirty">
-          <span *ngIf="otpForm.get('otp')?.errors?.['required']">OTP là bắt buộc</span>
-          <span *ngIf="otpForm.get('otp')?.errors?.['minlength'] || otpForm.get('otp')?.errors?.['maxlength']">OTP phải có 6 số</span>
-        </div>
+<div class="otp-page">
+  <main class="otp-page__main">
+    <div class="otp-card">
+      <div class="otp-card__icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
       </div>
 
-      <button type="submit" [disabled]="loading" class="submit-btn">
-        <span *ngIf="!loading">Xác thực</span>
-        <span *ngIf="loading">Đang xác thực...</span>
-      </button>
-    </form>
+      <h1 class="otp-card__title">Xác thực Email</h1>
+      <p class="otp-card__desc">
+        Chúng tôi đã gửi mã xác thực gồm 6 chữ số đến email
+        <span class="otp-card__email">{{ email }}</span>
+      </p>
 
-    <div class="resend-link">
-      <a (click)="resendOtp()" [class.disabled]="loading">Gửi lại OTP</a>
-    </div>
+      <form [formGroup]="otpForm" (ngSubmit)="submit()">
+        <app-otp-digit-input formControlName="otp" [disabled]="loading" ariaLabel="Mã OTP đặt lại mật khẩu" />
 
-    <div class="back-link">
-      <a (click)="backToForgot()">Quay lại</a>
+        <button type="submit" class="saco-btn saco-btn-primary w-full" [disabled]="loading || otpForm.invalid">
+          @if (!loading) {
+            Xác thực
+          } @else {
+            Đang xác thực...
+          }
+        </button>
+      </form>
+
+      <p class="otp-card__footer">
+        Chưa nhận được mã?
+        @if (countdown > 0) {
+          <span class="font-medium text-gray-800"> Gửi lại sau {{ countdown }}s</span>
+        } @else {
+          <button type="button" class="otp-card__resend" [disabled]="loading" (click)="resendOtp()">Gửi lại mã</button>
+        }
+      </p>
+
+      <button type="button" class="otp-card__back" (click)="backToForgot()">Quay lại</button>
     </div>
-  </div>
+  </main>
 </div>

@@ -63,7 +63,7 @@ function resolveTier(tier?: VipTier | string): VipTier {
 
 /** Thẻ tin — cùng kích thước mọi gói (chỉ tiêu đề khác cỡ). */
 export function getVipTierCardArticleClass(_tier?: VipTier | string): string {
-  return 'bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-50 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300';
+  return 'saco-card saco-card-interactive bg-white rounded-saco-xl overflow-hidden shadow-saco-card border border-orange-50/80 hover:shadow-saco-card-hover hover:-translate-y-1 transition-all duration-300';
 }
 
 /** Nhãn gói — chỉ trang landlord (my-listings). */
@@ -84,7 +84,7 @@ export function getVipTierInlineBadgeClass(tier?: VipTier | string): string {
 
 export function getVipTierPriceBadgeClass(tier?: VipTier | string): string {
   const t = resolveTier(tier);
-  const base = 'absolute bottom-3 left-3 text-white text-sm font-bold px-3 py-1 rounded-lg shadow';
+  const base = 'absolute bottom-3 left-3 text-white text-sm font-bold px-3 py-1.5 rounded-xl shadow-md backdrop-blur-sm';
   switch (t) {
     case 'vip3':
       return `${base} bg-[#EF4444]`;

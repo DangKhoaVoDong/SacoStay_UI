@@ -2,6 +2,7 @@
 @import 'ng-zorro-antd/ng-zorro-antd.min.css';
 
 @import './styles/legal.css';
+@import './styles/design-system.css';
 
 /* Tailwind CSS */
 @tailwind base;
@@ -22,17 +23,35 @@
   html {
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
 
   body {
     font-family: var(--auth-font);
     overflow-x: hidden;
     min-height: 100dvh;
+    background-color: #f8f7f5;
+    color: #1a1a2e;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
   }
 
   img,
   video {
     max-width: 100%;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid rgba(255, 159, 67, 0.45);
+    outline-offset: 2px;
   }
 }
 
@@ -52,35 +71,46 @@
   }
 }
 
-/* Logo thương hiệu — kích thước qua Tailwind class trong brand-assets */
 .brand-logo {
   object-fit: contain;
   display: block;
 }
 
-/* Custom components */
 @layer components {
   .btn-primary-saco {
-    @apply bg-gradient-to-r from-saco-orange to-saco-orange-dark text-white font-semibold py-3 px-6 rounded-lg shadow-saco-orange hover:shadow-lg transform hover:scale-105 transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 font-semibold text-white rounded-full px-6 py-3 shadow-saco-orange transition-all duration-200;
+    background: linear-gradient(135deg, #ff9f43 0%, #ff8c2a 100%);
   }
-  
+
+  .btn-primary-saco:hover:not(:disabled) {
+    @apply -translate-y-0.5 shadow-lg;
+  }
+
+  .btn-primary-saco:active:not(:disabled) {
+    @apply scale-[0.98];
+  }
+
   .input-saco {
-    @apply border border-gray-200 rounded-lg px-4 py-3 focus:border-saco-orange focus:ring-2 focus:ring-saco-orange/20 transition-all duration-200;
+    @apply w-full border border-saco-border rounded-saco-lg px-4 py-3 text-[0.9375rem] bg-white transition-all duration-200;
   }
-  
+
+  .input-saco:focus {
+    @apply border-saco-orange outline-none ring-2 ring-saco-orange/20;
+  }
+
   .auth-card {
-    @apply bg-white rounded-2xl shadow-saco border border-orange-50 p-6 max-w-md mx-auto;
+    @apply bg-white rounded-saco-xl shadow-saco-card border border-orange-50/80 p-6 max-w-md mx-auto;
   }
-  
+
   .role-button-saco {
-    @apply relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200;
+    @apply relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-200;
   }
-  
+
   .role-button-saco.selected {
     @apply border-saco-orange bg-orange-50 shadow-md shadow-orange-100;
   }
-  
+
   .role-button-saco:not(.selected) {
-    @apply border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50;
+    @apply border-gray-200 bg-white hover:border-orange-200 hover:bg-orange-50/40;
   }
 }

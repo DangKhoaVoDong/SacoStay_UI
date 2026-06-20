@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, SESSION_AUTH_RETURN_URL_KEY, SESSION_PENDING_ROLE_KEY } from '../../services/auth.service';
@@ -7,22 +7,25 @@ import { sanitizeReturnUrl } from '../../utils/auth-navigation';
 import { shouldSyncGuestAfterRegister } from '../../utils/guest-discovery.storage';
 import { clearTempRegisterProfile } from '../../utils/user-display';
 import { UiToastService } from '../../services/ui-toast.service';
+import { OtpDigitInputComponent } from '../../components/shared/otp-digit-input/otp-digit-input.component';
 
 @Component({
   selector: 'app-otp-verification',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './otp-verification.component.html',
-  styleUrls: ['./otp-verification.component.css']
+  imports: [CommonModule, FormsModule, RouterLink, OtpDigitInputComponent],
+  templateUrl: './otp-verification.component.html'
 })
 export class OtpVerificationComponent implements OnInit, OnDestroy {
-  otpValue: string = '';
+  otpValue = '';
   isLoading = false;
   countdown = 60;
   email = '';
-  private countdownTimer: any;
+  private countdownTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly toast = inject(UiToastService);
-  constructor(private router: Router, private authService: AuthService) {
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+
+  constructor() {
     this.email = localStorage.getItem('temp_email') || 'your-email@example.com';
   }
 
@@ -45,10 +48,6 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
     }
   }
 
-  sanitizeOtp(value: string): string {
-    return value.replace(/[^\d]/g, '').slice(0, 6);
-  }
-
   handleVerify(): void {
     if (this.otpValue.length !== 6) {
       this.toast.error('Vui lòng nhập đủ 6 chữ số.');
@@ -58,10 +57,6 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     const tempPassword = localStorage.getItem('temp_password');
     const userRole = sessionStorage.getItem(SESSION_PENDING_ROLE_KEY) || 'tenant';
-
-    console.log('Verifying OTP:', this.otpValue);
-    console.log('Email:', this.email);
-    console.log('TempPassword:', tempPassword ? '[SET]' : '[EMPTY]');
 
     this.authService.verifyEmailOtp(this.email, this.otpValue).subscribe({
       next: () => {
@@ -73,17 +68,15 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
                   this.isLoading = false;
                   this.navigateAfterRegistration(userRole);
                 },
-                error: (e) => {
+                error: () => {
                   this.isLoading = false;
-                  console.error('Finalize session after OTP failed', e);
                   this.toast.info('Đã đăng nhập nhưng đồng bộ hồ sơ thất bại. Bạn có thể cập nhật hồ sơ sau trong phần cài đặt.');
                   this.navigateAfterRegistration(userRole);
                 }
               });
             },
-            error: (err) => {
+            error: () => {
               this.isLoading = false;
-              console.error('Auto-login after OTP failed', err);
               this.toast.info('Xác thực thành công nhưng tự động đăng nhập thất bại. Vui lòng đăng nhập lại.');
               this.router.navigate(['/login']);
             }
@@ -95,12 +88,8 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
           this.router.navigate(['/login']);
         }
       },
-      error: (err) => {
+      error: () => {
         this.isLoading = false;
-        console.error('OTP verification failed', err);
-        console.error('Error status:', err?.status);
-        console.error('Error body:', err?.error);
-        console.error('Error message:', err?.error?.message || err?.message);
         this.toast.error('Mã OTP không đúng hoặc đã hết hạn. Vui lòng thử lại.');
       }
     });
@@ -109,18 +98,12 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
   handleResend(): void {
     this.countdown = 60;
     this.startCountdown();
-    // Mock resend logic
   }
 
   get isOtpComplete(): boolean {
     return this.otpValue.length === 6;
   }
 
-  get canResend(): boolean {
-    return this.countdown === 0;
-  }
-
-  /** Sau OTP: bắt buộc eKYC trước khi vào bước tiếp theo. */
   private navigateAfterRegistration(userRole: string): void {
     const storedReturnUrl = sanitizeReturnUrl(sessionStorage.getItem(SESSION_AUTH_RETURN_URL_KEY));
     let returnUrl = storedReturnUrl || '/profile-setup';

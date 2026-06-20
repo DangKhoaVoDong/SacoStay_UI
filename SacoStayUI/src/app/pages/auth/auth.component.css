@@ -159,6 +159,11 @@
   color: #ff9f43;
 }
 
+/* Input text — giữ bo góc vừa phải như trước (rounded-lg), không dùng bo tròn lớn từ design system */
+.auth-page .input-saco {
+  border-radius: 0.5rem;
+}
+
 /* Responsive — mobile only */
 @media (max-width: 640px) {
   .auth-page {

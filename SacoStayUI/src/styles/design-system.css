@@ -1,0 +1,278 @@
+/**
+ * SacoStay Design System — visual polish only (layouts unchanged).
+ */
+
+:root {
+  --saco-orange: #ff9f43;
+  --saco-orange-dark: #ff8c2a;
+  --saco-orange-light: #fff8f0;
+  --saco-surface: #ffffff;
+  --saco-surface-muted: #fafafa;
+  --saco-bg: #f8f7f5;
+  --saco-text: #1a1a2e;
+  --saco-text-muted: #6b7280;
+  --saco-border: #eceae6;
+  --saco-radius-sm: 0.75rem;
+  --saco-radius-md: 1rem;
+  --saco-radius-lg: 1.25rem;
+  --saco-radius-xl: 1.5rem;
+  --saco-shadow-sm: 0 1px 2px rgba(26, 26, 46, 0.04);
+  --saco-shadow-md: 0 8px 24px rgba(26, 26, 46, 0.08);
+  --saco-shadow-lg: 0 20px 48px rgba(26, 26, 46, 0.1);
+  --saco-shadow-hover: 0 16px 40px rgba(255, 159, 67, 0.14);
+  --saco-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --saco-font: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Page enter ── */
+.saco-page-enter {
+  animation: sacoFadeIn 280ms ease-out both;
+}
+
+@keyframes sacoFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Surfaces & cards ── */
+.saco-card {
+  background: var(--saco-surface);
+  border: 1px solid var(--saco-border);
+  border-radius: var(--saco-radius-xl);
+  box-shadow: var(--saco-shadow-md);
+  transition:
+    box-shadow var(--saco-transition),
+    transform var(--saco-transition),
+    border-color var(--saco-transition);
+}
+
+.saco-card:hover {
+  box-shadow: var(--saco-shadow-hover);
+}
+
+.saco-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 159, 67, 0.25);
+}
+
+.saco-surface-page {
+  background: var(--saco-bg);
+  min-height: 100dvh;
+}
+
+/* ── Buttons ── */
+.saco-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.25;
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  transition:
+    transform var(--saco-transition),
+    box-shadow var(--saco-transition),
+    background-color var(--saco-transition),
+    opacity var(--saco-transition);
+  cursor: pointer;
+}
+
+.saco-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.saco-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.saco-btn-primary {
+  background: linear-gradient(135deg, var(--saco-orange) 0%, var(--saco-orange-dark) 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255, 159, 67, 0.35);
+}
+
+.saco-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 8px 22px rgba(255, 159, 67, 0.45);
+  transform: translateY(-1px);
+}
+
+.saco-btn-primary:focus-visible {
+  outline: 2px solid rgba(255, 159, 67, 0.5);
+  outline-offset: 2px;
+}
+
+/* ── Form inputs ── */
+.saco-input {
+  width: 100%;
+  border: 1px solid var(--saco-border);
+  border-radius: var(--saco-radius-md);
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  color: var(--saco-text);
+  background: var(--saco-surface);
+  transition:
+    border-color var(--saco-transition),
+    box-shadow var(--saco-transition);
+}
+
+.saco-input:focus {
+  outline: none;
+  border-color: var(--saco-orange);
+  box-shadow: 0 0 0 3px rgba(255, 159, 67, 0.18);
+}
+
+.saco-input::placeholder {
+  color: #9ca3af;
+}
+
+/* ── OTP verification page ── */
+.otp-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--saco-bg);
+}
+
+.otp-page__main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 3rem;
+}
+
+.otp-card {
+  width: 100%;
+  max-width: 28rem;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  background: var(--saco-surface);
+  border: 1px solid rgba(255, 159, 67, 0.12);
+  border-radius: var(--saco-radius-xl);
+  box-shadow: var(--saco-shadow-lg);
+  animation: sacoFadeIn 320ms ease-out both;
+}
+
+.otp-card__icon {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: linear-gradient(145deg, #fff8f0 0%, #ffedd5 100%);
+  box-shadow: 0 0 0 8px rgba(255, 159, 67, 0.08);
+}
+
+.otp-card__icon svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--saco-orange);
+}
+
+.otp-card__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--saco-text);
+  letter-spacing: -0.02em;
+}
+
+.otp-card__desc {
+  margin: 0 0 2rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--saco-text-muted);
+}
+
+.otp-card__email {
+  display: block;
+  margin-top: 0.35rem;
+  font-weight: 600;
+  color: var(--saco-text);
+  word-break: break-all;
+}
+
+.otp-card__footer {
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--saco-text-muted);
+}
+
+.otp-card__resend {
+  font-weight: 600;
+  color: var(--saco-orange);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: opacity var(--saco-transition);
+}
+
+.otp-card__resend:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.otp-card__resend:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.otp-card__back {
+  display: inline-block;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--saco-text-muted);
+  cursor: pointer;
+  transition: color var(--saco-transition);
+}
+
+.otp-card__back:hover {
+  color: var(--saco-orange);
+}
+
+/* Stagger list items */
+.saco-stagger > * {
+  animation: sacoFadeIn 260ms ease-out both;
+}
+
+.saco-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.saco-stagger > *:nth-child(2) { animation-delay: 40ms; }
+.saco-stagger > *:nth-child(3) { animation-delay: 80ms; }
+.saco-stagger > *:nth-child(4) { animation-delay: 120ms; }
+.saco-stagger > *:nth-child(5) { animation-delay: 160ms; }
+.saco-stagger > *:nth-child(6) { animation-delay: 200ms; }
+
+/* Skeleton shimmer */
+.saco-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: sacoShimmer 1.4s ease infinite;
+  border-radius: var(--saco-radius-sm);
+}
+
+@keyframes sacoShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

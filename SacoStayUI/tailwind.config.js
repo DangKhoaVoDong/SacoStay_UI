@@ -1,8 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    "./src/**/*.{html,ts}",
-  ],
+  content: ['./src/**/*.{html,ts}'],
   theme: {
     extend: {
       colors: {
@@ -17,40 +15,57 @@ module.exports = {
           700: '#c2410c',
           800: '#9a3412',
           900: '#7c2d12',
-          950: '#431407',
+          950: '#431407'
         },
-        // SacoStay brand colors
         'saco-orange': '#FF9F43',
         'saco-orange-dark': '#FF8C2A',
         'saco-brand': '#ffbd59',
         'saco-brand-dark': '#f5a832',
         'saco-blue': '#1A1A2E',
         'saco-gray': '#6B7280',
+        'saco-bg': '#f8f7f5',
+        'saco-surface': '#ffffff',
+        'saco-border': '#eceae6'
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'Inter', 'ui-sans-serif', 'system-ui'],
+        sans: ['Plus Jakarta Sans', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+      },
+      borderRadius: {
+        saco: '1rem',
+        'saco-lg': '1.25rem',
+        'saco-xl': '1.5rem'
       },
       boxShadow: {
-        'saco': '0 20px 40px rgba(0, 0, 0, 0.1)',
+        saco: '0 20px 40px rgba(0, 0, 0, 0.1)',
         'saco-orange': '0 4px 12px rgba(255, 159, 67, 0.3)',
+        'saco-card': '0 8px 24px rgba(26, 26, 46, 0.08)',
+        'saco-card-hover': '0 16px 40px rgba(255, 159, 67, 0.14)',
+        'saco-soft': '0 2px 8px rgba(26, 26, 46, 0.06)'
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.6s ease-out',
+        'fade-in': 'fadeIn 0.28s ease-out',
         'bounce-slow': 'bounce 2s infinite',
+        shimmer: 'shimmer 1.4s ease infinite'
       },
       keyframes: {
         fadeInUp: {
-          '0%': {
-            opacity: '0',
-            transform: 'translateY(20px)',
-          },
-          '100%': {
-            opacity: '1',
-            transform: 'translateY(0)',
-          },
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
         },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' }
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' }
+        }
       },
-    },
+      transitionDuration: {
+        saco: '200ms'
+      }
+    }
   },
   safelist: [
     'text-[#2563EB]',
@@ -62,7 +77,7 @@ module.exports = {
     'text-[21px]',
     'text-[19px]',
     'text-[17px]',
-    'text-[15px]',
+    'text-[15px]'
   ],
-  plugins: [],
-}
+  plugins: []
+};
