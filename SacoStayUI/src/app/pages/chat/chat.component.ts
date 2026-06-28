@@ -362,18 +362,36 @@ export class ChatComponent implements OnInit {
   get sharedSpaceButtonLabel(): string {
     if (!this.activeOtherUserId) return 'Tạo không gian chung';
     return this.spacesWithPartner(this.activeOtherUserId).length
-      ? 'Tạo không gian chung mới'
+      ? 'Không gian chung'
       : 'Tạo không gian chung';
   }
 
+  get hasExistingSharedSpace(): boolean {
+    if (!this.activeOtherUserId) return false;
+    return this.spacesWithPartner(this.activeOtherUserId).length > 0;
+  }
+
+  get activeSharedSpaceId(): string | null {
+    if (!this.activeOtherUserId) return null;
+    const spaces = this.spacesWithPartner(this.activeOtherUserId);
+    return spaces.length > 0 ? spaces[0].id : null;
+  }
+
   onSharedSpaceAction(): void {
-    const partnerId = this.activeOtherUserId;
-    if (!partnerId) return;
+    if (!this.activeOtherUserId) return;
+
+    if (this.hasExistingSharedSpace) {
+      const spaceId = this.activeSharedSpaceId;
+      if (spaceId) {
+        void this.router.navigate(['/shared-space'], { queryParams: { spaceId } });
+      }
+      return;
+    }
 
     if (this.creatingSharedSpace) return;
     this.creatingSharedSpace = true;
     this.sharedSpace
-      .createSpace(partnerId)
+      .createSpace(this.activeOtherUserId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
