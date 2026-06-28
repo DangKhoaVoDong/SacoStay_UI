@@ -56,6 +56,11 @@ export class ChatHubService {
 
   async sendPrivateMessage(receiverId: string, message: string): Promise<void> {
     const conn = await this.getConnection();
+
+    if (conn.state !== signalR.HubConnectionState.Connected) {
+      throw new Error('Chưa kết nối được ChatHub. Vui lòng thử lại.');
+    }
+
     await conn.invoke('SendPrivateMessage', receiverId, message);
   }
 
@@ -81,6 +86,16 @@ export class ChatHubService {
 
     if (this.connection?.state === signalR.HubConnectionState.Connected) {
       return Promise.resolve(this.connection);
+    }
+
+    // Nếu đang reconnecting/disconnecting, chờ connection hiện tại
+    if (
+      this.connection?.state === signalR.HubConnectionState.Reconnecting ||
+      this.connection?.state === signalR.HubConnectionState.Disconnecting
+    ) {
+      if (this.startPromise) {
+        return this.startPromise;
+      }
     }
 
     if (this.startPromise) {

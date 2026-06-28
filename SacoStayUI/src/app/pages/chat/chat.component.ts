@@ -566,7 +566,9 @@ export class ChatComponent implements OnInit {
         this.sendError =
           msg.includes('Chưa đăng nhập') || msg.includes('đăng nhập lại')
             ? msg || 'Vui lòng đăng nhập lại.'
-            : 'Gửi tin nhắn thất bại. Kiểm tra API SignalR (/chatHub) và backend đang chạy.';
+            : msg.includes('Chưa kết nối')
+              ? 'Đang kết nối chat… Vui lòng thử lại.'
+              : 'Gửi tin nhắn thất bại. Kiểm tra API SignalR (/chatHub) và backend đang chạy.';
         this.cdr.detectChanges();
       });
   }
