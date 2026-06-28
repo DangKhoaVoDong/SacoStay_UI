@@ -96,6 +96,9 @@ export class ChatComponent implements OnInit {
       this.peerProfiles.cacheFromAuthUser(profile);
     }
 
+    // Auto connect SignalR khi vào trang chat
+    this.connectChatHub();
+
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.pendingWith = params.get('with');
       this.pendingName = params.get('name');
