@@ -3,6 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { landlordGuard } from './core/guards/landlord.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { tenantGuard } from './core/guards/tenant.guard';
+import { discoveryGuard } from './core/guards/discovery.guard';
 
 export const routes: Routes = [
   {
@@ -80,7 +81,7 @@ export const routes: Routes = [
   {
     path: 'discovery',
     loadComponent: () => import('./pages/discovery/discovery.component').then((m) => m.DiscoveryComponent),
-    canActivate: [tenantGuard]
+    canActivate: [discoveryGuard]
   },
   {
     path: 'shared-space',

@@ -44,6 +44,7 @@ export interface UserProfile {
   lifestyleProfile?: unknown;
   vipTier?: string | null;
   verificationStatus?: string | null;
+  isVerified?: boolean;
 }
 
 export interface ForgotPasswordRequest {

@@ -193,6 +193,13 @@ export class CreateListingComponent implements OnInit {
         },
         error: (err) => {
           this.submitting = false;
+          const status = (err as { status?: number })?.status;
+          if (status === 403) {
+            void this.router.navigate(['/identity-verification'], {
+              queryParams: { returnUrl: '/create-listing' }
+            });
+            return;
+          }
           console.error('Create listing failed', err);
           this.errorMessage =
             getApiErrorMessage(err) ||

@@ -442,8 +442,15 @@ export class DiscoveryComponent implements OnInit {
           this.needsQuiz = false;
           this.cdr.detectChanges();
         },
-        error: () => {
+        error: (err: unknown) => {
           this.loading = false;
+          const status = (err as { status?: number })?.status;
+          if (status === 403) {
+            void this.router.navigate(['/identity-verification'], {
+              queryParams: { returnUrl: '/discovery' }
+            });
+            return;
+          }
           this.cdr.detectChanges();
         }
       });

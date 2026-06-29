@@ -76,6 +76,8 @@ export function normalizeAuthUser(raw: unknown): Record<string, unknown> {
   copyScalar('livingArea', 'LivingArea', 'living_area', 'Location', 'location', 'ResidentialArea', 'residentialArea', 'Address', 'address');
   copyScalar('bio', 'Bio');
   copyScalar('avatar', 'Avatar', 'AvatarUrl', 'avatarUrl');
+  copyScalar('isVerified', 'IsVerified');
+  copyScalar('verificationStatus', 'VerificationStatus');
 
   const avatarFromList = profileAvatarFromRaw(o);
   if (avatarFromList) {
