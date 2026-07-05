@@ -5,6 +5,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavbarComponent } from '../../../components/layout/navbar.component';
 import { AuthService } from '../../../services/auth.service';
 import { setTenantPremium, userIdFromUser } from '../../../utils/user-display';
+import {
+  clearPaymentContext,
+  parsePaymentReturnParams,
+  paymentReturnPath,
+  type PaymentResultContext,
+  type PaymentResultStatus
+} from '../../../utils/payment-return';
 
 @Component({
   selector: 'app-payment-result',
@@ -19,34 +26,40 @@ export class PaymentResultComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  status: 'success' | 'failed' | 'unknown' = 'unknown';
-  context: 'landlord' | 'tenant' = 'landlord';
+  status: PaymentResultStatus = 'unknown';
+  context: PaymentResultContext = 'landlord';
   orderId = '';
   returnPath = '/';
 
   ngOnInit(): void {
-    const qp = this.route.snapshot.queryParamMap;
-    const s = (qp.get('status') || '').toLowerCase();
-    this.status = s === 'success' ? 'success' : s === 'failed' ? 'failed' : 'unknown';
-    const ctxParam = (qp.get('context') || '').toLowerCase();
-    this.context = ctxParam === 'tenant' ? 'tenant' : 'landlord';
-    this.orderId = qp.get('orderId') || '';
-    this.returnPath = this.context === 'tenant' ? '/discovery' : '/my-listings';
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((qp) => {
+      const parsed = parsePaymentReturnParams(qp);
+      this.status = parsed.status;
+      this.context = parsed.context;
+      this.orderId = parsed.orderId;
+      this.returnPath = paymentReturnPath(parsed.context, parsed.status);
+      clearPaymentContext();
+      this.syncPremiumIfNeeded();
+      this.cdr.detectChanges();
+    });
+  }
+
+  private syncPremiumIfNeeded(): void {
+    if (this.status !== 'success' || this.context !== 'tenant') return;
 
     this.auth
       .refreshProfile()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((profile) => {
-        if (this.status === 'success' && this.context === 'tenant') {
-          const userId = userIdFromUser(profile ?? this.auth.getCurrentUser());
-          if (userId) setTenantPremium(true, userId);
-        }
+        const userId = userIdFromUser(profile ?? this.auth.getCurrentUser());
+        if (userId) setTenantPremium(true, userId);
         this.cdr.detectChanges();
       });
   }
 
   get title(): string {
     if (this.status === 'success') return 'Thanh toán thành công';
+    if (this.status === 'cancelled') return 'Đã hủy thanh toán';
     if (this.status === 'failed') return 'Thanh toán thất bại';
     return 'Kết quả thanh toán';
   }
@@ -58,8 +71,11 @@ export class PaymentResultComponent implements OnInit {
     if (this.status === 'success' && this.context === 'tenant') {
       return 'Bạn đã nâng cấp Premium. Tận hưởng matching không giới hạn!';
     }
+    if (this.status === 'cancelled') {
+      return 'Bạn đã hủy giao dịch. Không có khoản phí nào được trừ.';
+    }
     if (this.status === 'failed') {
-      return 'Giao dịch không thành công hoặc đã bị hủy. Bạn có thể thử lại.';
+      return 'Giao dịch không thành công. Bạn có thể thử lại.';
     }
     return 'Không xác định được trạng thái giao dịch.';
   }

@@ -83,7 +83,7 @@ export class LandlordPricingComponent implements OnInit {
             this.cdr.detectChanges();
             return;
           }
-          this.payment.goToVnPay(url);
+          this.payment.goToVnPay(url, 'landlord');
           this.cdr.detectChanges();
         },
         error: (err) => {

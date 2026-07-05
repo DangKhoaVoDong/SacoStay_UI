@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { savePaymentContext, type PaymentResultContext } from '../utils/payment-return';
 
 function paymentUrlFromResponse(raw: unknown): string {
   if (!raw) return '';
@@ -44,14 +45,15 @@ export class PaymentService {
       .pipe(map((res) => paymentUrlFromResponse(res)));
   }
 
-  goToPayOS(paymentUrl: string): void {
+  goToPayOS(paymentUrl: string, context?: PaymentResultContext): void {
     if (!paymentUrl) return;
+    if (context) savePaymentContext(context);
     window.location.href = paymentUrl;
   }
 
   /** @deprecated dùng goToPayOS */
-  goToVnPay(paymentUrl: string): void {
-    this.goToPayOS(paymentUrl);
+  goToVnPay(paymentUrl: string, context?: PaymentResultContext): void {
+    this.goToPayOS(paymentUrl, context);
   }
 
   static saveRoomPostIdForPayment(id: string): void {
