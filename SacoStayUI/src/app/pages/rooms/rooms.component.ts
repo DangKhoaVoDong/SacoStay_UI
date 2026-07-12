@@ -10,21 +10,12 @@ import type { RoomListFilters, RoomPostSummary } from '../../models/room-post.mo
 import { sortRoomsByVipTier } from '../../utils/vip-tier-styles';
 import { cityMatches, districtMatches, priceInRange } from '../../utils/room-filters';
 import { FILTER_CITY_OPTIONS, districtFilterOptions } from '../../utils/vietnam-districts';
+import {
+  ROOM_FILTER_AMENITY_OPTIONS,
+  toggleRoomFilterAmenity
+} from '../../utils/room-amenities';
 
-export const AMENITY_OPTIONS = [
-  { value: 'Điều hòa', icon: '❄️' },
-  { value: 'Ban công', icon: '🌿' },
-  { value: 'WiFi', icon: '📶' },
-  { value: 'Nóng lạnh', icon: '🚿' },
-  { value: 'Máy giặt', icon: '👕' },
-  { value: 'Bếp riêng', icon: '🍳' },
-  { value: 'Thang máy', icon: '🛗' },
-  { value: 'Bảo vệ 24/7', icon: '🛡️' },
-  { value: 'Chỗ để xe', icon: '🏍️' },
-  { value: 'Tủ lạnh', icon: '🧊' },
-  { value: 'Full nội thất', icon: '🛋️' },
-  { value: 'Hồ bơi chung', icon: '🏊' }
-] as const;
+export const AMENITY_OPTIONS = ROOM_FILTER_AMENITY_OPTIONS;
 
 const DEFAULT_PRICE_MIN = 0;
 const DEFAULT_PRICE_MAX = 50_000_000;
@@ -163,9 +154,8 @@ export class RoomsComponent implements OnInit {
   }
 
   toggleAmenity(amenity: string): void {
-    this.selectedAmenities = this.selectedAmenities.includes(amenity)
-      ? this.selectedAmenities.filter((a) => a !== amenity)
-      : [...this.selectedAmenities, amenity];
+    const selected = this.selectedAmenities.includes(amenity);
+    this.selectedAmenities = toggleRoomFilterAmenity(this.selectedAmenities, amenity, !selected);
   }
 
   clearAllFilters(): void {

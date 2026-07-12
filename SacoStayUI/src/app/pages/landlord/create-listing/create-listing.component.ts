@@ -11,20 +11,10 @@ import { resolveVipTier } from '../../../utils/user-display';
 import type { CreateRoomPostPayload } from '../../../models/room-post.models';
 import { PaymentService } from '../../../services/payment.service';
 import { DISTRICT_OPTIONS_BY_CITY } from '../../../utils/vietnam-districts';
+import { LANDLORD_AMENITY_VALUES } from '../../../utils/room-amenities';
 import { UiToastService } from '../../../services/ui-toast.service';
 
-const AMENITIES_LIST = [
-  'Điều hòa',
-  'Nóng lạnh',
-  'Máy giặt',
-  'Ban công',
-  'Thang máy',
-  'Bếp riêng',
-  'Bảo vệ 24/7',
-  'Chỗ để xe',
-  'WiFi',
-  'Tủ lạnh'
-];
+const AMENITIES_LIST = [...LANDLORD_AMENITY_VALUES];
 
 @Component({
   selector: 'app-create-listing',
