@@ -28,14 +28,26 @@ export const ROOM_FILTER_AMENITY_OPTIONS = [
   { value: FULL_FURNITURE_AMENITY, icon: '🛋️' }
 ] as const;
 
+/** Full nội thất is a UI shortcut — not stored in DB as an amenity. */
+export function isFullFurnitureFilterActive(current: string[]): boolean {
+  const set = new Set(current);
+  return LANDLORD_AMENITY_VALUES.every((a) => set.has(a));
+}
+
+export function isRoomFilterAmenitySelected(current: string[], value: string): boolean {
+  if (value === FULL_FURNITURE_AMENITY) {
+    return isFullFurnitureFilterActive(current);
+  }
+  return current.includes(value);
+}
+
 export function toggleRoomFilterAmenity(current: string[], value: string, selected: boolean): string[] {
   const set = new Set(current);
   if (value === FULL_FURNITURE_AMENITY) {
     if (selected) {
       for (const a of LANDLORD_AMENITY_VALUES) set.add(a);
-      set.add(FULL_FURNITURE_AMENITY);
     } else {
-      set.delete(FULL_FURNITURE_AMENITY);
+      for (const a of LANDLORD_AMENITY_VALUES) set.delete(a);
     }
     return [...set];
   }
@@ -44,7 +56,6 @@ export function toggleRoomFilterAmenity(current: string[], value: string, select
     set.add(value);
   } else {
     set.delete(value);
-    set.delete(FULL_FURNITURE_AMENITY);
   }
   return [...set];
 }

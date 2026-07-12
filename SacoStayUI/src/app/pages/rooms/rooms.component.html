@@ -166,7 +166,7 @@
                 <button
                   type="button"
                   (click)="toggleAmenity(amenity.value)"
-                  [class]="chipBtn(selectedAmenities.includes(amenity.value)) + ' inline-flex items-center gap-1.5'"
+                  [class]="chipBtn(isAmenityChipActive(amenity.value)) + ' inline-flex items-center gap-1.5'"
                 >
                   <span>{{ amenity.icon }}</span>
                   {{ amenity.value }}

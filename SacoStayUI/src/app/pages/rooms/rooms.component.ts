@@ -11,6 +11,7 @@ import { sortRoomsByVipTier } from '../../utils/vip-tier-styles';
 import { cityMatches, districtMatches, priceInRange } from '../../utils/room-filters';
 import { FILTER_CITY_OPTIONS, districtFilterOptions } from '../../utils/vietnam-districts';
 import {
+  isRoomFilterAmenitySelected,
   ROOM_FILTER_AMENITY_OPTIONS,
   toggleRoomFilterAmenity
 } from '../../utils/room-amenities';
@@ -154,8 +155,12 @@ export class RoomsComponent implements OnInit {
   }
 
   toggleAmenity(amenity: string): void {
-    const selected = this.selectedAmenities.includes(amenity);
+    const selected = isRoomFilterAmenitySelected(this.selectedAmenities, amenity);
     this.selectedAmenities = toggleRoomFilterAmenity(this.selectedAmenities, amenity, !selected);
+  }
+
+  isAmenityChipActive(value: string): boolean {
+    return isRoomFilterAmenitySelected(this.selectedAmenities, value);
   }
 
   clearAllFilters(): void {
