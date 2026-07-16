@@ -5,7 +5,8 @@ import {
   profileDateOfBirthSeed,
   profileLivingAreaSeed,
   genderToFormValue,
-  profileAvatarFromRaw
+  profileAvatarFromRaw,
+  navProfileLabel
 } from '../../utils/user-display';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -19,14 +20,11 @@ import {
   personNameValidator
 } from '../../utils/profile-validators';
 import { AuthService, getApiErrorMessage } from '../../services/auth.service';
-import { KycService } from '../../services/kyc.service';
 import { UiToastService } from '../../services/ui-toast.service';
-import { kycUiStatusFromApi } from '../../utils/kyc-display';
-import type { KycUiStatus } from '../../models/kyc.models';
 import { UiConfirmService } from '../../services/ui-confirm.service';
 import type { UserProfileUpdateDTO, UserProfile } from '../../models/auth.models';
 import { resolveMediaUrl } from '../../utils/media-url';
-import { navProfileLabel } from '../../utils/user-display';
+import { isVerifiedUser } from '../../utils/lifestyle-display';
 
 @Component({
   selector: 'app-profile-setup',
@@ -42,9 +40,8 @@ export class ProfileSetupComponent implements OnInit {
 
   profileForm: FormGroup | null = null;
   existingUser: Record<string, unknown> = {};
-  verificationStatus: KycUiStatus = 'not_started';
-  kycAdminNote = '';
-  kycStatusLoading = true;
+  /** Hiển thị badge xác minh theo Account.isVerified (eKYC FPT đã tắt). */
+  isAccountVerified = true;
   maxBioLength = 300;
   submitLoading = false;
   profileLoading = true;
@@ -59,12 +56,10 @@ export class ProfileSetupComponent implements OnInit {
   constructor(
     private router: Router,
     private fb: FormBuilder,
-    private authService: AuthService,
-    private kycService: KycService
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.loadKycStatus();
     if (!this.authService.isLoggedIn) {
       this.profileLoading = false;
       this.cdr.detectChanges();
@@ -74,6 +69,9 @@ export class ProfileSetupComponent implements OnInit {
     this.authService.refreshProfile().subscribe({
       next: (p) => {
         try {
+          this.isAccountVerified = isVerifiedUser(
+            (p ?? this.authService.getCurrentUser()) as unknown as Record<string, unknown>
+          );
           this.initFormFromProfile(p);
         } catch (e) {
           console.error('initFormFromProfile', e);
@@ -294,28 +292,6 @@ export class ProfileSetupComponent implements OnInit {
         this.submitLoading = false;
         this.cdr.detectChanges();
         this.toast.error(getApiErrorMessage(err) || 'Cập nhật hồ sơ thất bại. Thử lại sau.');
-      }
-    });
-  }
-
-  navigateToIdentityVerification(): void {
-    void this.router.navigate(['/identity-verification'], {
-      queryParams: { returnUrl: '/profile-setup' }
-    });
-  }
-
-  private loadKycStatus(): void {
-    this.kycStatusLoading = true;
-    this.kycService.getMyStatus().subscribe({
-      next: (status) => {
-        this.verificationStatus = kycUiStatusFromApi(status.status);
-        this.kycAdminNote = status.adminNote?.trim() || '';
-        this.kycStatusLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.kycStatusLoading = false;
-        this.cdr.detectChanges();
       }
     });
   }

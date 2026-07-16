@@ -7,6 +7,7 @@ import { sanitizeReturnUrl } from '../../utils/auth-navigation';
 import { shouldSyncGuestAfterRegister } from '../../utils/guest-discovery.storage';
 import { clearTempRegisterProfile } from '../../utils/user-display';
 import { UiToastService } from '../../services/ui-toast.service';
+import { GuestDiscoverySyncService } from '../../services/guest-discovery-sync.service';
 import { OtpDigitInputComponent } from '../../components/shared/otp-digit-input/otp-digit-input.component';
 
 @Component({
@@ -24,6 +25,7 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
   private readonly toast = inject(UiToastService);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly guestSync = inject(GuestDiscoverySyncService);
 
   constructor() {
     this.email = localStorage.getItem('temp_email') || 'your-email@example.com';
@@ -104,8 +106,11 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
     return this.otpValue.length === 6;
   }
 
+  /** FPT.AI eKYC đã ngừng dịch vụ — bỏ qua bước xác minh; BE luôn set IsVerified = true. */
   private navigateAfterRegistration(userRole: string): void {
     const storedReturnUrl = sanitizeReturnUrl(sessionStorage.getItem(SESSION_AUTH_RETURN_URL_KEY));
+    sessionStorage.removeItem(SESSION_AUTH_RETURN_URL_KEY);
+
     let returnUrl = storedReturnUrl || '/profile-setup';
     if (!storedReturnUrl) {
       if (shouldSyncGuestAfterRegister()) {
@@ -114,6 +119,7 @@ export class OtpVerificationComponent implements OnInit, OnDestroy {
         returnUrl = '/landlord-profile';
       }
     }
-    void this.router.navigate(['/identity-verification'], { queryParams: { returnUrl } });
+
+    this.guestSync.syncAfterRegisterAndNavigate(returnUrl);
   }
 }

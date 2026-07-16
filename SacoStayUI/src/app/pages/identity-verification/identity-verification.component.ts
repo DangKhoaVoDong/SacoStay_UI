@@ -79,40 +79,13 @@ export class IdentityVerificationComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (!this.auth.isLoggedIn) {
-      void this.router.navigate(['/login'], { queryParams: { returnUrl: '/identity-verification' } });
+      void this.router.navigate(['/login'], { queryParams: { returnUrl: '/profile-setup' } });
       return;
     }
 
+    // FPT.AI eKYC đã ngừng dịch vụ — bỏ qua trang xác minh, giữ luồng returnUrl như khi đã Approved.
     this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl')?.trim() || '/profile-setup';
-
-    this.kyc
-      .getMyStatus()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (status) => {
-          this.statusLoading = false;
-          if (status.status === 'Approved') {
-            this.continueAfterVerification();
-            return;
-          }
-          if (status.status === 'Pending') {
-            this.toast.info('Hồ sơ xác thực đang được xử lý. Vui lòng thử lại sau.');
-            void this.router.navigateByUrl(this.returnUrl);
-            return;
-          }
-          if (status.status === 'NeedReupload' || status.status === 'Rejected') {
-            this.previousKycNote = status.adminNote?.trim() || '';
-            if (this.previousKycNote) {
-              this.toast.info('Lần xác thực trước chưa đạt. Vui lòng nộp lại hồ sơ.');
-            }
-          }
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.statusLoading = false;
-          this.cdr.detectChanges();
-        }
-      });
+    this.continueAfterVerification();
   }
 
   ngOnDestroy(): void {
