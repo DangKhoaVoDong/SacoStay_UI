@@ -75,11 +75,12 @@ export class ChatPeerProfileService {
 
   /**
    * BE (khuyến nghị): `GET /api/Auth/user/{userId}` — FirstName, LastName, UserName, ProfileImage, Roles.
-   * Nếu 404, dùng cache / gợi ý query.
+   * Landlord: thêm PhoneNumber. Nếu 404, dùng cache / gợi ý query.
+   * @param forceRefresh bỏ qua cache (dùng khi cần SĐT liên hệ).
    */
   fetchPeer(
     userId: string,
-    hints?: { displayName?: string; avatarUrl?: string; role?: string }
+    hints?: { displayName?: string; avatarUrl?: string; role?: string; forceRefresh?: boolean }
   ): Observable<ChatParticipant> {
     if (!userId) {
       return of({ id: '', displayName: 'Người dùng' });
@@ -88,7 +89,14 @@ export class ChatPeerProfileService {
     this.seedFromHints(userId, hints);
 
     const cached = this.readCache(userId);
-    if (cached?.displayName && !isGenericChatLabel(cached.displayName) && cached.avatarUrl) {
+    const needPhone = hints?.role === 'landlord' && !cached?.phoneNumber;
+    if (
+      !hints?.forceRefresh &&
+      !needPhone &&
+      cached?.displayName &&
+      !isGenericChatLabel(cached.displayName) &&
+      cached.avatarUrl
+    ) {
       return of(cached);
     }
 
@@ -99,6 +107,9 @@ export class ChatPeerProfileService {
       map((p) => {
         if (cached?.avatarUrl && !p.avatarUrl) {
           return { ...p, avatarUrl: cached.avatarUrl };
+        }
+        if (cached?.phoneNumber && !p.phoneNumber) {
+          return { ...p, phoneNumber: cached.phoneNumber };
         }
         return p;
       })
@@ -144,6 +155,7 @@ export class ChatPeerProfileService {
       displayName: navProfileLabel(normalized),
       avatarUrl: resolveMediaUrl(profileAvatarFromRaw(normalized)) || undefined,
       roles: Array.isArray(roles) ? roles.map((r) => String(r)) : undefined,
+      phoneNumber: str(normalized['phoneNumber'] ?? normalized['PhoneNumber']) || undefined,
       lastSeenAt,
       isOnline
     };

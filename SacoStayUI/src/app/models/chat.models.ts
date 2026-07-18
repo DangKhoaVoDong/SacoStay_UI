@@ -4,6 +4,8 @@ export interface ChatParticipant {
   displayName: string;
   avatarUrl?: string;
   roles?: string[];
+  /** SĐT công khai — chỉ landlord (GET /api/Auth/user/{id}). */
+  phoneNumber?: string;
   /** Từ GET /api/Auth/user/{id} hoặc POST /api/Activity/presence */
   lastSeenAt?: string;
   isOnline?: boolean;

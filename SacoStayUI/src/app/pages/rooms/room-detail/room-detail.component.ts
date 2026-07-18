@@ -45,6 +45,8 @@ export class RoomDetailComponent implements OnInit {
 
   landlordChatName = '';
   landlordChatAvatar = '';
+  landlordPhone = '';
+  contactingLandlord = false;
   nearbyLandmarksLoading = false;
 
   ngOnInit(): void {
@@ -77,7 +79,10 @@ export class RoomDetailComponent implements OnInit {
             if (!isLandlordUser(this.auth.getCurrentUser())) {
               this.loadSharedSpaceState(room.id);
             }
+          } else if (room?.landlordUserId) {
+            this.loadLandlordChatMeta(room.landlordUserId);
           }
+          this.landlordPhone = (room?.landlordPhone || '').trim();
           this.cdr.detectChanges();
         },
         error: () => {
@@ -101,8 +106,55 @@ export class RoomDetailComponent implements OnInit {
       .subscribe((p) => {
         this.landlordChatName = p.displayName;
         this.landlordChatAvatar = p.avatarUrl ?? '';
+        if (p.phoneNumber?.trim()) {
+          this.landlordPhone = p.phoneNumber.trim();
+        }
         this.cdr.detectChanges();
       });
+  }
+
+  /** Hiện thông báo kèm SĐT chủ trọ (BE trả PhoneNumber trên GET Auth/user khi là landlord). */
+  contactLandlord(): void {
+    if (this.isLandlord || this.contactingLandlord) return;
+
+    const fromRoom = (this.room?.landlordPhone || this.landlordPhone || '').trim();
+    if (fromRoom) {
+      this.showLandlordPhoneToast(fromRoom);
+      return;
+    }
+
+    const landlordId = this.room?.landlordUserId;
+    if (!landlordId) {
+      this.toast.info('Chưa có số điện thoại liên hệ của chủ trọ.');
+      return;
+    }
+
+    this.contactingLandlord = true;
+    this.peerProfiles
+      .fetchPeer(landlordId, { role: 'landlord', forceRefresh: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (p) => {
+          this.contactingLandlord = false;
+          const phone = (p.phoneNumber || '').trim();
+          if (phone) {
+            this.landlordPhone = phone;
+            this.showLandlordPhoneToast(phone);
+          } else {
+            this.toast.info('Chủ trọ chưa cập nhật số điện thoại.');
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.contactingLandlord = false;
+          this.toast.error('Không lấy được thông tin liên hệ chủ trọ. Thử lại sau.');
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  private showLandlordPhoneToast(phone: string): void {
+    this.toast.show(`Liên hệ chủ trọ: ${phone}`, 'info', 8000);
   }
 
   get titleClass(): string {

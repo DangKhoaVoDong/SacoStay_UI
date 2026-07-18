@@ -197,8 +197,13 @@
                     Đã thêm vào danh sách chung
                   </button>
                 }
-                <button type="button" class="w-full py-3 rounded-lg bg-[#FF9F43] text-white font-medium hover:bg-[#FF8C2A]">
-                  Liên hệ xem phòng
+                <button
+                  type="button"
+                  class="w-full py-3 rounded-lg bg-[#FF9F43] text-white font-medium hover:bg-[#FF8C2A] disabled:opacity-60"
+                  [disabled]="contactingLandlord"
+                  (click)="contactLandlord()"
+                >
+                  {{ contactingLandlord ? 'Đang lấy SĐT…' : 'Liên hệ xem phòng' }}
                 </button>
                 @if (canMessageLandlord) {
                 <a [routerLink]="['/chat']" [queryParams]="chatQueryParams" class="block">
