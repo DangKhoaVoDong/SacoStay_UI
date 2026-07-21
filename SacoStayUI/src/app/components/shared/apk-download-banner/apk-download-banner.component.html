@@ -1,0 +1,36 @@
+@if (visible) {
+  <aside class="apk-banner" role="complementary" aria-label="Tải ứng dụng SacoStay">
+    <button
+      type="button"
+      class="apk-banner__close"
+      (click)="dismiss()"
+      aria-label="Đóng thông báo tải app"
+    >
+      ×
+    </button>
+
+    <a
+      class="apk-banner__link"
+      [href]="downloadUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      (click)="dismiss()"
+    >
+      <img [src]="logoUrl" alt="" class="apk-banner__icon" width="44" height="44" />
+      <span class="apk-banner__text">
+        <span class="apk-banner__title">Tải app SacoStay</span>
+        <span class="apk-banner__subtitle">Android · Miễn phí</span>
+      </span>
+      <span class="apk-banner__action" aria-hidden="true">
+        <svg class="apk-banner__download-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+          />
+        </svg>
+      </span>
+    </a>
+  </aside>
+}
