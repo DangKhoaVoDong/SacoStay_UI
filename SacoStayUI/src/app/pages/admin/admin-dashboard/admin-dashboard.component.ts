@@ -2,13 +2,20 @@ import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angul
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, of } from 'rxjs';
-import { NavbarComponent } from '../../../components/layout/navbar.component';
 import { AdminLifestyleQuizComponent } from '../admin-lifestyle-quiz/admin-lifestyle-quiz.component';
 import { AdminService, adminApiErrorMessage } from '../../../services/admin.service';
 import { ReportService, reportApiErrorMessage } from '../../../services/report.service';
-import type { AdminDashboardStats, AdminRoomPostRow, AdminUserRow } from '../../../models/admin.models';
+import { AuthService } from '../../../services/auth.service';
+import type {
+  AdminDashboardStats,
+  AdminPaymentStats,
+  AdminRoomPostRow,
+  AdminTransactionRow,
+  AdminUserRow
+} from '../../../models/admin.models';
 import type { ReportRow } from '../../../models/report.models';
 import { resolveMediaUrl } from '../../../utils/media-url';
+import { navProfileLabel, profileAvatarFromRaw } from '../../../utils/user-display';
 import { UiToastService } from '../../../services/ui-toast.service';
 import { UiConfirmService } from '../../../services/ui-confirm.service';
 import {
@@ -19,32 +26,65 @@ import {
   type MonthBucket,
   type StatusSlice
 } from '../../../utils/admin-growth-charts';
+import { SACOSTAY_APK_DOWNLOAD_URL } from '../../../components/shared/apk-download-banner/apk-download-banner.component';
+import { SACOSTAY_LOGO_URL } from '../../../utils/brand-assets';
 
-type AdminTab = 'overview' | 'pending' | 'users' | 'lifestyle' | 'user-reports' | 'room-reports';
+type AdminTab =
+  | 'overview'
+  | 'pending'
+  | 'users'
+  | 'transactions'
+  | 'lifestyle'
+  | 'user-reports'
+  | 'room-reports';
+
+interface AdminNavItem {
+  id: AdminTab;
+  label: string;
+  icon: string;
+}
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, NavbarComponent, AdminLifestyleQuizComponent],
+  imports: [CommonModule, AdminLifestyleQuizComponent],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.css']
 })
 export class AdminDashboardComponent implements OnInit {
   private readonly admin = inject(AdminService);
   private readonly reportsApi = inject(ReportService);
+  private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toast = inject(UiToastService);
   private readonly uiConfirm = inject(UiConfirmService);
 
+  readonly logoUrl = SACOSTAY_LOGO_URL;
+  readonly apkUrl = SACOSTAY_APK_DOWNLOAD_URL;
+
+  readonly navItems: AdminNavItem[] = [
+    { id: 'overview', label: 'Tổng quan', icon: 'overview' },
+    { id: 'pending', label: 'Kiểm duyệt tin', icon: 'pending' },
+    { id: 'users', label: 'Người dùng', icon: 'users' },
+    { id: 'transactions', label: 'Giao dịch & doanh thu', icon: 'payments' },
+    { id: 'lifestyle', label: 'Quiz lối sống', icon: 'quiz' },
+    { id: 'user-reports', label: 'Báo cáo người dùng', icon: 'user-reports' },
+    { id: 'room-reports', label: 'Báo cáo phòng trọ', icon: 'room-reports' }
+  ];
+
   activeTab: AdminTab = 'overview';
+  sidebarOpen = false;
   loading = true;
+  paymentsLoading = false;
   reportsLoading = false;
   errorMessage = '';
+  paymentsError = '';
   reportsError = '';
   actionPostId: string | null = null;
   processingReportId: string | null = null;
   detailReport: ReportRow | null = null;
+  txStatusFilter = '';
 
   stats: AdminDashboardStats = {
     totalUsers: 0,
@@ -54,24 +94,133 @@ export class AdminDashboardComponent implements OnInit {
     hiddenRoomPosts: 0
   };
 
+  paymentStats: AdminPaymentStats = {
+    totalRevenue: 0,
+    revenueThisMonth: 0,
+    revenueLastMonth: 0,
+    revenueGrowthPercent: null,
+    totalTransactions: 0,
+    successCount: 0,
+    pendingCount: 0,
+    failedCount: 0,
+    cancelledCount: 0,
+    byBuyerType: [],
+    byStatus: [],
+    dailyRevenue: []
+  };
+
   users: AdminUserRow[] = [];
   roomPosts: AdminRoomPostRow[] = [];
+  transactions: AdminTransactionRow[] = [];
   allReports: ReportRow[] = [];
 
   ngOnInit(): void {
     this.loadData();
   }
 
+  get pageTitle(): string {
+    return this.navItems.find((n) => n.id === this.activeTab)?.label || 'Admin Dashboard';
+  }
+
+  get adminName(): string {
+    return navProfileLabel(this.auth.getCurrentUser()) || 'Quản trị viên';
+  }
+
+  get adminEmail(): string {
+    return this.auth.getCurrentUser()?.email || '';
+  }
+
+  get adminAvatar(): string {
+    const raw = profileAvatarFromRaw(this.auth.getCurrentUser());
+    return raw
+      ? resolveMediaUrl(raw)
+      : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(this.adminName);
+  }
+
   get pendingPosts(): AdminRoomPostRow[] {
     return this.roomPosts.filter((p) => this.isPendingStatus(p.status));
   }
 
+  get filteredTransactions(): AdminTransactionRow[] {
+    if (!this.txStatusFilter) return this.transactions;
+    return this.transactions.filter(
+      (t) => (t.status || '').toLowerCase() === this.txStatusFilter.toLowerCase()
+    );
+  }
+
+  get revenueBarMax(): number {
+    const amounts = this.paymentStats.dailyRevenue.map((d) => d.amount);
+    return Math.max(1, ...amounts, 0);
+  }
+
+  get paymentStatusSlices(): StatusSlice[] {
+    const mapColor: Record<string, string> = {
+      success: '#22c55e',
+      pending: '#0f766e',
+      failed: '#ef4444',
+      cancelled: '#86efac'
+    };
+    const mapLabel: Record<string, string> = {
+      success: 'Đã thanh toán',
+      pending: 'Chờ thanh toán',
+      failed: 'Thất bại',
+      cancelled: 'Hủy'
+    };
+    return this.paymentStats.byStatus.map((s) => {
+      const key = (s.status || '').toLowerCase();
+      return {
+        key,
+        label: mapLabel[key] || s.status,
+        count: s.count,
+        color: mapColor[key] || '#94a3b8'
+      };
+    });
+  }
+
+  get paymentStatusTotal(): number {
+    return this.paymentStats.totalTransactions || 1;
+  }
+
+  get paymentDonutStyle(): string {
+    const slices = this.paymentStatusSlices.filter((s) => s.count > 0);
+    if (!slices.length) return 'conic-gradient(#e5e7eb 0deg 360deg)';
+    const total = slices.reduce((sum, s) => sum + s.count, 0) || 1;
+    let acc = 0;
+    const parts: string[] = [];
+    for (const s of slices) {
+      const deg = (s.count / total) * 360;
+      const start = acc;
+      acc += deg;
+      parts.push(`${s.color} ${start}deg ${acc}deg`);
+    }
+    return `conic-gradient(${parts.join(', ')})`;
+  }
+
   setTab(tab: AdminTab): void {
     this.activeTab = tab;
+    this.sidebarOpen = false;
     if (tab === 'user-reports' || tab === 'room-reports') {
       this.loadReports();
     }
+    if (tab === 'transactions') {
+      this.loadPayments();
+    }
     this.cdr.detectChanges();
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  logout(): void {
+    this.auth.logout();
+  }
+
+  navBadge(tab: AdminTab): number | null {
+    if (tab === 'pending') return this.pendingPosts.length || null;
+    if (tab === 'user-reports') return this.userReports.filter((r) => this.isReportPending(r)).length || null;
+    if (tab === 'room-reports') return this.roomReports.filter((r) => this.isReportPending(r)).length || null;
+    return null;
   }
 
   /** Báo cáo trực tiếp hồ sơ user (không kèm tin phòng). */
@@ -181,8 +330,40 @@ export class AdminDashboardComponent implements OnInit {
     return Math.max(6, Math.round((count / max) * 100));
   }
 
+  revenueBarHeight(amount: number): number {
+    return this.barHeight(amount, this.revenueBarMax);
+  }
+
   statusBarWidth(count: number): number {
     return Math.round((count / this.roomStatusTotal) * 100);
+  }
+
+  paymentStatusBarWidth(count: number): number {
+    return Math.round((count / this.paymentStatusTotal) * 100);
+  }
+
+  loadPayments(): void {
+    this.paymentsLoading = true;
+    this.paymentsError = '';
+    forkJoin({
+      stats: this.admin.getPaymentStats().pipe(catchError(() => of(null))),
+      txs: this.admin.getTransactions({ limit: 300 }).pipe(catchError(() => of<AdminTransactionRow[]>([])))
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ stats, txs }) => {
+          if (stats) this.paymentStats = stats;
+          else this.paymentsError = 'Không tải được thống kê doanh thu.';
+          this.transactions = txs;
+          this.paymentsLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.paymentsLoading = false;
+          this.paymentsError = adminApiErrorMessage(err, 'Không tải được giao dịch.');
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   loadReports(): void {
@@ -225,15 +406,19 @@ export class AdminDashboardComponent implements OnInit {
       stats: this.admin.getDashboard(),
       users: this.admin.getUsers(100),
       posts: this.admin.getRoomPosts(),
-      reports: this.reportsApi.getReports().pipe(catchError(() => of<ReportRow[]>([])))
+      reports: this.reportsApi.getReports().pipe(catchError(() => of<ReportRow[]>([]))),
+      paymentStats: this.admin.getPaymentStats().pipe(catchError(() => of(null))),
+      transactions: this.admin.getTransactions({ limit: 300 }).pipe(catchError(() => of<AdminTransactionRow[]>([])))
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ stats, users, posts, reports }) => {
+        next: ({ stats, users, posts, reports, paymentStats, transactions }) => {
           this.stats = stats;
           this.users = users;
           this.roomPosts = posts;
           this.allReports = reports;
+          if (paymentStats) this.paymentStats = paymentStats;
+          this.transactions = transactions;
           this.loading = false;
           this.cdr.detectChanges();
         },
@@ -243,6 +428,31 @@ export class AdminDashboardComponent implements OnInit {
           this.cdr.detectChanges();
         }
       });
+  }
+
+  buyerTypeLabel(type: string): string {
+    const t = (type || '').toLowerCase();
+    if (t === 'landlord') return 'Chủ trọ';
+    if (t === 'tenant') return 'Người thuê';
+    return type || '—';
+  }
+
+  paymentStatusLabel(status: string): string {
+    const s = (status || '').toLowerCase();
+    if (s === 'success') return 'Thành công';
+    if (s === 'pending') return 'Chờ thanh toán';
+    if (s === 'failed') return 'Thất bại';
+    if (s === 'cancelled') return 'Đã hủy';
+    return status || '—';
+  }
+
+  paymentStatusClass(status: string): string {
+    const s = (status || '').toLowerCase();
+    if (s === 'success') return 'bg-emerald-100 text-emerald-800';
+    if (s === 'pending') return 'bg-amber-100 text-amber-800';
+    if (s === 'failed') return 'bg-red-100 text-red-800';
+    if (s === 'cancelled') return 'bg-gray-200 text-gray-700';
+    return 'bg-gray-100 text-gray-600';
   }
 
   async approvePost(post: AdminRoomPostRow): Promise<void> {

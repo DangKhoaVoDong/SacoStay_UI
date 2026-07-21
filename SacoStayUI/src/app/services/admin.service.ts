@@ -3,7 +3,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import type { AdminDashboardStats, AdminRoomPostRow, AdminUserRow } from '../models/admin.models';
+import type {
+  AdminDashboardStats,
+  AdminPaymentStats,
+  AdminRoomPostRow,
+  AdminTransactionRow,
+  AdminUserRow
+} from '../models/admin.models';
 import type { ProcessReportPayload } from '../models/report.models';
 
 function str(v: unknown): string {
@@ -113,6 +119,102 @@ export class AdminService {
         })
       )
     );
+  }
+
+  getPaymentStats(): Observable<AdminPaymentStats> {
+    return this.http.get<unknown>(`${this.apiUrl}/Admin/payment-stats`).pipe(
+      map((raw) => this.normalizePaymentStats(raw))
+    );
+  }
+
+  getTransactions(opts?: {
+    status?: string;
+    buyerType?: string;
+    limit?: number;
+  }): Observable<AdminTransactionRow[]> {
+    let params = new HttpParams();
+    if (opts?.status) params = params.set('status', opts.status);
+    if (opts?.buyerType) params = params.set('buyerType', opts.buyerType);
+    params = params.set('limit', String(opts?.limit ?? 200));
+    return this.http.get<unknown>(`${this.apiUrl}/Admin/transactions`, { params }).pipe(
+      map((raw) => unwrapList(raw).map((item, i) => this.normalizeTransaction(item, i)))
+    );
+  }
+
+  private normalizePaymentStats(raw: unknown): AdminPaymentStats {
+    const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+    const growthRaw = o['revenueGrowthPercent'] ?? o['RevenueGrowthPercent'];
+    const growth =
+      growthRaw === null || growthRaw === undefined || growthRaw === ''
+        ? null
+        : Number(growthRaw);
+
+    const byBuyerRaw = o['byBuyerType'] ?? o['ByBuyerType'];
+    const byStatusRaw = o['byStatus'] ?? o['ByStatus'];
+    const dailyRaw = o['dailyRevenue'] ?? o['DailyRevenue'];
+
+    return {
+      totalRevenue: Number(o['totalRevenue'] ?? o['TotalRevenue'] ?? 0),
+      revenueThisMonth: Number(o['revenueThisMonth'] ?? o['RevenueThisMonth'] ?? 0),
+      revenueLastMonth: Number(o['revenueLastMonth'] ?? o['RevenueLastMonth'] ?? 0),
+      revenueGrowthPercent: Number.isFinite(growth as number) ? (growth as number) : null,
+      totalTransactions: Number(o['totalTransactions'] ?? o['TotalTransactions'] ?? 0),
+      successCount: Number(o['successCount'] ?? o['SuccessCount'] ?? 0),
+      pendingCount: Number(o['pendingCount'] ?? o['PendingCount'] ?? 0),
+      failedCount: Number(o['failedCount'] ?? o['FailedCount'] ?? 0),
+      cancelledCount: Number(o['cancelledCount'] ?? o['CancelledCount'] ?? 0),
+      byBuyerType: Array.isArray(byBuyerRaw)
+        ? byBuyerRaw.map((item) => {
+            const x = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+            return {
+              buyerType: str(x['buyerType'] ?? x['BuyerType']) || 'Unknown',
+              count: Number(x['count'] ?? x['Count'] ?? 0),
+              amount: Number(x['amount'] ?? x['Amount'] ?? 0)
+            };
+          })
+        : [],
+      byStatus: Array.isArray(byStatusRaw)
+        ? byStatusRaw.map((item) => {
+            const x = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+            return {
+              status: str(x['status'] ?? x['Status']) || 'Unknown',
+              count: Number(x['count'] ?? x['Count'] ?? 0),
+              amount: Number(x['amount'] ?? x['Amount'] ?? 0)
+            };
+          })
+        : [],
+      dailyRevenue: Array.isArray(dailyRaw)
+        ? dailyRaw.map((item) => {
+            const x = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+            return {
+              date: str(x['date'] ?? x['Date']),
+              label: str(x['label'] ?? x['Label']) || str(x['date'] ?? x['Date']),
+              amount: Number(x['amount'] ?? x['Amount'] ?? 0),
+              count: Number(x['count'] ?? x['Count'] ?? 0)
+            };
+          })
+        : []
+    };
+  }
+
+  private normalizeTransaction(item: unknown, index: number): AdminTransactionRow {
+    const o = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+    return {
+      id: Number(o['id'] ?? o['Id'] ?? index),
+      orderId: str(o['orderId'] ?? o['OrderId']),
+      amount: Number(o['amount'] ?? o['Amount'] ?? 0),
+      status: str(o['status'] ?? o['Status']) || 'Pending',
+      paymentMethod: str(o['paymentMethod'] ?? o['PaymentMethod']) || 'PayOS',
+      transactionNo: str(o['transactionNo'] ?? o['TransactionNo']) || undefined,
+      createdAt: str(o['createdAt'] ?? o['CreatedAt']),
+      roomPostId: str(o['roomPostId'] ?? o['RoomPostId']) || undefined,
+      roomTitle: str(o['roomTitle'] ?? o['RoomTitle']) || undefined,
+      packageName: str(o['packageName'] ?? o['PackageName']) || undefined,
+      buyerType: str(o['buyerType'] ?? o['BuyerType']) || 'Unknown',
+      userId: str(o['userId'] ?? o['UserId']) || undefined,
+      buyerName: str(o['buyerName'] ?? o['BuyerName']) || undefined,
+      buyerEmail: str(o['buyerEmail'] ?? o['BuyerEmail']) || undefined
+    };
   }
 
   private normalizeUser(item: unknown, index: number): AdminUserRow {

@@ -36,3 +36,54 @@ export interface AdminRoomPostRow {
   landlordName?: string;
   landlordEmail?: string;
 }
+
+export interface AdminPaymentBuyerSlice {
+  buyerType: string;
+  count: number;
+  amount: number;
+}
+
+export interface AdminPaymentStatusSlice {
+  status: string;
+  count: number;
+  amount: number;
+}
+
+export interface AdminDailyRevenue {
+  date: string;
+  label: string;
+  amount: number;
+  count: number;
+}
+
+export interface AdminPaymentStats {
+  totalRevenue: number;
+  revenueThisMonth: number;
+  revenueLastMonth: number;
+  revenueGrowthPercent: number | null;
+  totalTransactions: number;
+  successCount: number;
+  pendingCount: number;
+  failedCount: number;
+  cancelledCount: number;
+  byBuyerType: AdminPaymentBuyerSlice[];
+  byStatus: AdminPaymentStatusSlice[];
+  dailyRevenue: AdminDailyRevenue[];
+}
+
+export interface AdminTransactionRow {
+  id: number;
+  orderId: string;
+  amount: number;
+  status: string;
+  paymentMethod: string;
+  transactionNo?: string;
+  createdAt: string;
+  roomPostId?: string;
+  roomTitle?: string;
+  packageName?: string;
+  buyerType: string;
+  userId?: string;
+  buyerName?: string;
+  buyerEmail?: string;
+}

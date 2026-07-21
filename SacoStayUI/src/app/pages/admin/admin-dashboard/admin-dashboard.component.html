@@ -1,173 +1,241 @@
-<div class="min-h-screen bg-gray-50 flex flex-col">
-  <app-navbar />
+<div class="admin-shell">
+  @if (sidebarOpen) {
+    <button
+      type="button"
+      class="admin-overlay"
+      aria-label="Đóng menu"
+      (click)="toggleSidebar()"
+    ></button>
+  }
 
-  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-    <div class="admin-hero rounded-2xl p-6 sm:p-8 mb-8 text-white shadow-lg">
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p class="text-sm font-medium text-white/80 uppercase tracking-wide">SacoStay Admin</p>
-          <h1 class="text-2xl sm:text-3xl font-bold mt-1 text-white">Dashboard Quản trị</h1>
-          <p class="text-sm text-white/85 mt-2 max-w-xl">
-            Theo dõi tăng trưởng người dùng, tin phòng và báo cáo — dữ liệu đồng bộ từ API Admin &amp; Report.
-          </p>
-        </div>
-        <button
-          type="button"
-          (click)="loadData()"
-          [disabled]="loading"
-          class="px-4 py-2 text-sm font-semibold rounded-lg bg-white/15 hover:bg-white/25 border border-white/30 disabled:opacity-50 shrink-0"
-        >
-          {{ loading ? 'Đang tải…' : 'Làm mới dữ liệu' }}
-        </button>
+  <aside class="admin-sidebar" [class.admin-sidebar--open]="sidebarOpen">
+    <div class="admin-sidebar__brand">
+      <img [src]="logoUrl" alt="SacoStay" class="admin-sidebar__logo" />
+      <div>
+        <p class="admin-sidebar__brand-name">SacoStay</p>
+        <p class="admin-sidebar__brand-sub">Admin Console</p>
       </div>
     </div>
 
-    @if (errorMessage) {
-      <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{{ errorMessage }}</div>
-    }
+    <nav class="admin-sidebar__nav" aria-label="Admin navigation">
+      @for (item of navItems; track item.id) {
+        <button
+          type="button"
+          class="admin-nav-item"
+          [class.admin-nav-item--active]="activeTab === item.id"
+          (click)="setTab(item.id)"
+        >
+          <span class="admin-nav-item__icon" [attr.data-icon]="item.icon">
+            @switch (item.icon) {
+              @case ('overview') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="9" rx="1.5" />
+                  <rect x="14" y="3" width="7" height="5" rx="1.5" />
+                  <rect x="14" y="12" width="7" height="9" rx="1.5" />
+                  <rect x="3" y="16" width="7" height="5" rx="1.5" />
+                </svg>
+              }
+              @case ('pending') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+              }
+              @case ('users') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="3" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a3 3 0 0 1 0 5.74" />
+                </svg>
+              }
+              @case ('payments') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="2" y="5" width="20" height="14" rx="2" />
+                  <path d="M2 10h20" />
+                  <path d="M7 15h3" />
+                </svg>
+              }
+              @case ('quiz') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M9 9a3 3 0 1 1 4.5 2.6c-.7.5-1.5 1.1-1.5 2.4" />
+                  <circle cx="12" cy="17.5" r="0.8" fill="currentColor" stroke="none" />
+                  <circle cx="12" cy="12" r="9" />
+                </svg>
+              }
+              @case ('user-reports') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M12 3l8 4v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V7l8-4z" />
+                  <path d="M12 8v5" />
+                  <circle cx="12" cy="16" r="0.8" fill="currentColor" stroke="none" />
+                </svg>
+              }
+              @case ('room-reports') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M3 10.5 12 3l9 7.5" />
+                  <path d="M5 9.5V20h14V9.5" />
+                  <path d="M10 20v-5h4v5" />
+                </svg>
+              }
+              @default {
+                <span class="admin-nav-item__dot"></span>
+              }
+            }
+          </span>
+          <span class="admin-nav-item__label">{{ item.label }}</span>
+          @if (navBadge(item.id); as badge) {
+            <span class="admin-nav-item__badge">{{ badge }}</span>
+          }
+        </button>
+      }
+    </nav>
 
-    @if (loading) {
-      <p class="text-center text-gray-500 py-16">Đang tải dữ liệu từ API…</p>
-    } @else {
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        <div class="p-5 bg-white rounded-xl border border-gray-100 shadow-sm">
-          <div class="flex items-center justify-between">
-            <span class="text-2xl">👥</span>
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full" [ngClass]="trendClass(userTrend)">{{ trendLabel(userTrend) }}</span>
-          </div>
-          <p class="text-sm text-gray-500 font-medium mt-3">Tổng người dùng</p>
-          <h3 class="text-2xl font-bold text-gray-900">{{ stats.totalUsers }}</h3>
-          <p class="text-xs text-gray-400 mt-1">30 ngày gần nhất</p>
-        </div>
-        <div class="p-5 bg-white rounded-xl border border-gray-100 shadow-sm">
-          <div class="flex items-center justify-between">
-            <span class="text-2xl">🏠</span>
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full" [ngClass]="trendClass(postTrend)">{{ trendLabel(postTrend) }}</span>
-          </div>
-          <p class="text-sm text-gray-500 font-medium mt-3">Tổng tin phòng</p>
-          <h3 class="text-2xl font-bold text-gray-900">{{ stats.totalRoomPosts }}</h3>
-          <p class="text-xs text-gray-400 mt-1">30 ngày gần nhất</p>
-        </div>
-        <div class="p-5 bg-white rounded-xl border border-gray-100 shadow-sm">
-          <span class="text-2xl">⏳</span>
-          <p class="text-sm text-gray-500 font-medium mt-3">Chờ duyệt</p>
-          <h3 class="text-2xl font-bold text-orange-600">{{ stats.pendingRoomPosts }}</h3>
-        </div>
-        <div class="p-5 bg-white rounded-xl border border-gray-100 shadow-sm">
-          <span class="text-2xl">✓</span>
-          <p class="text-sm text-gray-500 font-medium mt-3">Đang hiển thị</p>
-          <h3 class="text-2xl font-bold text-emerald-600">{{ stats.activeRoomPosts }}</h3>
-        </div>
-        <div class="p-5 bg-white rounded-xl border border-gray-100 shadow-sm">
-          <span class="text-2xl">🚩</span>
-          <p class="text-sm text-gray-500 font-medium mt-3">Báo cáo</p>
-          <h3 class="text-2xl font-bold text-gray-900">{{ allReports.length }}</h3>
-          <p class="text-xs text-orange-600 mt-1">{{ pendingReportsCount }} chờ xử lý</p>
+    <div class="admin-sidebar__footer">
+      <a class="admin-apk-card" [href]="apkUrl" target="_blank" rel="noopener noreferrer">
+        <span class="admin-apk-card__icon">📱</span>
+        <span>
+          <strong>Tải app SacoStay</strong>
+          <small>APK cho Android</small>
+        </span>
+      </a>
+
+      <div class="admin-sidebar__user">
+        <img [src]="adminAvatar" alt="" class="admin-sidebar__avatar" />
+        <div class="admin-sidebar__user-meta">
+          <p class="admin-sidebar__user-name">{{ adminName }}</p>
+          <p class="admin-sidebar__user-email">{{ adminEmail }}</p>
         </div>
       </div>
 
-      @if (activeTab === 'overview') {
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <div class="flex items-start justify-between gap-2 mb-4">
-              <div>
-                <h2 class="font-bold text-gray-900">Người dùng mới theo tháng</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Từ GET /api/Admin/users — createdAt</p>
-              </div>
-              <span class="text-xs font-semibold px-2 py-1 rounded-lg bg-blue-50 text-blue-700">{{ trendLabel(userTrend) }}</span>
-            </div>
-            <div class="admin-chart-bars">
-              @for (b of userGrowthBuckets; track b.key) {
-                <div class="admin-chart-col">
-                  <div class="admin-chart-bar-wrap">
-                    <div
-                      class="admin-chart-bar admin-chart-bar--users"
-                      [style.height.%]="barHeight(b.count, userGrowthMax)"
-                      [attr.title]="b.label + ': ' + b.count"
-                    ></div>
-                  </div>
-                  <span class="admin-chart-value">{{ b.count }}</span>
-                  <span class="admin-chart-label">{{ b.label }}</span>
-                </div>
-              }
-            </div>
-          </div>
+      <button type="button" class="admin-logout-btn" (click)="logout()">
+        Đăng xuất
+      </button>
+    </div>
+  </aside>
 
-          <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <div class="flex items-start justify-between gap-2 mb-4">
-              <div>
-                <h2 class="font-bold text-gray-900">Tin phòng mới theo tháng</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Từ GET /api/Admin/room-posts — createdAt</p>
-              </div>
-              <span class="text-xs font-semibold px-2 py-1 rounded-lg bg-green-50 text-green-700">{{ trendLabel(postTrend) }}</span>
-            </div>
-            <div class="admin-chart-bars">
-              @for (b of postGrowthBuckets; track b.key) {
-                <div class="admin-chart-col">
-                  <div class="admin-chart-bar-wrap">
-                    <div
-                      class="admin-chart-bar admin-chart-bar--posts"
-                      [style.height.%]="barHeight(b.count, postGrowthMax)"
-                      [attr.title]="b.label + ': ' + b.count"
-                    ></div>
-                  </div>
-                  <span class="admin-chart-value">{{ b.count }}</span>
-                  <span class="admin-chart-label">{{ b.label }}</span>
-                </div>
-              }
-            </div>
-          </div>
+  <div class="admin-main">
+    <header class="admin-header">
+      <div class="admin-header__left">
+        <button
+          type="button"
+          class="admin-header__menu"
+          aria-label="Mở menu"
+          (click)="toggleSidebar()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+        <div>
+          <h1 class="admin-header__title">Admin Dashboard</h1>
+          <p class="admin-header__subtitle">{{ pageTitle }}</p>
+        </div>
+      </div>
 
-          <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <h2 class="font-bold text-gray-900">Phân bổ trạng thái tin phòng</h2>
-            <p class="text-xs text-gray-500 mt-0.5 mb-4">Tổng {{ roomPosts.length }} tin trong danh sách admin</p>
-            <div class="flex flex-col sm:flex-row items-center gap-6">
-              <div class="admin-donut shrink-0" [style.background]="donutStyle">
-                <div class="admin-donut-hole">
-                  <strong>{{ stats.totalRoomPosts }}</strong>
-                  <span>tổng tin</span>
-                </div>
-              </div>
-              <div class="flex-1 w-full space-y-3">
-                @for (s of roomStatusSlices; track s.key) {
-                  <div>
-                    <div class="flex justify-between text-sm mb-1">
-                      <span class="text-gray-700">{{ s.label }}</span>
-                      <span class="font-semibold text-gray-900">{{ s.count }}</span>
-                    </div>
-                    <div class="admin-status-row">
-                      <div class="admin-status-track">
-                        <div
-                          class="admin-status-fill"
-                          [style.width.%]="statusBarWidth(s.count)"
-                          [style.background]="s.color"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
+      <div class="admin-header__right">
+        <button
+          type="button"
+          class="admin-header__refresh"
+          (click)="loadData()"
+          [disabled]="loading"
+        >
+          {{ loading ? 'Đang tải…' : 'Làm mới' }}
+        </button>
+        <div class="admin-header__chip">
+          <img [src]="adminAvatar" alt="" />
+          <span>{{ adminName }}</span>
+        </div>
+      </div>
+    </header>
 
-          <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <div class="flex items-start justify-between gap-2 mb-4">
-              <div>
-                <h2 class="font-bold text-gray-900">Báo cáo theo tháng</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Từ GET /api/Report</p>
+    <main class="admin-content">
+      @if (errorMessage) {
+        <div class="admin-alert admin-alert--error">{{ errorMessage }}</div>
+      }
+
+      @if (loading) {
+        <p class="admin-loading">Đang tải dữ liệu từ API…</p>
+      } @else {
+        @if (activeTab === 'overview') {
+          <section class="admin-kpi-grid">
+            <article class="admin-card admin-kpi">
+              <div class="admin-kpi__top">
+                <span class="admin-kpi__emoji">👥</span>
+                <span class="admin-kpi__trend" [ngClass]="trendClass(userTrend)">{{ trendLabel(userTrend) }}</span>
               </div>
-              <span class="text-xs text-gray-500">{{ pendingReportsCount }} pending</span>
-            </div>
-            @if (allReports.length === 0 && !reportsError) {
-              <p class="text-sm text-gray-500 py-8 text-center">Chưa có báo cáo — biểu đồ sẽ cập nhật khi có dữ liệu.</p>
-            } @else {
+              <p class="admin-kpi__label">Tổng người dùng</p>
+              <h3 class="admin-kpi__value">{{ stats.totalUsers }}</h3>
+              <p class="admin-kpi__hint">30 ngày gần nhất</p>
+            </article>
+
+            <article class="admin-card admin-kpi">
+              <div class="admin-kpi__top">
+                <span class="admin-kpi__emoji">🏠</span>
+                <span class="admin-kpi__trend" [ngClass]="trendClass(postTrend)">{{ trendLabel(postTrend) }}</span>
+              </div>
+              <p class="admin-kpi__label">Tổng tin phòng</p>
+              <h3 class="admin-kpi__value">{{ stats.totalRoomPosts }}</h3>
+              <p class="admin-kpi__hint">30 ngày gần nhất</p>
+            </article>
+
+            <article class="admin-card admin-kpi">
+              <span class="admin-kpi__emoji">⏳</span>
+              <p class="admin-kpi__label">Chờ duyệt</p>
+              <h3 class="admin-kpi__value admin-kpi__value--orange">{{ stats.pendingRoomPosts }}</h3>
+            </article>
+
+            <article class="admin-card admin-kpi">
+              <span class="admin-kpi__emoji">✓</span>
+              <p class="admin-kpi__label">Đang hiển thị</p>
+              <h3 class="admin-kpi__value admin-kpi__value--green">{{ stats.activeRoomPosts }}</h3>
+            </article>
+
+            <article class="admin-card admin-kpi">
+              <span class="admin-kpi__emoji">🚩</span>
+              <p class="admin-kpi__label">Báo cáo</p>
+              <h3 class="admin-kpi__value">{{ allReports.length }}</h3>
+              <p class="admin-kpi__hint admin-kpi__hint--warn">{{ pendingReportsCount }} chờ xử lý</p>
+            </article>
+          </section>
+
+          <section class="admin-kpi-grid admin-kpi-grid--revenue">
+            <article class="admin-card admin-kpi admin-kpi--compact">
+              <p class="admin-kpi__label">Doanh thu</p>
+              <h3 class="admin-kpi__value admin-kpi__value--sm">{{ formatPrice(paymentStats.totalRevenue) }}</h3>
+              <p class="admin-kpi__hint" [ngClass]="trendClass(paymentStats.revenueGrowthPercent)">
+                {{ trendLabel(paymentStats.revenueGrowthPercent) }} tháng này
+              </p>
+            </article>
+            <article class="admin-card admin-kpi admin-kpi--compact">
+              <p class="admin-kpi__label">Giao dịch</p>
+              <h3 class="admin-kpi__value admin-kpi__value--sm">{{ paymentStats.totalTransactions }}</h3>
+            </article>
+            <article class="admin-card admin-kpi admin-kpi--compact">
+              <p class="admin-kpi__label">Thành công</p>
+              <h3 class="admin-kpi__value admin-kpi__value--sm admin-kpi__value--green">{{ paymentStats.successCount }}</h3>
+            </article>
+            <article class="admin-card admin-kpi admin-kpi--compact">
+              <p class="admin-kpi__label">Chờ thanh toán</p>
+              <h3 class="admin-kpi__value admin-kpi__value--sm admin-kpi__value--orange">{{ paymentStats.pendingCount }}</h3>
+            </article>
+          </section>
+
+          <section class="admin-chart-grid">
+            <article class="admin-card admin-panel">
+              <div class="admin-panel__head">
+                <div>
+                  <h2 class="admin-panel__title">Người dùng mới theo tháng</h2>
+                  <p class="admin-panel__desc">Từ GET /api/Admin/users — createdAt</p>
+                </div>
+                <span class="admin-chip admin-chip--blue">{{ trendLabel(userTrend) }}</span>
+              </div>
               <div class="admin-chart-bars">
-                @for (b of reportGrowthBuckets; track b.key) {
+                @for (b of userGrowthBuckets; track b.key) {
                   <div class="admin-chart-col">
                     <div class="admin-chart-bar-wrap">
                       <div
-                        class="admin-chart-bar admin-chart-bar--reports"
-                        [style.height.%]="barHeight(b.count, reportGrowthMax)"
+                        class="admin-chart-bar admin-chart-bar--users"
+                        [style.height.%]="barHeight(b.count, userGrowthMax)"
                         [attr.title]="b.label + ': ' + b.count"
                       ></div>
                     </div>
@@ -176,468 +244,698 @@
                   </div>
                 }
               </div>
-            }
-          </div>
-        </div>
-      }
+            </article>
 
-      <div class="flex flex-wrap gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-full touch-scroll-x sm:w-auto sm:flex-wrap">
-        <button
-          type="button"
-          (click)="setTab('overview')"
-          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
-          [class.bg-white]="activeTab === 'overview'"
-          [class.text-gray-900]="activeTab === 'overview'"
-          [class.shadow-sm]="activeTab === 'overview'"
-          [class.text-gray-500]="activeTab !== 'overview'"
-        >
-          Tổng quan
-        </button>
-        <button
-          type="button"
-          (click)="setTab('pending')"
-          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
-          [class.bg-white]="activeTab === 'pending'"
-          [class.text-gray-900]="activeTab === 'pending'"
-          [class.shadow-sm]="activeTab === 'pending'"
-          [class.text-gray-500]="activeTab !== 'pending'"
-        >
-          Tin chờ duyệt ({{ pendingPosts.length }})
-        </button>
-        <button
-          type="button"
-          (click)="setTab('users')"
-          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
-          [class.bg-white]="activeTab === 'users'"
-          [class.text-gray-900]="activeTab === 'users'"
-          [class.shadow-sm]="activeTab === 'users'"
-          [class.text-gray-500]="activeTab !== 'users'"
-        >
-          Người dùng
-        </button>
-        <button
-          type="button"
-          (click)="setTab('lifestyle')"
-          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
-          [class.bg-white]="activeTab === 'lifestyle'"
-          [class.text-gray-900]="activeTab === 'lifestyle'"
-          [class.shadow-sm]="activeTab === 'lifestyle'"
-          [class.text-gray-500]="activeTab !== 'lifestyle'"
-        >
-          Quiz lối sống
-        </button>
-        <button
-          type="button"
-          (click)="setTab('user-reports')"
-          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
-          [class.bg-white]="activeTab === 'user-reports'"
-          [class.text-gray-900]="activeTab === 'user-reports'"
-          [class.shadow-sm]="activeTab === 'user-reports'"
-          [class.text-gray-500]="activeTab !== 'user-reports'"
-        >
-          Báo cáo người dùng ({{ userReports.length }})
-        </button>
-        <button
-          type="button"
-          (click)="setTab('room-reports')"
-          class="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
-          [class.bg-white]="activeTab === 'room-reports'"
-          [class.text-gray-900]="activeTab === 'room-reports'"
-          [class.shadow-sm]="activeTab === 'room-reports'"
-          [class.text-gray-500]="activeTab !== 'room-reports'"
-        >
-          Báo cáo phòng trọ ({{ roomReports.length }})
-        </button>
-      </div>
-
-      @if (activeTab === 'overview') {
-        <p class="text-sm text-gray-500 mb-4 -mt-2">Cuộn xuống để duyệt tin và quản lý người dùng — hoặc chọn tab bên trên.</p>
-      }
-
-      @if (activeTab === 'overview' || activeTab === 'pending') {
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-8">
-          <div class="p-6 border-b border-gray-100">
-            <h2 class="font-bold text-gray-900">{{ activeTab === 'pending' ? 'Tin chờ duyệt' : 'Phòng trọ — duyệt tin' }}</h2>
-            <p class="text-sm text-gray-500 mt-1">Duyệt tin để chuyển sang trạng thái Active (hiển thị công khai).</p>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
-              <thead class="bg-gray-50 text-gray-500 font-medium">
-                <tr>
-                  <th class="px-6 py-3">Phòng trọ</th>
-                  <th class="px-6 py-3">Chủ trọ</th>
-                  <th class="px-6 py-3">Giá</th>
-                  <th class="px-6 py-3">Khu vực</th>
-                  <th class="px-6 py-3">Trạng thái</th>
-                  <th class="px-6 py-3">Ngày đăng</th>
-                  <th class="px-6 py-3 text-right">Hành động</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                @for (post of (activeTab === 'pending' ? pendingPosts : roomPosts); track post.id) {
-                  <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4">
-                      <div class="flex items-center gap-3">
-                        <img [src]="roomThumb(post)" alt="" class="w-14 h-10 rounded object-cover border border-gray-200" />
-                        <span class="font-medium text-gray-900 max-w-[200px] truncate">{{ post.title }}</span>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 text-gray-600">
-                      <div>{{ post.landlordName || '—' }}</div>
-                      <div class="text-xs text-gray-400">{{ post.landlordEmail }}</div>
-                    </td>
-                    <td class="px-6 py-4 text-[#FF6B6B] font-medium whitespace-nowrap">{{ formatPrice(post.price) }}</td>
-                    <td class="px-6 py-4 text-gray-500">{{ post.district }}, {{ post.city }}</td>
-                    <td class="px-6 py-4">
-                      <span class="px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="statusClass(post.status)">{{ statusLabel(post.status) }}</span>
-                    </td>
-                    <td class="px-6 py-4 text-gray-500 whitespace-nowrap">{{ formatDate(post.createdAt) }}</td>
-                    <td class="px-6 py-4 text-right">
-                      @if (isPendingStatus(post.status)) {
-                        <div class="flex justify-end gap-2 flex-wrap">
-                          <button
-                            type="button"
-                            (click)="approvePost(post)"
-                            [disabled]="isActionLoading(post.id)"
-                            class="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 disabled:opacity-50"
-                          >
-                            {{ isActionLoading(post.id) ? '…' : '✓ Duyệt' }}
-                          </button>
-                          <button
-                            type="button"
-                            (click)="rejectPost(post)"
-                            [disabled]="isActionLoading(post.id)"
-                            class="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-50"
-                          >
-                            ✕ Từ chối
-                          </button>
-                        </div>
-                      } @else {
-                        <span class="text-xs text-gray-400">—</span>
-                      }
-                    </td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">Không có tin nào.</td>
-                  </tr>
+            <article class="admin-card admin-panel">
+              <div class="admin-panel__head">
+                <div>
+                  <h2 class="admin-panel__title">Tin phòng mới theo tháng</h2>
+                  <p class="admin-panel__desc">Từ GET /api/Admin/room-posts — createdAt</p>
+                </div>
+                <span class="admin-chip admin-chip--green">{{ trendLabel(postTrend) }}</span>
+              </div>
+              <div class="admin-chart-bars">
+                @for (b of postGrowthBuckets; track b.key) {
+                  <div class="admin-chart-col">
+                    <div class="admin-chart-bar-wrap">
+                      <div
+                        class="admin-chart-bar admin-chart-bar--posts"
+                        [style.height.%]="barHeight(b.count, postGrowthMax)"
+                        [attr.title]="b.label + ': ' + b.count"
+                      ></div>
+                    </div>
+                    <span class="admin-chart-value">{{ b.count }}</span>
+                    <span class="admin-chart-label">{{ b.label }}</span>
+                  </div>
                 }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      }
+              </div>
+            </article>
 
-      @if (activeTab === 'overview' || activeTab === 'users') {
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <div class="p-6 border-b border-gray-100">
-            <h2 class="font-bold text-gray-900">Quản lý người dùng</h2>
-            <p class="text-sm text-gray-500 mt-1">Thời gian trên web = tổng thời gian đã ping khi user đăng nhập và dùng app (tenant &amp; landlord).</p>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
-              <thead class="bg-gray-50 text-gray-500 font-medium">
-                <tr>
-                  <th class="px-6 py-3">Họ và tên</th>
-                  <th class="px-6 py-3">Vi phạm (báo cáo)</th>
-                  <th class="px-6 py-3">Vai trò</th>
-                  <th class="px-6 py-3">SĐT</th>
-                  <th class="px-6 py-3">Thời gian trên web</th>
-                  <th class="px-6 py-3">Lần cuối online</th>
-                  <th class="px-6 py-3">Ngày tham gia</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100">
-                @for (user of users; track user.id) {
-                  <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4">
-                      <div class="flex items-center">
-                        <img [src]="userAvatar(user)" alt="" class="w-8 h-8 rounded-full mr-3 object-cover" />
-                        <div>
-                          <div class="font-medium text-gray-900">{{ userFullName(user) }}</div>
-                          <div class="text-gray-500 text-xs">{{ user.email }}</div>
+            <article class="admin-card admin-panel">
+              <h2 class="admin-panel__title">Phân bổ trạng thái tin phòng</h2>
+              <p class="admin-panel__desc">Tổng {{ roomPosts.length }} tin trong danh sách admin</p>
+              <div class="admin-donut-layout">
+                <div class="admin-donut shrink-0" [style.background]="donutStyle">
+                  <div class="admin-donut-hole">
+                    <strong>{{ stats.totalRoomPosts }}</strong>
+                    <span>tổng tin</span>
+                  </div>
+                </div>
+                <div class="admin-donut-legend">
+                  @for (s of roomStatusSlices; track s.key) {
+                    <div>
+                      <div class="admin-legend-row">
+                        <span>{{ s.label }}</span>
+                        <strong>{{ s.count }}</strong>
+                      </div>
+                      <div class="admin-status-row">
+                        <div class="admin-status-track">
+                          <div
+                            class="admin-status-fill"
+                            [style.width.%]="statusBarWidth(s.count)"
+                            [style.background]="s.color"
+                          ></div>
                         </div>
                       </div>
-                    </td>
-                    <td class="px-6 py-4">
-                      @if (violationBadge(user.id); as badge) {
-                        <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="badge.class">
-                          {{ badge.label }}
-                        </span>
-                      } @else {
-                        <span class="text-gray-400 text-xs">—</span>
-                      }
-                    </td>
-                    <td class="px-6 py-4 capitalize text-gray-700">{{ roleLabel(user.roles) }}</td>
-                    <td class="px-6 py-4 text-gray-500">{{ user.phoneNumber || '—' }}</td>
-                    <td class="px-6 py-4 font-medium text-[#FF9F43]">{{ formatSiteTime(user.totalSiteSeconds) }}</td>
-                    <td class="px-6 py-4 text-gray-500 text-xs">{{ formatDateTime(user.lastSeenAt) }}</td>
-                    <td class="px-6 py-4 text-gray-500">{{ formatDate(user.createdAt) }}</td>
-                  </tr>
-                } @empty {
-                  <tr>
-                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">Chưa có người dùng.</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      }
+                    </div>
+                  }
+                </div>
+              </div>
+            </article>
 
-      @if (activeTab === 'lifestyle') {
-        <app-admin-lifestyle-quiz />
-      }
+            <article class="admin-card admin-panel">
+              <div class="admin-panel__head">
+                <div>
+                  <h2 class="admin-panel__title">Báo cáo theo tháng</h2>
+                  <p class="admin-panel__desc">Từ GET /api/Report</p>
+                </div>
+                <span class="admin-panel__meta">{{ pendingReportsCount }} pending</span>
+              </div>
+              @if (allReports.length === 0 && !reportsError) {
+                <p class="admin-empty">Chưa có báo cáo — biểu đồ sẽ cập nhật khi có dữ liệu.</p>
+              } @else {
+                <div class="admin-chart-bars">
+                  @for (b of reportGrowthBuckets; track b.key) {
+                    <div class="admin-chart-col">
+                      <div class="admin-chart-bar-wrap">
+                        <div
+                          class="admin-chart-bar admin-chart-bar--reports"
+                          [style.height.%]="barHeight(b.count, reportGrowthMax)"
+                          [attr.title]="b.label + ': ' + b.count"
+                        ></div>
+                      </div>
+                      <span class="admin-chart-value">{{ b.count }}</span>
+                      <span class="admin-chart-label">{{ b.label }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </article>
+          </section>
 
-      @if (activeTab === 'user-reports' || activeTab === 'room-reports') {
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div class="px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 class="text-lg font-bold text-gray-900">
-                {{ isRoomReportsTab ? 'Báo cáo phòng trọ' : 'Báo cáo người dùng' }}
-              </h2>
-              <p class="text-sm text-gray-500">
-                @if (isRoomReportsTab) {
-                  Tin đăng bị report — có cột <span class="font-medium">Tin phòng</span>.
-                } @else {
-                  Report trực tiếp hồ sơ (không có tin phòng) — không hiển thị cột Tin phòng.
-                }
-              </p>
-              <p class="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2 max-w-2xl">
-                Chấp nhận báo cáo lần 1: ẩn tin + cảnh báo chủ trọ. <strong>Lần 2 trở lên (cùng tài khoản):</strong> khóa vĩnh viễn — đăng nhập trả lỗi
-                (Auth/login: &quot;Tài khoản đã bị khóa vĩnh viễn do vi phạm nội quy&quot;).
-              </p>
+          <p class="admin-hint-text">Cuộn xuống để duyệt tin và quản lý người dùng — hoặc chọn mục bên sidebar.</p>
+        }
+
+        @if (activeTab === 'overview' || activeTab === 'pending') {
+          <section class="admin-card admin-table-card">
+            <div class="admin-table-card__head">
+              <h2 class="admin-panel__title">{{ activeTab === 'pending' ? 'Tin chờ duyệt' : 'Phòng trọ — duyệt tin' }}</h2>
+              <p class="admin-panel__desc">Duyệt tin để chuyển sang trạng thái Active (hiển thị công khai).</p>
             </div>
-            <button
-              type="button"
-              (click)="loadReports()"
-              [disabled]="reportsLoading"
-              class="px-4 py-2 rounded-lg text-sm font-medium bg-[#FF9F43] text-white hover:bg-[#FF8C2A] disabled:opacity-60"
-            >
-              {{ reportsLoading ? 'Đang tải…' : 'Làm mới' }}
-            </button>
-          </div>
-
-          @if (reportsError) {
-            <div class="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{{ reportsError }}</div>
-          }
-
-          @if (reportsLoading && !activeReports.length) {
-            <p class="px-6 py-12 text-center text-gray-500">Đang tải báo cáo…</p>
-          } @else if (!activeReports.length) {
-            <p class="px-6 py-12 text-center text-gray-500">Chưa có báo cáo nào trong mục này.</p>
-          } @else {
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead class="bg-gray-50 text-left text-gray-600">
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
                   <tr>
-                    <th class="px-4 py-3 font-semibold whitespace-nowrap">Thời gian</th>
-                    <th class="px-4 py-3 font-semibold">Người báo cáo</th>
-                    @if (isRoomReportsTab) {
-                      <th class="px-4 py-3 font-semibold">Tin phòng</th>
-                    }
-                    <th class="px-4 py-3 font-semibold">Người bị báo cáo</th>
-                    <th class="px-4 py-3 font-semibold">Vi phạm</th>
-                    <th class="px-4 py-3 font-semibold">Lý do</th>
-                    <th class="px-4 py-3 font-semibold">Chi tiết</th>
-                    <th class="px-4 py-3 font-semibold">Ảnh</th>
-                    <th class="px-4 py-3 font-semibold">Trạng thái</th>
-                    <th class="px-4 py-3 font-semibold text-right">Hành động</th>
+                    <th>Phòng trọ</th>
+                    <th>Chủ trọ</th>
+                    <th>Giá</th>
+                    <th>Khu vực</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày đăng</th>
+                    <th class="text-right">Hành động</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
-                  @for (r of activeReports; track r.id) {
-                    <tr class="hover:bg-gray-50/80 align-top">
-                      <td class="px-4 py-4 whitespace-nowrap text-gray-600 text-xs">{{ formatDateTime(r.createdAt) }}</td>
-                      <td class="px-4 py-4 font-medium text-gray-900 max-w-[120px]">{{ reporterLabel(r) }}</td>
-                      @if (isRoomReportsTab) {
-                        <td class="px-4 py-4 text-gray-800 max-w-[140px]">{{ reportRoomLabel(r) }}</td>
-                      }
-                      <td class="px-4 py-4 font-medium text-gray-900 max-w-[120px]">{{ reportPersonLabel(r) }}</td>
-                      <td class="px-4 py-4 whitespace-nowrap">
-                        @if (reportViolatorUserId(r); as vid) {
-                          @if (violationBadge(vid); as badge) {
-                            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold" [ngClass]="badge.class">
-                              {{ badge.label }}
-                            </span>
-                          } @else {
-                            <span class="text-gray-400 text-xs">—</span>
-                          }
-                        } @else {
-                          <span class="text-gray-400 text-xs">—</span>
-                        }
-                      </td>
-                      <td class="px-4 py-4 text-gray-700 max-w-[140px]" [title]="r.reason">{{ truncateText(r.reason, 32) }}</td>
-                      <td class="px-4 py-4 text-gray-600 max-w-[160px]" [title]="r.description">
-                        <p class="line-clamp-2">{{ truncateText(r.description, 40) }}</p>
-                      </td>
-                      <td class="px-6 py-4">
-                        @if (r.images.length) {
-                          <div class="flex flex-wrap gap-1">
-                            @for (img of r.images; track img) {
-                              <a [href]="reportImageUrl(img)" target="_blank" rel="noopener noreferrer" class="block">
-                                <img
-                                  [src]="reportImageUrl(img)"
-                                  alt=""
-                                  class="w-12 h-12 rounded-lg object-cover border border-gray-200"
-                                />
-                              </a>
-                            }
-                          </div>
-                        } @else {
-                          <span class="text-gray-400">—</span>
-                        }
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="reportStatusClass(r.status)">
-                          {{ reportStatusLabel(r.status) }}
-                        </span>
-                      </td>
-                      <td class="px-4 py-4">
-                        <div class="admin-report-actions">
-                          <button
-                            type="button"
-                            (click)="openReportDetail(r)"
-                            class="admin-report-actions__btn admin-report-actions__btn--outline"
-                          >
-                            Xem chi tiết
-                          </button>
-                          @if (isReportPending(r)) {
-                            <button
-                              type="button"
-                              (click)="acceptReport(r)"
-                              [disabled]="isReportProcessing(r.id)"
-                              class="admin-report-actions__btn admin-report-actions__btn--accept"
-                            >
-                              {{ isReportProcessing(r.id) ? '…' : 'Chấp nhận' }}
-                            </button>
-                            <button
-                              type="button"
-                              (click)="rejectReport(r)"
-                              [disabled]="isReportProcessing(r.id)"
-                              class="admin-report-actions__btn admin-report-actions__btn--reject"
-                            >
-                              Từ chối
-                            </button>
-                          }
+                <tbody>
+                  @for (post of (activeTab === 'pending' ? pendingPosts : roomPosts); track post.id) {
+                    <tr>
+                      <td>
+                        <div class="admin-cell-media">
+                          <img [src]="roomThumb(post)" alt="" />
+                          <span class="admin-cell-title">{{ post.title }}</span>
                         </div>
                       </td>
+                      <td>
+                        <div>{{ post.landlordName || '—' }}</div>
+                        <div class="admin-cell-sub">{{ post.landlordEmail }}</div>
+                      </td>
+                      <td class="admin-price">{{ formatPrice(post.price) }}</td>
+                      <td>{{ post.district }}, {{ post.city }}</td>
+                      <td>
+                        <span class="admin-badge" [ngClass]="statusClass(post.status)">{{ statusLabel(post.status) }}</span>
+                      </td>
+                      <td class="whitespace-nowrap">{{ formatDate(post.createdAt) }}</td>
+                      <td class="text-right">
+                        @if (isPendingStatus(post.status)) {
+                          <div class="admin-inline-actions">
+                            <button
+                              type="button"
+                              class="admin-btn admin-btn--success"
+                              (click)="approvePost(post)"
+                              [disabled]="isActionLoading(post.id)"
+                            >
+                              {{ isActionLoading(post.id) ? '…' : '✓ Duyệt' }}
+                            </button>
+                            <button
+                              type="button"
+                              class="admin-btn admin-btn--danger"
+                              (click)="rejectPost(post)"
+                              [disabled]="isActionLoading(post.id)"
+                            >
+                              ✕ Từ chối
+                            </button>
+                          </div>
+                        } @else {
+                          <span class="admin-muted">—</span>
+                        }
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="7" class="admin-empty-cell">Không có tin nào.</td>
                     </tr>
                   }
                 </tbody>
               </table>
             </div>
+          </section>
+        }
+
+        @if (activeTab === 'overview' || activeTab === 'users') {
+          <section class="admin-card admin-table-card">
+            <div class="admin-table-card__head">
+              <h2 class="admin-panel__title">Quản lý người dùng</h2>
+              <p class="admin-panel__desc">Thời gian trên web = tổng thời gian đã ping khi user đăng nhập và dùng app (tenant &amp; landlord).</p>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Họ và tên</th>
+                    <th>Vi phạm (báo cáo)</th>
+                    <th>Vai trò</th>
+                    <th>SĐT</th>
+                    <th>Thời gian trên web</th>
+                    <th>Lần cuối online</th>
+                    <th>Ngày tham gia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (user of users; track user.id) {
+                    <tr>
+                      <td>
+                        <div class="admin-user-cell">
+                          <img [src]="userAvatar(user)" alt="" />
+                          <div>
+                            <div class="admin-cell-strong">{{ userFullName(user) }}</div>
+                            <div class="admin-cell-sub">{{ user.email }}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        @if (violationBadge(user.id); as badge) {
+                          <span class="admin-badge" [ngClass]="badge.class">{{ badge.label }}</span>
+                        } @else {
+                          <span class="admin-muted">—</span>
+                        }
+                      </td>
+                      <td>{{ roleLabel(user.roles) }}</td>
+                      <td>{{ user.phoneNumber || '—' }}</td>
+                      <td class="admin-accent">{{ formatSiteTime(user.totalSiteSeconds) }}</td>
+                      <td class="admin-cell-sub">{{ formatDateTime(user.lastSeenAt) }}</td>
+                      <td>{{ formatDate(user.createdAt) }}</td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="7" class="admin-empty-cell">Chưa có người dùng.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+
+        @if (activeTab === 'transactions') {
+          @if (paymentsError) {
+            <div class="admin-alert admin-alert--error">{{ paymentsError }}</div>
           }
-        </div>
+
+          <div class="admin-section-toolbar">
+            <h2 class="admin-panel__title">Giao dịch &amp; doanh thu</h2>
+            <button
+              type="button"
+              class="admin-btn admin-btn--primary"
+              (click)="loadPayments()"
+              [disabled]="paymentsLoading"
+            >
+              {{ paymentsLoading ? 'Đang tải…' : 'Làm mới giao dịch' }}
+            </button>
+          </div>
+
+          @if (paymentsLoading && !paymentStats.totalTransactions) {
+            <p class="admin-loading">Đang tải thống kê thanh toán…</p>
+          } @else {
+            <section class="admin-kpi-grid admin-kpi-grid--4">
+              <article class="admin-card admin-kpi">
+                <p class="admin-kpi__label">Doanh thu</p>
+                <h3 class="admin-kpi__value admin-kpi__value--sm">{{ formatPrice(paymentStats.totalRevenue) }}</h3>
+                <p class="admin-kpi__hint" [ngClass]="trendClass(paymentStats.revenueGrowthPercent)">
+                  {{ trendLabel(paymentStats.revenueGrowthPercent) }} so với tháng trước
+                </p>
+              </article>
+              <article class="admin-card admin-kpi">
+                <p class="admin-kpi__label">Số giao dịch</p>
+                <h3 class="admin-kpi__value">{{ paymentStats.totalTransactions }}</h3>
+              </article>
+              <article class="admin-card admin-kpi">
+                <p class="admin-kpi__label">Thành công</p>
+                <h3 class="admin-kpi__value admin-kpi__value--green">{{ paymentStats.successCount }}</h3>
+              </article>
+              <article class="admin-card admin-kpi">
+                <p class="admin-kpi__label">Chờ thanh toán</p>
+                <h3 class="admin-kpi__value admin-kpi__value--orange">{{ paymentStats.pendingCount }}</h3>
+              </article>
+            </section>
+
+            <section class="admin-chart-grid">
+              <article class="admin-card admin-panel admin-panel--wide">
+                <div class="admin-panel__head">
+                  <div>
+                    <h2 class="admin-panel__title">Doanh thu theo ngày</h2>
+                    <p class="admin-panel__desc">Các ngày có giao dịch thành công (90 ngày gần nhất)</p>
+                  </div>
+                </div>
+                @if (!paymentStats.dailyRevenue.length) {
+                  <p class="admin-empty">Chưa có dữ liệu doanh thu theo ngày.</p>
+                } @else {
+                  <div class="admin-chart-bars">
+                    @for (d of paymentStats.dailyRevenue; track d.date) {
+                      <div class="admin-chart-col">
+                        <div class="admin-chart-bar-wrap">
+                          <div
+                            class="admin-chart-bar admin-chart-bar--revenue"
+                            [style.height.%]="revenueBarHeight(d.amount)"
+                            [attr.title]="d.label + ': ' + formatPrice(d.amount) + ' (' + d.count + ' GD)'"
+                          ></div>
+                        </div>
+                        <span class="admin-chart-value">{{ d.count }}</span>
+                        <span class="admin-chart-label">{{ d.label }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </article>
+
+              <article class="admin-card admin-panel">
+                <h2 class="admin-panel__title">Trạng thái thanh toán</h2>
+                <p class="admin-panel__desc">Tổng {{ paymentStats.totalTransactions }} giao dịch</p>
+                <div class="admin-donut-layout">
+                  <div class="admin-donut" [style.background]="paymentDonutStyle">
+                    <div class="admin-donut-hole">
+                      <strong>{{ paymentStats.totalTransactions }}</strong>
+                      <span>giao dịch</span>
+                    </div>
+                  </div>
+                  <div class="admin-donut-legend">
+                    @for (s of paymentStatusSlices; track s.key) {
+                      <div>
+                        <div class="admin-legend-row">
+                          <span>{{ s.label }}</span>
+                          <strong>{{ s.count }}</strong>
+                        </div>
+                        <div class="admin-status-row">
+                          <div class="admin-status-track">
+                            <div
+                              class="admin-status-fill"
+                              [style.width.%]="paymentStatusBarWidth(s.count)"
+                              [style.background]="s.color"
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </article>
+
+              <article class="admin-card admin-panel admin-panel--span">
+                <h2 class="admin-panel__title">Theo loại người mua</h2>
+                <p class="admin-panel__desc">byBuyerType</p>
+                <div class="admin-buyer-list">
+                  @for (b of paymentStats.byBuyerType; track b.buyerType) {
+                    <div class="admin-buyer-item">
+                      <div>
+                        <strong>{{ buyerTypeLabel(b.buyerType) }}</strong>
+                        <span>{{ b.count }} giao dịch</span>
+                      </div>
+                      <p>{{ formatPrice(b.amount) }}</p>
+                    </div>
+                  } @empty {
+                    <p class="admin-empty">Chưa có phân bổ theo buyer type.</p>
+                  }
+                </div>
+              </article>
+            </section>
+          }
+
+          <section class="admin-card admin-table-card">
+            <div class="admin-table-card__head admin-table-card__head--row">
+              <div>
+                <h2 class="admin-panel__title">Danh sách giao dịch</h2>
+                <p class="admin-panel__desc">Lọc theo trạng thái thanh toán</p>
+              </div>
+              <div class="admin-filter-pills">
+                <button
+                  type="button"
+                  class="admin-pill"
+                  [class.admin-pill--active]="txStatusFilter === ''"
+                  (click)="txStatusFilter = ''"
+                >
+                  Tất cả
+                </button>
+                <button
+                  type="button"
+                  class="admin-pill"
+                  [class.admin-pill--active]="txStatusFilter === 'Success'"
+                  (click)="txStatusFilter = 'Success'"
+                >
+                  Thành công
+                </button>
+                <button
+                  type="button"
+                  class="admin-pill"
+                  [class.admin-pill--active]="txStatusFilter === 'Pending'"
+                  (click)="txStatusFilter = 'Pending'"
+                >
+                  Chờ thanh toán
+                </button>
+                <button
+                  type="button"
+                  class="admin-pill"
+                  [class.admin-pill--active]="txStatusFilter === 'Failed'"
+                  (click)="txStatusFilter = 'Failed'"
+                >
+                  Thất bại
+                </button>
+                <button
+                  type="button"
+                  class="admin-pill"
+                  [class.admin-pill--active]="txStatusFilter === 'Cancelled'"
+                  (click)="txStatusFilter = 'Cancelled'"
+                >
+                  Đã hủy
+                </button>
+              </div>
+            </div>
+
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Thời gian</th>
+                    <th>Mã đơn</th>
+                    <th>Người mua</th>
+                    <th>Loại</th>
+                    <th>Gói / tin</th>
+                    <th>Số tiền</th>
+                    <th>Phương thức</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (tx of filteredTransactions; track tx.id) {
+                    <tr>
+                      <td class="whitespace-nowrap admin-cell-sub">{{ formatDateTime(tx.createdAt) }}</td>
+                      <td>
+                        <div class="admin-cell-strong">{{ tx.orderId }}</div>
+                        @if (tx.transactionNo) {
+                          <div class="admin-cell-sub">{{ tx.transactionNo }}</div>
+                        }
+                      </td>
+                      <td>
+                        <div class="admin-cell-strong">{{ tx.buyerName || '—' }}</div>
+                        <div class="admin-cell-sub">{{ tx.buyerEmail || '' }}</div>
+                      </td>
+                      <td>{{ buyerTypeLabel(tx.buyerType) }}</td>
+                      <td>
+                        <div>{{ tx.packageName || '—' }}</div>
+                        @if (tx.roomTitle) {
+                          <div class="admin-cell-sub">{{ tx.roomTitle }}</div>
+                        }
+                      </td>
+                      <td class="admin-price">{{ formatPrice(tx.amount) }}</td>
+                      <td>{{ tx.paymentMethod || '—' }}</td>
+                      <td>
+                        <span class="admin-badge" [ngClass]="paymentStatusClass(tx.status)">
+                          {{ paymentStatusLabel(tx.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="8" class="admin-empty-cell">Không có giao dịch phù hợp bộ lọc.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+
+        @if (activeTab === 'lifestyle') {
+          <section class="admin-card admin-lifestyle-wrap">
+            <app-admin-lifestyle-quiz />
+          </section>
+        }
+
+        @if (activeTab === 'user-reports' || activeTab === 'room-reports') {
+          <section class="admin-card admin-table-card">
+            <div class="admin-table-card__head admin-table-card__head--row">
+              <div>
+                <h2 class="admin-panel__title">
+                  {{ isRoomReportsTab ? 'Báo cáo phòng trọ' : 'Báo cáo người dùng' }}
+                </h2>
+                <p class="admin-panel__desc">
+                  @if (isRoomReportsTab) {
+                    Tin đăng bị report — có cột <span class="font-medium">Tin phòng</span>.
+                  } @else {
+                    Report trực tiếp hồ sơ (không có tin phòng) — không hiển thị cột Tin phòng.
+                  }
+                </p>
+                <p class="admin-warn-note">
+                  Chấp nhận báo cáo lần 1: ẩn tin + cảnh báo chủ trọ. <strong>Lần 2 trở lên (cùng tài khoản):</strong> khóa vĩnh viễn — đăng nhập trả lỗi
+                  (Auth/login: &quot;Tài khoản đã bị khóa vĩnh viễn do vi phạm nội quy&quot;).
+                </p>
+              </div>
+              <button
+                type="button"
+                class="admin-btn admin-btn--primary"
+                (click)="loadReports()"
+                [disabled]="reportsLoading"
+              >
+                {{ reportsLoading ? 'Đang tải…' : 'Làm mới' }}
+              </button>
+            </div>
+
+            @if (reportsError) {
+              <div class="admin-alert admin-alert--error admin-alert--inset">{{ reportsError }}</div>
+            }
+
+            @if (reportsLoading && !activeReports.length) {
+              <p class="admin-empty">Đang tải báo cáo…</p>
+            } @else if (!activeReports.length) {
+              <p class="admin-empty">Chưa có báo cáo nào trong mục này.</p>
+            } @else {
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Thời gian</th>
+                      <th>Người báo cáo</th>
+                      @if (isRoomReportsTab) {
+                        <th>Tin phòng</th>
+                      }
+                      <th>Người bị báo cáo</th>
+                      <th>Vi phạm</th>
+                      <th>Lý do</th>
+                      <th>Chi tiết</th>
+                      <th>Ảnh</th>
+                      <th>Trạng thái</th>
+                      <th class="text-right">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (r of activeReports; track r.id) {
+                      <tr class="align-top">
+                        <td class="whitespace-nowrap admin-cell-sub">{{ formatDateTime(r.createdAt) }}</td>
+                        <td class="admin-cell-strong">{{ reporterLabel(r) }}</td>
+                        @if (isRoomReportsTab) {
+                          <td>{{ reportRoomLabel(r) }}</td>
+                        }
+                        <td class="admin-cell-strong">{{ reportPersonLabel(r) }}</td>
+                        <td>
+                          @if (reportViolatorUserId(r); as vid) {
+                            @if (violationBadge(vid); as badge) {
+                              <span class="admin-badge admin-badge--xs" [ngClass]="badge.class">{{ badge.label }}</span>
+                            } @else {
+                              <span class="admin-muted">—</span>
+                            }
+                          } @else {
+                            <span class="admin-muted">—</span>
+                          }
+                        </td>
+                        <td [title]="r.reason">{{ truncateText(r.reason, 32) }}</td>
+                        <td [title]="r.description">
+                          <p class="line-clamp-2">{{ truncateText(r.description, 40) }}</p>
+                        </td>
+                        <td>
+                          @if (r.images.length) {
+                            <div class="admin-thumb-row">
+                              @for (img of r.images; track img) {
+                                <a [href]="reportImageUrl(img)" target="_blank" rel="noopener noreferrer">
+                                  <img [src]="reportImageUrl(img)" alt="" />
+                                </a>
+                              }
+                            </div>
+                          } @else {
+                            <span class="admin-muted">—</span>
+                          }
+                        </td>
+                        <td>
+                          <span class="admin-badge" [ngClass]="reportStatusClass(r.status)">
+                            {{ reportStatusLabel(r.status) }}
+                          </span>
+                        </td>
+                        <td>
+                          <div class="admin-report-actions">
+                            <button
+                              type="button"
+                              (click)="openReportDetail(r)"
+                              class="admin-report-actions__btn admin-report-actions__btn--outline"
+                            >
+                              Xem chi tiết
+                            </button>
+                            @if (isReportPending(r)) {
+                              <button
+                                type="button"
+                                (click)="acceptReport(r)"
+                                [disabled]="isReportProcessing(r.id)"
+                                class="admin-report-actions__btn admin-report-actions__btn--accept"
+                              >
+                                {{ isReportProcessing(r.id) ? '…' : 'Chấp nhận' }}
+                              </button>
+                              <button
+                                type="button"
+                                (click)="rejectReport(r)"
+                                [disabled]="isReportProcessing(r.id)"
+                                class="admin-report-actions__btn admin-report-actions__btn--reject"
+                              >
+                                Từ chối
+                              </button>
+                            }
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </section>
+        }
       }
-    }
-  </main>
+    </main>
+  </div>
 </div>
 
 @if (detailReport) {
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+    class="admin-modal-backdrop"
     role="dialog"
     aria-modal="true"
     aria-labelledby="report-detail-title"
   >
-    <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-100">
-      <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-start justify-between gap-3">
+    <div class="admin-modal">
+      <div class="admin-modal__head">
         <div>
-          <h2 id="report-detail-title" class="text-lg font-bold text-gray-900">Chi tiết báo cáo</h2>
-          <p class="text-xs text-gray-500 mt-0.5">{{ formatDateTime(detailReport.createdAt) }}</p>
+          <h2 id="report-detail-title" class="admin-modal__title">Chi tiết báo cáo</h2>
+          <p class="admin-modal__sub">{{ formatDateTime(detailReport.createdAt) }}</p>
         </div>
         <button
           type="button"
+          class="admin-modal__close"
           (click)="closeReportDetail()"
-          class="text-gray-400 hover:text-gray-600 text-xl leading-none"
           aria-label="Đóng"
         >
           ×
         </button>
       </div>
 
-      <div class="px-6 py-4 space-y-4 text-sm">
+      <div class="admin-modal__body">
         <div>
-          <p class="text-xs font-semibold text-gray-500 uppercase">Người báo cáo</p>
-          <p class="mt-1 font-medium text-gray-900">{{ reporterLabel(detailReport) }}</p>
+          <p class="admin-modal__label">Người báo cáo</p>
+          <p class="admin-modal__value">{{ reporterLabel(detailReport) }}</p>
         </div>
         @if (detailReport.reportedRoomId) {
           <div>
-            <p class="text-xs font-semibold text-gray-500 uppercase">Tin phòng</p>
-            <p class="mt-1 font-medium text-gray-900">{{ reportRoomLabel(detailReport) }}</p>
+            <p class="admin-modal__label">Tin phòng</p>
+            <p class="admin-modal__value">{{ reportRoomLabel(detailReport) }}</p>
           </div>
         }
         <div>
-          <p class="text-xs font-semibold text-gray-500 uppercase">Người bị báo cáo</p>
-          <p class="mt-1 font-medium text-gray-900">{{ reportPersonLabel(detailReport) }}</p>
+          <p class="admin-modal__label">Người bị báo cáo</p>
+          <p class="admin-modal__value">{{ reportPersonLabel(detailReport) }}</p>
         </div>
         <div>
-          <p class="text-xs font-semibold text-gray-500 uppercase">Vi phạm</p>
+          <p class="admin-modal__label">Vi phạm</p>
           @if (reportViolatorUserId(detailReport); as vid) {
             @if (violationBadge(vid); as badge) {
-              <span class="inline-flex mt-1 px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="badge.class">
-                {{ badge.label }}
-              </span>
+              <span class="admin-badge" [ngClass]="badge.class">{{ badge.label }}</span>
             } @else {
-              <p class="mt-1 text-gray-500">—</p>
+              <p class="admin-muted">—</p>
             }
           } @else {
-            <p class="mt-1 text-gray-500">—</p>
+            <p class="admin-muted">—</p>
           }
         </div>
         @if (isReportPending(detailReport) && willLockOnAccept(detailReport)) {
-          <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+          <div class="admin-lock-warn">
             Chấp nhận báo cáo này sẽ <strong>khóa vĩnh viễn</strong> tài khoản (lần vi phạm thứ 2). User sẽ không đăng nhập được.
           </div>
         }
         <div>
-          <p class="text-xs font-semibold text-gray-500 uppercase">Lý do</p>
-          <p class="mt-1 text-gray-800 whitespace-pre-wrap">{{ detailReport.reason || '—' }}</p>
+          <p class="admin-modal__label">Lý do</p>
+          <p class="admin-modal__text">{{ detailReport.reason || '—' }}</p>
         </div>
         <div>
-          <p class="text-xs font-semibold text-gray-500 uppercase">Mô tả chi tiết</p>
-          <p class="mt-1 text-gray-700 whitespace-pre-wrap">{{ detailReport.description || '—' }}</p>
+          <p class="admin-modal__label">Mô tả chi tiết</p>
+          <p class="admin-modal__text">{{ detailReport.description || '—' }}</p>
         </div>
         @if (detailReport.images.length) {
           <div>
-            <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Ảnh minh chứng</p>
-            <div class="flex flex-wrap gap-2">
+            <p class="admin-modal__label">Ảnh minh chứng</p>
+            <div class="admin-thumb-row admin-thumb-row--lg">
               @for (img of detailReport.images; track img) {
                 <a [href]="reportImageUrl(img)" target="_blank" rel="noopener noreferrer">
-                  <img
-                    [src]="reportImageUrl(img)"
-                    alt=""
-                    class="w-24 h-24 rounded-lg object-cover border border-gray-200"
-                  />
+                  <img [src]="reportImageUrl(img)" alt="" />
                 </a>
               }
             </div>
           </div>
         }
         <div>
-          <p class="text-xs font-semibold text-gray-500 uppercase">Trạng thái</p>
-          <span class="inline-flex mt-1 px-2.5 py-1 rounded-full text-xs font-semibold" [ngClass]="reportStatusClass(detailReport.status)">
+          <p class="admin-modal__label">Trạng thái</p>
+          <span class="admin-badge" [ngClass]="reportStatusClass(detailReport.status)">
             {{ reportStatusLabel(detailReport.status) }}
           </span>
         </div>
       </div>
 
       @if (isReportPending(detailReport)) {
-        <div class="px-6 py-4 border-t border-gray-100 flex flex-wrap gap-2 justify-end">
+        <div class="admin-modal__foot">
           <button
             type="button"
+            class="admin-btn admin-btn--ghost"
             (click)="rejectReport(detailReport)"
             [disabled]="isReportProcessing(detailReport.id)"
-            class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
             Từ chối báo cáo
           </button>
           <button
             type="button"
+            class="admin-btn admin-btn--success"
             (click)="acceptReport(detailReport)"
             [disabled]="isReportProcessing(detailReport.id)"
-            class="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
           >
             {{ isReportProcessing(detailReport.id) ? 'Đang xử lý…' : 'Chấp nhận báo cáo' }}
           </button>
