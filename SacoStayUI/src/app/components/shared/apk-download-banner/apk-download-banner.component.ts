@@ -6,7 +6,7 @@ const DISMISS_KEY = 'saco_apk_banner_dismissed';
 
 /** Link Google Drive — file ID từ share link; uc?export=download để tải APK trực tiếp. */
 export const SACOSTAY_APK_DOWNLOAD_URL =
-  'https://drive.google.com/uc?export=download&id=1D5L3Y11X8h_fOmgZob9vSF84nm2rcUfx';
+  'https://drive.google.com/uc?export=download&id=10RRO-FWRuu9LdazAszBwBUnQ3tVTWd9T';
 
 @Component({
   selector: 'app-apk-download-banner',
